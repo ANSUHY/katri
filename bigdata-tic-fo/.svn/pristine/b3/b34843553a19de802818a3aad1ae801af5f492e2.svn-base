@@ -1,0 +1,377 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="c"		uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="cm" 		uri="/WEB-INF/tlds" %>
+<%@ taglib prefix="spring"	uri="http://www.springframework.org/tags" %>
+
+<%@ page import="com.katri.common.Const" %>
+<c:set var="ROW_COUNT" value="<%=Const.Paging.ROW_COUNT%>" />
+<c:set var="USER_TYPE_CD_ENT_MASTER" value="<%=Const.Code.UserTyCd.ENT_MASTER%>" />
+
+<style type="text/css">
+	table.test-lst01-jk th { padding:1.125rem; text-align:center; }
+	table.test-lst01-jk td { padding:1.125rem; vertical-align:top; }
+	table.test-lst01-jk td:not(:last-of-type) { border-right:1px solid var(--grey-e6e); }
+</style>
+
+<script type="text/javascript">
+
+	$(document).ready(function() {
+
+		/* 초기작업 */
+		fn_myRprtDetailInit();
+
+	});
+
+	/*
+	 * 함수명 : fn_myRprtDetailInit()
+	 * 설	 명 : 초기 작업
+	 */
+	function fn_myRprtDetailInit() {
+
+		//====== [##품목 정보##],[##시료 정보##] 처음값 셋팅
+		fn_getMyRprtPdctData("${myRprtDetail.rprtPdctgList[0].instPdctgCd}");
+
+		//====== [품목 정보 select박스] 바뀌면 아래 [##품목 정보##],[##시료 정보##] 데이터 새로 셋팅
+		$(document).on("change", "select[id='rprtPdctgCdSelect']", function() {
+
+			//[품목 정보] 가져오기 + 새로 셋팅
+			if( !fn_emptyCheck( $(this).val() )){
+				let instPdctgCd	= $(this).val(); //기관품목코드
+				fn_getMyRprtPdctData(instPdctgCd);
+			}
+
+		});
+
+		//====== [시료명 select박스] 바뀌면 아래 [##시료별 시험항목 정보##], [##시험항목별 시험결과##] 데이터 보이고 안보이고
+		$(document).on("change", "select[id='instSampleNoSelect']", function() {
+
+			let instSampleNo = $(this).val();
+
+			if(instSampleNo === "all" || fn_emptyCheck(instSampleNo) ){
+				$("[class^='tt_']").show();//전체보이기
+			} else {
+				$("[class^='tt_']").hide();
+				$("[class^='tt_"+instSampleNo+"']").show();
+			}
+
+		});
+
+	}
+
+	/*
+	 * 함수명 : fn_getMyRprtPdctData(instPdctgCd)
+	 * 설	 명 : 선택한 [품목 정보 select박스]에 대한	[##품목 정보##],[##시료 정보##]
+	 * @param instPdctgCd : 찾을 기준이 되는 기관품목코드
+	 */
+	function fn_getMyRprtPdctData(instPdctgCd){
+
+		/* [품목 정보] 데이터 비우기 */
+		$("#areaPdctgData").html("");
+		/* [##시료 정보##] 데이터 비우기 */
+		$("#areaInstSampleData").html("");
+
+		/* 디테일 가져오기 */
+		$.blockUI();
+		$.ajax({
+			url	 		: "/platformSvc/myData/myInfoCert/getMyRprtPdctData"
+			, type 		: "GET"
+			, dataType 	: "json"
+			, data 		: {"targetInstId" 			: $("#frm_myRprtList #targetInstId").val()
+							, "targetInstRcptNo" 	: $("#frm_myRprtList #targetInstRcptNo").val()
+							, "targetRprtNo" 		: $("#frm_myRprtList #targetRprtNo").val()
+							, "targetInstPdctgCd" 	: instPdctgCd
+						}
+			, success 	: function(jsonData, textStatus, jqXHR) {
+				$.unblockUI();
+
+				if(jsonData.resultCode === 200){
+
+					let data = jsonData.data;
+
+					/*===== [##품목 정보##]셋팅 =====*/
+					let html = "";
+
+					html += '<tr>';
+					html += '	<th>품목</th>';
+					html += '	<td>' + data.instPdctgNm + '</td>';
+					html += '	<th>제조 국가명</th>';
+					html += '	<td>' + data.mnftrNtnNm + '</td>';
+					html += '</tr>';
+					html += '<tr>';
+					html += '	<th>모델명</th>';
+					html += '	<td>' + data.mdlNm + '</td>';
+					html += '	<th>제조 업체명</th>';
+					html += '	<td>' + data.mnftrEntrpsNm + '</td>';
+					html += '</tr>';
+					html += '<tr>';
+					html += '	<th>시료수</th>';
+					html += '	<td colspan="3">' + data.sampleTotalCnt + '</td>';
+					html += '</tr>';
+
+					$("#areaPdctgData").html(html);
+
+					/*===== [##시료 정보##]셋팅(select박스), [##시료별 시험항목 정보##],[##시험항목별 시험결과##] 셋팅=====*/
+					let htmlSampleSelect = "";	 	//[##시료 정보##] select박스 html
+					let htmlInstTestItemList = "";	//[##시료별 시험항목 정보##],[##시험항목별 시험결과##] html
+
+					if(data.instSampleList !== null && data.instSampleList.length > 0){
+
+						let instSampleList = data.instSampleList; //[##시료 정보##] 리스트
+
+						/* [##시료 정보##]셋팅(select박스) */
+						htmlSampleSelect += '<div class="itm-tit" data-instpdctgcd="' + instPdctgCd + '">';
+// 						htmlSampleSelect += '	<label>시료명</label>';
+						htmlSampleSelect += '	<h3 class="tit" style="margin-right:10px;">시료명</h3>';
+						htmlSampleSelect += '	<select class="select" id="instSampleNoSelect">';
+
+						htmlSampleSelect += '		<option value="all">전체</option>';
+						$.each(instSampleList, function(index, instSample){
+							htmlSampleSelect +=	'	<option value="'+ instSample.instSampleNo +'">' + instSample.instSampleNm + '</option>'
+						})
+						htmlSampleSelect += '	</select>';
+						htmlSampleSelect += '</div>';
+
+						//HTML 셋팅
+						$("#areaInstSampleData").html(htmlSampleSelect);
+
+						/*  [##시료별 시험항목 정보##], [##시험항목별 시험결과##]  셋팅*/
+						htmlInstTestItemList += '<table class="test-lst01-jk" style="border-collapse:collapse;">';
+						htmlInstTestItemList += '	<colgroup>'
+											+	'		<col width="10%">'
+											+	'		<col width="10%">'
+											+	'		<col width="*%">'
+											+	'		<col width="5%">'
+											+	'		<col width="5%">'
+											+	'		<col width="5%">'
+											+	'		<col width="5%">'
+											+	'		<col width="7%">'
+											+	'		<col width="10%">'
+											+	'		<col width="8%">'
+											+	'		<col width="5%">'
+											+	'		<col width="5%">'
+											+	'		<col width="5%">'
+											+	'	</colgroup>';
+						htmlInstTestItemList += '	<thead>'
+											+	'		<tr>'
+											+	'			<th>시료번호</th>'
+											+	'			<th>시료명</th>'
+											+	'			<th>시험항목</th>'
+											+	'			<th>세부항목</th>'
+											+	'			<th>판정결과</th>'
+											+	'			<th>측정값</th>'
+											+	'			<th>기준값</th>'
+											+	'			<th>CAS번호</th>'
+											+	'			<th>시험규격</th>'
+											+	'			<th>시험조건</th>'
+											+	'			<th>시험단위</th>'
+											+	'			<th>사용기기명</th>'
+											+	'			<th>검출한계</th>'
+											+	'		</tr>'
+											+	'	</thead>';
+						htmlInstTestItemList += '	<tbody>';
+
+						/* [##시료 정보##] 리스트 each */
+						$.each(instSampleList, function(indexSam, instSample){
+
+							if(instSample.instTestItemList !== null && instSample.instTestItemList.length > 0){
+
+								/* [##시료별 시험항목 정보##] 리스트 each */
+								let instTestItemList = instSample.instTestItemList
+								$.each(instTestItemList, function(indexItem, instTestItem){
+
+									if(instTestItem.instTestItemRsltList !== null && instTestItem.instTestItemRsltList.length > 0){
+
+										/* [##시험항목별 시험결과##] 리스트 each */
+										let instTestItemRsltList = instTestItem.instTestItemRsltList
+										$.each(instTestItemRsltList, function(indexRslt, instTestItemRslt){
+
+											htmlInstTestItemList += '<tr class="tt_'+ instSample.instSampleNo +' board-tr">';
+
+											if( indexItem === 0  && indexRslt === 0){
+												htmlInstTestItemList += '<td class="tt_'+ instSample.instSampleNo +'" rowspan="' + instSample.oneSapmleCountRsltCnt + '">' + instSample.instSampleNo + '</td>'; //기관시료번호(시료번호)
+												htmlInstTestItemList += '<td class="tt_'+ instSample.instSampleNo +'" rowspan="' + instSample.oneSapmleCountRsltCnt + '">' + instSample.instSampleNm + '</td>'; //기관시료명(시료명)
+											}
+
+											if(indexRslt === 0){
+												htmlInstTestItemList += '<td class="tt_'+ instSample.instSampleNo +'" rowspan="' + instTestItem.oneTestItemCountRsltCnt + '">' + instTestItem.instTestItemNm + '</td>'; //기관시험항목명(시험항목)
+											}
+
+											htmlInstTestItemList += '	<td class="tt_'+ instSample.instSampleNo +'" >' + instTestItemRslt.testRsltNm + '</td>'; 	//시험결과명(세부항목)
+											htmlInstTestItemList += '	<td class="tt_'+ instSample.instSampleNo +'" >' + instTestItemRslt.instJgmtRsltNm + '</td>';//기관판정결과명(판정결과)
+											htmlInstTestItemList += '	<td class="tt_'+ instSample.instSampleNo +'" >' + instTestItemRslt.testMsrmtVal + '</td>'; 	//시험측정값(측정값)
+											htmlInstTestItemList += '	<td class="tt_'+ instSample.instSampleNo +'" >' + instTestItemRslt.testCrtraVal + '</td>'; 	//시험기준값(기준값)
+											htmlInstTestItemList += '	<td class="tt_'+ instSample.instSampleNo +'" >' + instTestItemRslt.casNo + '</td>'; 		//CAS번호(CAS번호)
+											htmlInstTestItemList += '	<td class="tt_'+ instSample.instSampleNo +'" >' + instTestItem.instStndNm + '</td>'; 		//기관규격명(시험규격)
+											htmlInstTestItemList += '	<td class="tt_'+ instSample.instSampleNo +'" >' + instTestItem.instCondNm + '</td>'; 		//기관조건명(시험조건)
+											htmlInstTestItemList += '	<td class="tt_'+ instSample.instSampleNo +'" >' + instTestItem.instUnitNm + '</td>'; 		//기관단위명(시험단위)
+											htmlInstTestItemList += '	<td class="tt_'+ instSample.instSampleNo +'" >' + instTestItem.useIstmtNm + '</td>'; 		//사용기기명(사용기기명)
+											htmlInstTestItemList += '	<td class="tt_'+ instSample.instSampleNo +'" >' + instTestItem.dtctLimitCn + '</td>'; 		//검출한계내용(검출한계)
+
+											htmlInstTestItemList += '</tr>';
+
+										})
+									}
+
+								})
+							}
+
+						})
+
+						htmlInstTestItemList += '	</tbody>';
+						htmlInstTestItemList += '</table>';
+
+						//HTML 셋팅
+						$("#areaInstTestItem").html(htmlInstTestItemList);
+
+					}
+
+				}
+			}
+		});
+
+	}
+
+	/*
+	 * 함수명 : fn_goMyRprtList
+	 * 설	 명 : 리스트 페이지로 이동
+	*/
+	function fn_goMyRprtList() {
+
+		$("#frm_myRprtList").attr("method", "GET");
+		$("#frm_myRprtList").attr("action", "/platformSvc/myData/myInfoCert/myRprtList");
+		$("#frm_myRprtList").submit();
+	}
+
+
+</script>
+
+<!-- ===== header ====== -->
+<header id="header">
+	<div id="sub-mv" class="sub-myservice">
+		<div class="inner">
+			<h2>플랫폼 서비스</h2>
+			<div class="sub-obj">오브젝트</div>
+		</div>
+	</div>
+</header>
+<!-- ===== /header ====== -->
+
+<!-- ===== container ====== -->
+<div id="container">
+
+	<!--breadcrumb-wr-->
+	<jsp:include page="/WEB-INF/views/layout/breadcrumbWr.jsp">
+		<jsp:param name="menuTopNo" value="02"/>
+		<jsp:param name="menuSubNo" value="0201"/>
+	</jsp:include>
+	<!-- // breadcrumb-wr-->
+
+	<!--container-->
+	<div id="cont" class="cont-myservice dtl-myservice">
+
+		<!-- 검색 조건 -->
+		<form method="get" name="frm_myRprtList" 	id="frm_myRprtList">
+
+			<input type="hidden" name="rowCount" 		id="rowCount" 			value="${ROW_COUNT * schDatamyRprt.currPage}">
+			<input type="hidden" name="currPage" 		id="currPage"			value="${schDatamyRprt.currPage}">
+
+			<input type="hidden" name="targetInstId" 	id="targetInstId" 		value="${schDatamyRprt.targetInstId}"/> <!-- Detail 갈때 기관아이디 -->
+			<input type="hidden" name="targetInstRcptNo" id="targetInstRcptNo" 	value="${schDatamyRprt.targetInstRcptNo}"/> <!-- Detail 갈때 기관접수번호 -->
+			<input type="hidden" name="targetRprtNo" 	id="targetRprtNo" 		value="${schDatamyRprt.targetRprtNo}"/> <!-- Detail 갈때 성적서번호 -->
+
+			<input type="hidden" name="schEDivi" 		id="schEDivi" 			value="${schDatamyRprt.schEDivi}">		<!-- [검색:입장구분]	-->
+			<input type="hidden" name="schInstId" 		id="schInstId" 			value="${schDatamyRprt.schInstId}">		<!-- [검색:시험기관]	-->
+			<input type="hidden" name="schRprtNo" 		id="schRprtNo" 			value="${schDatamyRprt.schRprtNo}">		<!-- [검색:성적서 번호]	-->
+			<input type="hidden" name="schStdLgclfCd" 	id="schStdLgclfCd" 		value="${schDatamyRprt.schStdLgclfCd}">	<!-- [검색:제품분류_대]	-->
+			<input type="hidden" name="schStdMlclfCd" 	id="schStdMlclfCd" 		value="${schDatamyRprt.schStdMlclfCd}">	<!-- [검색:제품분류_중]	-->
+			<input type="hidden" name="schPdctgNm" 		id="schPdctgNm" 		value="${schDatamyRprt.schPdctgNm}">	<!-- [검색:품목명]	-->
+			<input type="hidden" name="schRprtYmdF" 	id="schRprtYmdF" 		value="${schDatamyRprt.schRprtYmdF}">	<!-- [검색:발급일자_시작일]	-->
+			<input type="hidden" name="schRprtYmdT" 	id="schRprtYmdT" 		value="${schDatamyRprt.schRprtYmdT}">	<!-- [검색:발급일자_끝일]	-->
+			<input type="hidden" name="schJgmtCd" 		id="schJgmtCd" 			value="${schDatamyRprt.schJgmtCd}">		<!-- [검색:종합판정]	-->
+
+		</form>
+		<!--// 검색 조건	-->
+
+		<!--tit-->
+		<div class="cont-platform-tit bMg80">
+			<h2 class="tit">성적서 정보 상세</h2>
+		</div>
+		<!--// tit-->
+
+		<h3 class="tit">성적서 정보</h3>
+
+		<!--리스트-->
+		<div class="svc-info-dtl">
+			<table>
+				<caption>성적서정보 상세 - 성적서 번호, 발급일자, 성적서 발급용도, 시험 기관, 성적서 발급회차, 신청 기업, 종합판정결과, 제출 기업, 비고 내용 포함</caption>
+				<tr>
+					<th>성적서 번호</th>
+					<td>${myRprtDetail.rprtNo}</td>
+					<th>발급일자</th>
+					<td><cm:stringFormat type="date" format="YYYY-MM-DD" value="${myRprtDetail.rprtIssuYmd}" /></td>
+				</tr>
+
+				<tr>
+					<th>성적서 발급용도</th>
+					<td>${myRprtDetail.instRprtPrposDivNm}</td>
+					<th>시험 기관</th>
+					<td>${myRprtDetail.instKoEngNm}</td>
+				</tr>
+
+				<tr>
+					<th>성적서 발급회차</th>
+					<td>${myRprtDetail.rprtIssuTmsNo}회</td>
+					<th>신청 기업</th>
+					<td>${myRprtDetail.rcptCoNm}</td>
+				</tr>
+
+				<tr>
+					<th>종합판정결과</th>
+					<td>${myRprtDetail.intgrGnrlzJgmtRsltNm}</td>
+					<th>제출기업</th>
+					<td>${myRprtDetail.sbmsnCoNm}</td>
+				</tr>
+
+				<tr>
+					<th>비고</th>
+					<td colspan="3">${myRprtDetail.rmkCn}</td>
+				</tr>
+			</table>
+		</div>
+
+		<div class="dtl-one-list-wr">
+			<div class="itm-tit">
+				<h3 class="tit" style="margin-right:10px;">품목 정보</h3>
+				<c:if test="${! empty myRprtDetail.rprtPdctgList}">
+					<select class="select" id="rprtPdctgCdSelect">
+						<c:forEach items="${myRprtDetail.rprtPdctgList}" var="item" varStatus="status">
+							<option value="${item.instPdctgCd}" ${status.first ? "selected":"" }>${item.instPdctgNm}</option>
+						</c:forEach>
+					</select>
+				</c:if>
+			</div>
+		</div>
+
+		<!--리스트-->
+		<div class="svc-info-dtl">
+			<table id="areaPdctgData">
+
+			</table>
+		</div>
+
+		<!--시료-->
+		<div class="dtl-one-list-wr" id="areaInstSampleData">
+		</div>
+
+		<div class="svc-info-dtl" id="areaInstTestItem">
+		</div>
+
+		<div class="btn-wr">
+			<a href="javascript:void(0)" onclick="fn_goMyRprtList()" class="btn">목록</a>
+		</div>
+
+	</div>
+	<!--// container-->
+
+</div>
+<!-- ===== /container ====== -->

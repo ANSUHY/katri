@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.system.code.mapper.CodeMapper">
+
+	<!--  사용중인 코드만 보기 -->
+	<sql id="useY">
+		<where>
+			<if test="comnGrpCd != null"> <!-- depth -->
+				AND ${alias}comn_grp_cd = #{comnGrpCd}
+			</if>
+			<if test='searchUseYn == "Y"'> <!-- 사용중인 코드만 보기 -->
+				AND ${alias}use_yn = 'Y'
+			</if>
+		</where>
+	</sql>
+
+	<!-- 공통그룹코드 -->
+	<!--  공통그룹코드 목록 조회 -->
+	<select id="selectComnGrpCdList" resultType="com.katri.web.system.code.model.CodeSelectRes" parameterType="com.katri.web.system.code.model.CodeSelectReq">
+		/* codeMapper.selectcomnGrpCdList (공통그룹코드 목록 조회) */
+
+		SELECT
+			  COALESCE(null, tcgc.comn_grp_cd, '') AS comnGrpCd
+			, COALESCE(null, tcgc.comn_grp_cd_nm, '') AS comnGrpCdNm
+			, COALESCE(null, tcgc.comn_grp_cd_desc_cn, '') AS comnGrpCdDescCn
+			, tcgc.use_yn
+		FROM
+			tb_comn_grp_cd tcgc
+		<include refid="useY">
+			<property name="alias" value="tcgc."/>
+		</include>
+		ORDER BY
+			tcgc.comn_grp_cd
+	</select>
+
+	<!-- 공통그룹코드 단건 조회 -->
+	<select id="selectComnGrpCdDetail" resultType="com.katri.web.system.code.model.CodeSelectRes">
+		/* codeMapper.selectComnGrpCdDetail (공통그룹코드 단건 조회) */
+
+		SELECT
+			  COALESCE(null, tcgc.comn_grp_cd, '') AS comnGrpCd
+			, COALESCE(null, tcgc.comn_grp_cd_nm, '') AS comnGrpCdNm
+			, COALESCE(null, tcgc.comn_grp_cd_desc_cn, '') AS comnGrpCdDescCn
+			, tcgc.use_yn
+		FROM
+			tb_comn_grp_cd tcgc
+		WHERE
+			tcgc.comn_grp_cd = #{comnGrpCd}
+	</select>
+
+	<!-- 공통그룹코드 추가 -->
+	<insert id="insertComnGrpCd" parameterType="com.katri.web.system.code.model.CodeSaveReq">
+		/* codeMapper.insertComnGrpCd (공통그룹코드 추가) */
+
+		INSERT INTO
+			tb_comn_grp_cd
+			(
+				  comn_grp_cd
+				, comn_grp_cd_nm
+				, comn_grp_cd_desc_cn
+				, use_yn
+				, crtr_id
+			)
+		VALUES
+			(
+				  #{comnGrpCd}
+				, #{comnGrpCdNm}
+				, #{comnGrpCdDescCn}
+				, #{useYn}
+				, #{crtrId}
+			)
+	</insert>
+
+	<!-- 공통그룹코드 수정 -->
+	<update id="updateComnGrpCd" parameterType="com.katri.web.system.code.model.CodeSaveReq">
+		/* codeMapper.updateComnGrpCd (공통그룹코드 수정) */
+
+		UPDATE
+			tb_comn_grp_cd
+		SET
+			  comn_grp_cd = #{comnGrpCd}
+			, comn_grp_cd_nm = #{comnGrpCdNm}
+			, comn_grp_cd_desc_cn = #{comnGrpCdDescCn}
+			, use_yn = #{useYn}
+			, mdfr_id = #{mdfrId}
+			, mdfcn_dt = now()
+		WHERE
+			comn_grp_cd = #{targetComnGrpCd}
+	</update>
+
+	<!-- 공통코드 -->
+	<!-- 공통코드 목록 조회 -->
+	<select id="selectComnCdList" resultType="com.katri.web.system.code.model.CodeSelectRes" parameterType="com.katri.web.system.code.model.CodeSelectReq">
+		/* codeMapper.selectComnCdList (공통코드 목록 조회) */
+
+		SELECT
+			  COALESCE(null, tcc.comn_grp_cd, '') AS comnGrpCd
+			, COALESCE(null, tcc.comn_cd, '') AS comnCd
+			, COALESCE(null, tcc.comn_cd_nm, '') AS comnCdNm
+			, COALESCE(null, tcc.comn_cd_val, '') AS comnCdVal
+			, tcc.srt_seq
+			, tcc.use_yn
+		FROM
+			tb_comn_cd tcc
+		LEFT OUTER JOIN tb_comn_grp_cd tcgc
+			ON tcc.comn_grp_cd = tcgc.comn_grp_cd
+		<include refid="useY">
+			<property name="alias" value="tcc."/>
+		</include>
+		ORDER BY
+			srt_seq ASC
+	</select>
+
+	<!-- 공통코드 단건 조회 -->
+	<select id="selectComnCdDetail" parameterType="com.katri.web.system.code.model.CodeSelectReq" resultType="com.katri.web.system.code.model.CodeSelectRes">
+		/* codeMapper.selectComnCdDetail (공통코드 단건 조회) */
+
+		SELECT
+			  COALESCE(null, tcc.comn_grp_cd, '') AS comnGrpCd
+			, COALESCE(null, tcc.comn_cd, '') AS comnCd
+			, COALESCE(null, tcc.comn_cd_nm, '') AS comnCdNm
+			, COALESCE(null, tcc.comn_cd_val, '') AS comnCdVal
+			, tcc.use_yn
+			, tcc.srt_seq
+		FROM
+			tb_comn_cd tcc
+		WHERE
+			comn_grp_cd = #{comnGrpCd} AND comn_cd = #{comnCd}
+	</select>
+
+	<!-- 공통코드 추가 -->
+	<insert id="insertComnCd" parameterType="com.katri.web.system.code.model.CodeSaveReq">
+		/* codeMapper.insertComnCd (공통코드 추가) */
+
+		INSERT INTO
+			tb_comn_cd
+			(
+				  comn_grp_cd
+				, comn_cd
+				, comn_cd_nm
+				, comn_cd_val
+				, use_yn
+				, srt_seq
+				, crtr_id
+			)
+		VALUES
+			(
+				  #{comnGrpCd}
+				, #{comnCd}
+				, #{comnCdNm}
+				, #{comnCdVal}
+				, #{useYn}
+				, (
+						SELECT
+							COALESCE(MAX(srt_seq) + 1, 1)
+						FROM
+							tb_comn_cd tcc
+						WHERE
+							tcc.comn_grp_cd = #{comnGrpCd}
+					)
+				, #{crtrId}
+			)
+	</insert>
+
+	<!-- 공통코드 수정 -->
+	<update id="updateComnCd" parameterType="com.katri.web.system.code.model.CodeSaveReq">
+		/* codeMapper.updateComnCd (공통코드 수정) */
+
+		UPDATE
+			tb_comn_cd
+		SET
+			  comn_cd_nm = #{comnCdNm}
+			, comn_cd_val = #{comnCdVal}
+			, use_yn = #{useYn}
+			, mdfr_id = #{mdfrId}
+			, mdfcn_dt = now()
+		WHERE
+			comn_grp_cd = #{comnGrpCd} AND comn_cd = #{comnCd}
+	</update>
+
+	<!--  공통코드 순서 변경 -->
+	<update id="updateComnCdSeq" parameterType="com.katri.web.system.code.model.CodeSaveReq">
+		/* codeMapper.updateSrtSeq (순서 변경) */
+
+		UPDATE
+			tb_comn_cd
+		SET
+			srt_seq = #{srtSeq}
+		WHERE
+			comn_grp_cd = #{comnGrpCd} AND comn_cd = #{comnCd}
+	</update>
+
+	<!-- 공통그룹코드 데이터 존재 여부 (갯수) -->
+	<select id="countComnGrpCd"  parameterType="com.katri.web.system.code.model.CodeSelectReq" resultType="Integer">
+		/* codeMapper.countComnGrpCd (공통그룹코드 데이터 존재 여부 (갯수)) */
+
+		SELECT
+			count(tcgc.comn_grp_cd)
+		FROM
+			tb_comn_grp_cd tcgc
+		WHERE
+			comn_grp_cd = #{comnGrpCd}
+	</select>
+
+	<!-- 공통그룹코드/공통코드 데이터 존재 여부 (갯수) -->
+	<select id="countComnCd" parameterType="com.katri.web.system.code.model.CodeSelectReq" resultType="Integer">
+		/* codeMapper.countComnCd (공통그룹코드/공통코드 데이터 존재 여부 (갯수)) */
+
+		SELECT
+			count(tcc.comn_cd)
+		FROM
+			tb_comn_cd tcc
+		WHERE
+			comn_grp_cd = #{comnGrpCd} AND comn_cd = #{comnCd}
+	</select>
+
+</mapper>

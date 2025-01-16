@@ -1,0 +1,82 @@
+@charset "utf-8";
+
+body,td,th {
+	font-family: "나눔고딕";
+	font-size: 10px;
+	background-color: #fafafa;
+}
+body, div {
+	margin:0;
+    padding:0;
+    border:0;
+    outline:0;
+    font-size:100%;	
+    }
+html, body, form, #wrap {
+    height:100%;
+    }
+body > #wrap {
+    height: 100%;
+    min-height:100%;
+    }
+#wrap{
+	margin:0 auto;
+	width: 100%;
+	background-repeat: no-repeat;
+	background-position: center;
+    }
+#buttons {
+	margin: auto;
+	position: relative;
+	height: 270px;
+	width: 930px;
+	top: 50%;
+	margin-top:-150px;
+    }
+.btn_main{
+	margin:0 auto;
+	float:left;
+	padding:12px;
+	width:284;
+	height:244px;
+}
+.btn_admin{	
+	float:right;
+	position:relative;	
+	padding:12px;
+	margin-top:33px;
+}
+.top_space { 
+   margin: auto;
+   position: relative;
+   width:auto;
+   vertical-align: central;
+   height:161px;
+   }
+.id {
+	position: relative;
+	float:left;
+	position: relative;
+	height:25px;
+	margin-right:8px;
+	vertical-align:middle;
+	padding-top:7px;
+	}
+.pw {
+	position: relative;
+	float:left;
+	width:11px;
+	position: relative;
+	height:25px;
+	margin-right:8px;
+	vertical-align:middle;
+	padding-top:7px;
+	}
+.btn_login{
+	position:absolute;
+	top: 162px;
+	left:274px;
+	float:left;
+	width:67px;
+	height:63px;
+    }

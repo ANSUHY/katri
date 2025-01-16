@@ -1,0 +1,18 @@
+login-exclude:
+  common:
+    - '/'
+    - '/login/login'
+    - '/mbr/mbrReg'
+    - '/mbr/mbrSave'
+    - '/error'
+    - '/swagger-ui.html'
+    - '/comm/codeListData'
+    - '/comm/codeSaveTestData'
+    - '/favicon.ico'
+  front:
+    - '/member/mbshNo'
+  back:
+    - '/system/loginChk'
+    - '/login'
+    - '/layout'
+    - '/system/auth/userMenuAuthData'

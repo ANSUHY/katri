@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.search.mapper.SearchMapper">
+
+	<!-- 검색 조건 -->
+	<sql id="searchList">
+		AND ${alias}del_yn = 'N'
+		<if test='unifiedSearchKeyword != null and unifiedSearchKeyword != ""'>
+			/* 검색 (제목 + 내용) */
+			AND (${alias}ntt_sj_nm LIKE '%' || #{unifiedSearchKeyword} || '%' OR ${alias}ntt_cn LIKE '%' || #{unifiedSearchKeyword} || '%')
+		</if>
+	</sql>
+
+	<!-- 인증데이터 목록 조회 -->
+	<select id="selectCertDataList" parameterType="com.katri.web.search.model.SearchSelectReq" resultType="com.katri.web.dataUsageGuide.model.CertDataSelectRes">
+		/* searchMapper.selectCertDataList (인증데이터 목록 조회) */
+
+		SELECT
+			  (ROW_NUMBER() OVER(ORDER BY ppcb.cert_ymd)) as rownum
+			, (SELECT CONCAT (pcib.inst_nm, '(' , pcib.inst_eng_nm, ')' ) FROM pt_co_inst_bas pcib WHERE pcib.inst_id = ppcb.inst_id LIMIT 1) AS inst_ko_eng_nm
+			, UPPER(ppcb.inst_id) AS inst_id
+			, ppcb.mdl_nm
+			, ppcb.prdt_nm
+			, (SELECT pcicdc.dtl_cd_nm FROM pt_co_intgr_comn_dtl_cd pcicdc WHERE pcicdc.use_yn ='Y' AND pcicdc.grp_cd='ATC007' AND pcicdc.dtl_cd = ppcb.cert_stt_cd LIMIT 1) AS cert_stt_nm
+			, ppcb.cert_no
+		FROM
+			pt_pr_cert_bas ppcb
+		WHERE
+			ppcb.prdt_nm LIKE '%' || #{unifiedSearchKeyword} || '%'
+		ORDER BY
+			rownum DESC
+		OFFSET 0 LIMIT 5
+	</select>
+
+	<!-- 공지사항 목록 조회 -->
+	<select id="selectNoticeList" parameterType="com.katri.web.search.model.SearchSelectReq" resultType="com.katri.web.ctnt.notice.model.NoticeSelectRes">
+		/* searchMapper.selectNoticeList (공지사항 목록 조회) */
+
+		SELECT
+			  tnm.ntt_sn 		-- 게시물 일련 번호
+			, tnm.ntt_sj_nm 	-- 게시물 제목명
+			, tcc.comn_cd_nm 	-- 게시물 분류 이름
+			, tnm.ntt_cn		-- 게시글 내용
+		FROM
+			tb_ntt_mng tnm
+		LEFT OUTER JOIN tb_comn_cd tcc
+			ON (tcc.comn_grp_cd = 'PD_NOTICE' AND tcc.use_yn = 'Y' AND tnm.ntt_clf_cd = tcc.comn_cd)
+		WHERE tnm.ntt_ty_cd = 'NOTICE'
+		<include refid="searchList">
+			<property name="alias" value="tnm."/>
+		</include>
+		ORDER BY
+			ntt_sn DESC
+		OFFSET 0 LIMIT 5
+	</select>
+
+	<!-- FAQ 목록 조회 -->
+	<select id="selectFaqList" parameterType="com.katri.web.search.model.SearchSelectReq" resultType="com.katri.web.ctnt.faq.model.FaqSelectRes">
+		/* searchMapper.selectFaqList (FAQ 목록 조회) */
+
+		SELECT
+			  tnm.ntt_sn 		-- 게시물 일련 번호
+			, tnm.ntt_sj_nm 	-- 게시물 제목명
+			, tcc.comn_cd_nm 	-- 게시물 분류 이름
+			, tnm.ntt_cn		-- 게시글 내용
+		FROM
+			tb_ntt_mng tnm
+		LEFT OUTER JOIN tb_comn_cd tcc
+			ON (tcc.comn_grp_cd = 'PD_FAQ' AND tcc.use_yn = 'Y' AND tnm.ntt_clf_cd = tcc.comn_cd)
+		WHERE tnm.ntt_ty_cd = 'FAQ'
+		<include refid="searchList">
+			<property name="alias" value="tnm."/>
+		</include>
+		ORDER BY
+			ntt_sn DESC
+		OFFSET 0 LIMIT 5
+	</select>
+
+	<!-- 자료실 목록 조회 -->
+	<select id="selectArchiveList" parameterType="com.katri.web.search.model.SearchSelectReq" resultType="com.katri.web.ctnt.archive.model.ArchiveSelectRes">
+		/* searchMapper.selectArchiveList (자료실 목록 조회) */
+
+		SELECT
+			  tnm.ntt_sn 		-- 게시물 일련 번호
+			, tnm.ntt_sj_nm 	-- 게시물 제목명
+			, tnm.ntt_cn		-- 게시글 내용
+		FROM
+			tb_ntt_mng tnm
+		LEFT OUTER JOIN tb_comn_cd tcc
+			ON (tcc.comn_grp_cd = 'PTC' AND tcc.use_yn = 'Y' AND tnm.ntt_clf_cd = tcc.comn_cd)
+		WHERE tnm.ntt_ty_cd = 'ARCHIVE'
+		<include refid="searchList">
+			<property name="alias" value="tnm."/>
+		</include>
+		ORDER BY
+			ntt_sn DESC
+		OFFSET 0 LIMIT 5
+	</select>
+
+	<!-- 추천 키워드 조회 -->
+	<select id="selectRecKeywordList" parameterType="com.katri.web.search.model.SearchSelectReq" resultType="String">
+		/* searchMapper.selectRecKeywordList (추천 키워드 조회) */
+
+		SELECT
+			recKeyword.keywordNm
+		FROM (
+				SELECT
+					  userKeyword.keywordNm
+				FROM
+					(
+						SELECT
+							  pcismc.std_mlclf_nm AS keywordNm
+						FROM
+							tb_user_prdt_clf_chc_mng tupccm
+						LEFT OUTER JOIN pt_co_indst_std_mlclf_cd pcismc
+							ON ( tupccm.std_mlclf_cd = pcismc.std_mlclf_cd )
+						WHERE
+							tupccm.user_id = #{unifiedSearchUserId} -- 접속 아이디
+						ORDER BY RANDOM() LIMIT 4
+					) AS userKeyword
+				UNION ALL
+					SELECT
+						tsm.srwrd_nm AS mngKeywordNm
+					FROM
+						tb_srwrd_mng tsm
+					WHERE
+						tsm.use_yn = 'Y'
+			) AS recKeyword
+		ORDER BY RANDOM() LIMIT 5
+	</select>
+
+</mapper>

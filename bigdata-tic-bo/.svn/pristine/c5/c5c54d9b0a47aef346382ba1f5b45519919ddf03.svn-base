@@ -1,0 +1,1303 @@
+
+**** Error file opened at 20210805 110827 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Thu Aug 05 11:08:27,321<    >RfcGetException rc (21) message:      Invalid date                                                        
+<RfcGetException
+
+Error: [2] >Thu Aug 05 11:08:27,326<    RfcException raised by system [SQ1|qmoas03]:
+    message:      Invalid date                                                        
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+
+**** Error file opened at 20210805 152953 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Thu Aug 05 15:29:53,661<    >RfcGetException rc (21) message:      Screen output without connection to user.                           
+<RfcGetException
+
+Error: [2] >Thu Aug 05 15:29:53,665<    RfcException raised by system [SQ1|qmoas03]:
+    message:      Screen output without connection to user.                           
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Thu Aug 05 15:31:20,316<    >RfcGetException rc (21) message:      Screen output without connection to user.                           
+<RfcGetException
+
+Error: [1] >Thu Aug 05 15:31:20,316<    RfcException raised by system [SQ1|qmoas03]:
+    message:      Screen output without connection to user.                           
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Thu Aug 05 15:31:59,548<    >RfcGetException rc (21) message:      Screen output without connection to user.                           
+<RfcGetException
+
+Error: [1] >Thu Aug 05 15:31:59,551<    RfcException raised by system [SQ1|qmoas03]:
+    message:      Screen output without connection to user.                           
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Thu Aug 05 15:32:34,509<    >RfcGetException rc (21) message:      Screen output without connection to user.                           
+<RfcGetException
+
+Error: [1] >Thu Aug 05 15:32:34,509<    RfcException raised by system [SQ1|qmoas03]:
+    message:      Screen output without connection to user.                           
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Thu Aug 05 15:32:40,984<    >RfcGetException rc (21) message:      Screen output without connection to user.                           
+<RfcGetException
+
+Error: [1] >Thu Aug 05 15:32:40,984<    RfcException raised by system [SQ1|qmoas03]:
+    message:      Screen output without connection to user.                           
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Thu Aug 05 15:32:50,377<    >RfcGetException rc (21) message:      Screen output without connection to user.                           
+<RfcGetException
+
+Error: [1] >Thu Aug 05 15:32:50,377<    RfcException raised by system [SQ1|qmoas03]:
+    message:      Screen output without connection to user.                           
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Thu Aug 05 15:36:40,954<    >RfcGetException rc (21) message:      Screen output without connection to user.                           
+<RfcGetException
+
+Error: [1] >Thu Aug 05 15:36:40,955<    RfcException raised by system [SQ1|qmoas03]:
+    message:      Screen output without connection to user.                           
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Thu Aug 05 15:37:05,277<    >RfcGetException rc (21) message:      Screen output without connection to user.                           
+<RfcGetException
+
+Error: [1] >Thu Aug 05 15:37:05,278<    RfcException raised by system [SQ1|qmoas03]:
+    message:      Screen output without connection to user.                           
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+
+**** Error file opened at 20210809 152327 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Mon Aug 09 15:23:27,486<    >RfcGetException rc (7) message: Credit control area 1530 has not been defined
+<RfcGetException
+
+
+**** Error file opened at 20210909 111247 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Thu Sep 09 11:12:47,677<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [2] >Thu Sep 09 11:12:47,679<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+
+**** Error file opened at 20210910 112109 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Fri Sep 10 11:21:09,354<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Fri Sep 10 11:21:09,357<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Fri Sep 10 11:21:16,781<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Fri Sep 10 11:21:16,781<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Fri Sep 10 13:04:26,491<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Fri Sep 10 13:04:26,492<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Fri Sep 10 13:06:50,495<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Fri Sep 10 13:06:50,495<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+
+**** Error file opened at 20210923 091503 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Thu Sep 23 09:15:03,598<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Thu Sep 23 09:15:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+Error:  >Fri Sep 24 13:49:40,908<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Fri Sep 24 13:49:40 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     2
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+Error:  >Fri Sep 24 14:00:03,285<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Fri Sep 24 14:00:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     3
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210924 181503 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Fri Sep 24 18:15:03,515<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Fri Sep 24 18:15:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210924 183003 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Fri Sep 24 18:30:03,459<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Fri Sep 24 18:30:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210924 184503 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Fri Sep 24 18:45:03,482<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Fri Sep 24 18:45:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210924 190003 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Fri Sep 24 19:00:03,437<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Fri Sep 24 19:00:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210926 191503 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Sun Sep 26 19:15:03,850<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Sun Sep 26 19:15:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210926 200003 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Sun Sep 26 20:00:03,445<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Sun Sep 26 20:00:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210926 201503 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Sun Sep 26 20:15:03,451<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Sun Sep 26 20:15:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210926 203003 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Sun Sep 26 20:30:03,466<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Sun Sep 26 20:30:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210926 204503 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Sun Sep 26 20:45:03,466<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Sun Sep 26 20:45:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210926 211503 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Sun Sep 26 21:15:03,463<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Sun Sep 26 21:15:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210927 091754 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Mon Sep 27 09:17:54,974<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Mon Sep 27 09:17:54 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210927 103003 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Mon Sep 27 10:30:03,454<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Mon Sep 27 10:30:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210927 104503 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Mon Sep 27 10:45:03,468<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Mon Sep 27 10:45:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210927 164503 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Mon Sep 27 16:45:03,473<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Mon Sep 27 16:45:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210927 183003 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Mon Sep 27 18:30:03,453<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Mon Sep 27 18:30:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210927 231503 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Mon Sep 27 23:15:03,923<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Mon Sep 27 23:15:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210927 233003 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Mon Sep 27 23:30:03,461<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Mon Sep 27 23:30:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210928 104504 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Tue Sep 28 10:45:04,136<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Tue Sep 28 10:45:04 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210928 105843 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Tue Sep 28 10:58:43,493<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Tue Sep 28 10:58:43 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210928 111200 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Tue Sep 28 11:12:00,717<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Tue Sep 28 11:12:00 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+Error:  >Tue Sep 28 13:49:57,508<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Tue Sep 28 13:49:57 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+Error:  >Tue Sep 28 14:30:03,684<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Tue Sep 28 14:30:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     2
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210929 134503 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Wed Sep 29 13:45:03,783<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Wed Sep 29 13:45:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210929 135003 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Wed Sep 29 13:50:03,497<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Wed Sep 29 13:50:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210929 140003 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Wed Sep 29 14:00:03,450<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Wed Sep 29 14:00:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210930 081503 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Thu Sep 30 08:15:03,507<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Thu Sep 30 08:15:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210930 083003 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Thu Sep 30 08:30:03,437<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Thu Sep 30 08:30:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210930 100003 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Thu Sep 30 10:00:03,496<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Thu Sep 30 10:00:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210930 101412 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Thu Sep 30 10:14:12,193<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Thu Sep 30 10:14:12 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210930 111736 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Thu Sep 30 11:17:36,980<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Thu Sep 30 11:17:36 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210930 204503 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Thu Sep 30 20:45:03,616<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Thu Sep 30 20:45:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210930 204945 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Thu Sep 30 20:49:45,791<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Thu Sep 30 20:49:45 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20210930 205808 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Thu Sep 30 20:58:08,424<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Thu Sep 30 20:58:08 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20211001 000003 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Fri Oct 01 00:00:03,558<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Fri Oct 01 00:00:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20211001 140003 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Fri Oct 01 14:00:03,859<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Fri Oct 01 14:00:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20211001 174503 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Fri Oct 01 17:45:03,780<    RfcException:
+    message: Connect to message server on host 192.168.254.204 failed
+Connection parameters: TYPE=B DEST=qmoas03 MSHOST=192.168.254.204 MSSERV=3601 R3NAME=SQ1 GROUP=CI PCS=1
+
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-EQTF023 with Unicode
+ERROR       partner '192.168.254.204:3601' not reached
+TIME        Fri Oct 01 17:45:03 2021
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.254.204:3601
+SYSTEM CALL connect
+ERRNO       10061
+ERRNO TEXT  WSAECONNREFUSED: Connection refused
+COUNTER     1
+
+    return code: RFC_FAILURE (1)
+    error group: 102
+    key: RFC_ERROR_COMMUNICATION
+
+**** Error file opened at 20211005 102721 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Tue Oct 05 10:27:21,792<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Tue Oct 05 10:27:21,796<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Tue Oct 05 10:28:04,661<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Tue Oct 05 10:28:04,661<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Tue Oct 05 10:29:59,114<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Tue Oct 05 10:29:59,114<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Tue Oct 05 10:31:00,332<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Tue Oct 05 10:31:00,333<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Tue Oct 05 11:38:00,560<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Tue Oct 05 11:38:00,562<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+
+**** Error file opened at 20211005 185354 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Tue Oct 05 18:53:54,589<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Tue Oct 05 18:53:54,592<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Tue Oct 05 18:54:09,282<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Tue Oct 05 18:54:09,282<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+
+**** Error file opened at 20211006 131530 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Wed Oct 06 13:15:30,121<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Wed Oct 06 13:15:30,124<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Wed Oct 06 14:39:24,741<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Wed Oct 06 14:39:24,741<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Wed Oct 06 14:39:44,707<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Wed Oct 06 14:39:44,707<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Wed Oct 06 14:40:01,234<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Wed Oct 06 14:40:01,234<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Wed Oct 06 14:40:25,280<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Wed Oct 06 14:40:25,281<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Wed Oct 06 14:40:34,427<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Wed Oct 06 14:40:34,428<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Wed Oct 06 14:42:30,168<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Wed Oct 06 14:42:30,169<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+
+**** Error file opened at 20211006 170111 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Wed Oct 06 17:01:11,063<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Wed Oct 06 17:01:11,066<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Wed Oct 06 17:01:34,330<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Wed Oct 06 17:01:34,331<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+
+**** Error file opened at 20211118 134629 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Thu Nov 18 13:46:29,543<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Thu Nov 18 13:46:29,547<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Thu Nov 18 13:46:40,469<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Thu Nov 18 13:46:40,470<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Thu Nov 18 13:46:52,544<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Thu Nov 18 13:46:52,545<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Thu Nov 18 13:47:28,632<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Thu Nov 18 13:47:28,633<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Thu Nov 18 13:50:43,365<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Thu Nov 18 13:50:43,366<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Thu Nov 18 13:50:52,248<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Thu Nov 18 13:50:52,248<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Thu Nov 18 13:51:24,153<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [1] >Thu Nov 18 13:51:24,153<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+
+**** Error file opened at 20211122 175335 Korean Standard Time Rel. 3.0.14 (2015-12-16) [721.619]
+Error:  >Mon Nov 22 17:53:35,068<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [2] >Mon Nov 22 17:53:35,072<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Mon Nov 22 17:53:44,019<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [2] >Mon Nov 22 17:53:44,019<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Mon Nov 22 17:53:54,535<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [2] >Mon Nov 22 17:53:54,536<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Mon Nov 22 17:54:03,511<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [2] >Mon Nov 22 17:54:03,512<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Mon Nov 22 17:54:13,186<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [2] >Mon Nov 22 17:54:13,186<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Mon Nov 22 18:00:28,131<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [2] >Mon Nov 22 18:00:28,131<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE
+Error:  >Mon Nov 22 18:00:42,827<    >RfcGetException rc (21) message:      No list generated                                                   
+<RfcGetException
+
+Error: [2] >Mon Nov 22 18:00:42,827<    RfcException raised by system [SQ1|qmoas03]:
+    message:      No list generated                                                   
+    return code: RFC_SYS_EXCEPTION (3)
+    error group: 104
+    key: RFC_ERROR_SYSTEM_FAILURE

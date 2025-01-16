@@ -1,0 +1,842 @@
+package com.katri.web.platformSvc.myData.controller;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.context.MessageSource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+
+import com.katri.common.GlobalExceptionHandler.CustomMessageException;
+import com.katri.common.model.ResponseDto;
+import com.katri.common.util.CommonUtil;
+import com.katri.common.util.SessionUtil;
+import com.katri.web.comm.service.CommService;
+import com.katri.web.platformSvc.myData.model.MyDataStatSelectReq;
+import com.katri.web.platformSvc.myData.model.MyDataStatSelectRes;
+import com.katri.web.platformSvc.myData.service.MyDataStatService;
+
+import io.swagger.annotations.Api;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Controller
+@RequiredArgsConstructor
+@Api(tags = {"[플랫폼 서비스] > [나의 시험인증 현황] controller"})
+@Slf4j
+public class MyDataStatController {
+
+	/** 공통 Service */
+	private final CommService commService;
+
+	/** MyDataStat Service */
+	private final MyDataStatService myDataStatService;
+
+	/** 메시지 Component */
+	private final MessageSource messageSource;
+
+
+	/*****************************************************
+	 * [나의 시험인증 현황] -> [통계] -> 화면
+	 * @param myDataStatSelectReq
+	 * @return String
+	 *****************************************************/
+	@GetMapping("/platformSvc/myData/myDataStat/myDataStatInfo")
+	public String myDataStatSvcInfo(Model model, MyDataStatSelectReq myDataStatSelectReq) {
+		//[[0]].반환할 정보
+		List<MyDataStatSelectRes> instList 		= null;
+		MyDataStatSelectRes myDataStatSelectRes	= new MyDataStatSelectRes();
+		String brno								= "";
+
+		instList						= myDataStatService.getInstList();
+		myDataStatSelectRes				= myDataStatService.getDateData();
+
+		Integer entGrpSn = SessionUtil.getLoginEntGrpSn();
+
+		try {
+			brno							= myDataStatService.getMyDataStatBrno(entGrpSn);
+		} catch (CustomMessageException e) {
+			e.printStackTrace();
+		}
+
+		myDataStatSelectRes.setBrno(brno);
+
+		model.addAttribute("instList", instList);
+		model.addAttribute("dateData", myDataStatSelectRes);
+		model.addAttribute("myDataStatSelectReq", myDataStatSelectReq);
+
+		return "/platformSvc/myData/myDataStat/myDataStatInfo";
+	}
+
+	/*****************************************************
+	 * [나의 시험인증 현황] -> [통계] -> [~년 기준 의뢰 현황] -> 인증 데이터 조회
+	 * @param myDataStatSelectReq
+	 * @return List
+	 *****************************************************/
+	@GetMapping("/platformSvc/myData/myDataStat/getStatCertDataByYear")
+	public ResponseEntity<ResponseDto> chartJsStatDataByYear(@ModelAttribute MyDataStatSelectReq myDataStatSelectReq) throws Exception {
+		//[[0]]. 반환할 정보
+		List<MyDataStatSelectRes> statDataByYearList = null;
+		Integer resultCode	= HttpStatus.BAD_REQUEST.value();
+		String resultMsg	= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+
+		myDataStatSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());
+
+		//[[1]]. 조회
+		try {
+			statDataByYearList 	= myDataStatService.getChartJsStatDataByYear(myDataStatSelectReq);
+
+			resultCode			= HttpStatus.OK.value();
+			resultMsg			= messageSource.getMessage("result-message.messages.common.message.search", null, SessionUtil.getLocale()); //정상적으로 조회 하였습니다.
+		} catch (Exception e) {
+			throw e;
+		}
+
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(statDataByYearList)
+				.resultMessage(resultMsg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+
+	}
+
+	/*****************************************************
+	 * [나의 시험인증 현황] -> [통계] -> 년도별 -> 성적서 데이터 조회
+	 * @param myDataStatSelectReq
+	 * @return List
+	 *****************************************************/
+	@GetMapping("/platformSvc/myData/myDataStat/getStatRpRtDataByYear")
+	public ResponseEntity<ResponseDto> chartJsStatRprtDataByYear(@ModelAttribute MyDataStatSelectReq myDataStatSelectReq) throws Exception {
+		//[[0]]. 반환할 정보
+		List<MyDataStatSelectRes> statRprtDataByYearList	= null;
+		Integer resultCode									= HttpStatus.BAD_REQUEST.value();
+		String resultMsg									=  messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+
+		myDataStatSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());
+
+		//[[1]]. 조회
+		try {
+			statRprtDataByYearList							= myDataStatService.getChartJsStatRprtDataByYear(myDataStatSelectReq);
+
+			resultCode										= HttpStatus.OK.value();
+			resultMsg										= messageSource.getMessage("result-message.messages.common.message.search", null, SessionUtil.getLocale()); //정상적으로 조회 하였습니다.
+		} catch (Exception e) {
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(statRprtDataByYearList)
+				.resultMessage(resultMsg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+	/*****************************************************
+	 * [나의 시험인증 현황] -> [통계] -> 년도별 -> 시험항목 데이터 조회
+	 * @param myDataStatSelectReq
+	 * @return List
+	 *****************************************************/
+	@GetMapping("/platformSvc/myData/myDataStat/getStatTestDataByYear")
+	public ResponseEntity<ResponseDto> chartJsStatTestDataByYear(@ModelAttribute MyDataStatSelectReq myDataStatSelectReq) throws Exception {
+		//[[0]]. 반환할 정보
+		List<MyDataStatSelectRes> statTestDataByYearList	= null;
+		Integer resultCode									= HttpStatus.BAD_REQUEST.value();
+		String resultMsg									=  messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+
+		myDataStatSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());
+
+		//[[1]]. 조회
+		try {
+			statTestDataByYearList							= myDataStatService.getChartJsStatTestDataByYear(myDataStatSelectReq);
+
+			resultCode										= HttpStatus.OK.value();
+			resultMsg										= messageSource.getMessage("result-message.messages.common.message.search", null, SessionUtil.getLocale()); //정상적으로 조회 하였습니다.
+		} catch (Exception e) {
+			throw e;
+		}
+
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(statTestDataByYearList)
+				.resultMessage(resultMsg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+
+	}
+
+
+	/*****************************************************
+	 * [나의 시험인증 현황] -> [통계] -> ~월 기준 의뢰 현황 -> 인증 데이터 조회
+	 * @param myDataStatSelectReq
+	 * @return List
+	 *****************************************************/
+	@GetMapping("/platformSvc/myData/myDataStat/getStatCertDataByMonth")
+	public ResponseEntity<ResponseDto> chartJsStatCertDataByMonth(@ModelAttribute MyDataStatSelectReq myDataStatSelectReq) throws Exception {
+		//[[0]]. 반환할 정보
+		List<MyDataStatSelectRes> statCertDataByMonthList	= null;
+		Integer resultCode									= HttpStatus.BAD_REQUEST.value();
+		String resultMsg									= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+
+		myDataStatSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());
+
+		//[[1]]. 조회
+		try {
+			statCertDataByMonthList							= myDataStatService.getChartJsStatCertDataByMonth(myDataStatSelectReq);
+
+			resultCode										= HttpStatus.OK.value();
+			resultMsg										= messageSource.getMessage("result-message.messages.common.message.search", null, SessionUtil.getLocale()); //정상적으로 조회 하였습니다.
+		} catch (Exception e) {
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(statCertDataByMonthList)
+				.resultMessage(resultMsg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+
+	}
+
+	/*****************************************************
+	 * [나의 시험인증 현황] -> [통계] -> 월별 -> 성적서 데이터 조회
+	 * @param myDataStatSelectReq
+	 * @return List
+	 *****************************************************/
+	@GetMapping("/platformSvc/myData/myDataStat/getStatRprtDataByMonth")
+	public ResponseEntity<ResponseDto> chartJsStatRprtDataByMonth(@ModelAttribute MyDataStatSelectReq myDataStatSelectReq) throws Exception {
+		//[[0]]. 반환할 정보
+		List<MyDataStatSelectRes> statRprtDataByMonthList	= null;
+		Integer resultCode									= HttpStatus.BAD_REQUEST.value();
+		String resultMsg									= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+
+		myDataStatSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());
+
+		//[[1]]. 조회
+		try {
+			statRprtDataByMonthList								= myDataStatService.getChartJsStatrprtDataByMonth(myDataStatSelectReq);
+
+			resultCode											= HttpStatus.OK.value();
+			resultMsg											= messageSource.getMessage("result-message.messages.common.message.search", null, SessionUtil.getLocale()); //정상적으로 조회 하였습니다.
+		} catch (Exception e) {
+			throw e;
+		}
+
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(statRprtDataByMonthList)
+				.resultMessage(resultMsg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+	/*****************************************************
+	 * [나의 시험인증 현황] -> [통계] -> 월별 -> 시험항목 데이터 조회
+	 * @param myDataStatSelectReq
+	 * @return List
+	 *****************************************************/
+	@GetMapping("/platformSvc/myData/myDataStat/getStatTestDataByMonth")
+	public ResponseEntity<ResponseDto> chartJsStatTestDataByMonth(@ModelAttribute MyDataStatSelectReq myDataStatSelectReq) throws Exception {
+		//[[0]]. 반환할 정보
+		List<MyDataStatSelectRes> statTestDataByMonthList	= null;
+		Integer resultCode									= HttpStatus.BAD_REQUEST.value();
+		String resultMsg									= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+
+		myDataStatSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());
+
+		//[[1]]. 조회
+		try {
+			statTestDataByMonthList								= myDataStatService.getChartJsTestDataByMonth(myDataStatSelectReq);
+
+			resultCode											= HttpStatus.OK.value();
+			resultMsg											= messageSource.getMessage("result-message.messages.common.message.search", null, SessionUtil.getLocale()); //정상적으로 조회 하였습니다.
+		} catch (Exception e) {
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(statTestDataByMonthList)
+				.resultMessage(resultMsg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+	/*****************************************************
+	 * [나의 시험인증 현황] -> [통계] -> [월별 내 의뢰 추이]
+	 * @param myDataStatSelectReq
+	 * @return List
+	 *****************************************************/
+	@GetMapping("/platformSvc/myData/myDataStat/getStatReqDataByMonth")
+	public ResponseEntity<ResponseDto> charJsStatReqDataByMonth(@ModelAttribute MyDataStatSelectReq myDataStatSelectReq) throws Exception {
+		//[[0]]. 반환할 정보
+		MyDataStatSelectRes myDataStatSelectRes				= new MyDataStatSelectRes();
+		Integer resultCode									= HttpStatus.BAD_REQUEST.value();
+		String resultMsg									= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+
+		myDataStatSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());
+
+		//[[1]]. 조회
+		try {
+			myDataStatSelectRes					= myDataStatService.getChartJsStatReqDataByMonth(myDataStatSelectReq);
+
+			resultCode										= HttpStatus.OK.value();
+			resultMsg										= messageSource.getMessage("result-message.messages.common.message.search", null, SessionUtil.getLocale()); //정상적으로 조회 하였습니다.
+		} catch (Exception e) {
+			throw e;
+		}
+
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(myDataStatSelectRes)
+				.resultMessage(resultMsg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK
+				);
+	}
+
+	/*****************************************************
+	 * [나의 시험인증 현황] -> [인증] -> [~년 인증 전체 현황] -> [월별 인증 추이(건수)]
+	 * @param myDataStatSelectReq
+	 * @return List
+	 *****************************************************/
+	@PostMapping("/platformSvc/myData/myDataStatCert/getChartJsCertCountByMonthData")
+	public ResponseEntity<ResponseDto> chartJsStatCertCountByMonth(@ModelAttribute MyDataStatSelectReq myDataStatSelectReq) throws Exception {
+		//[[0]]. 반환할 정보
+		List<MyDataStatSelectRes> statCertCountbyMonthList	= null;
+		Integer resultCode									= HttpStatus.BAD_REQUEST.value();
+		String resultMsg									= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+
+		myDataStatSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());
+
+		//[[1]]. 조회
+		try {
+			statCertCountbyMonthList						= myDataStatService.getChartJsCertCountByMonthData(myDataStatSelectReq);
+
+			resultCode										= HttpStatus.OK.value();
+			resultMsg										= messageSource.getMessage("result-message.messages.common.message.search", null, SessionUtil.getLocale()); //정상적으로 조회 하였습니다.
+		} catch (Exception e) {
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(statCertCountbyMonthList)
+				.resultMessage(resultMsg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+
+	/*****************************************************
+	 * [나의 시험인증 현황] -> [인증] 화면
+	 * @return String
+	 *****************************************************/
+	@GetMapping("/platformSvc/myData/myDataStat/myDataCertInfo")
+	public String myDataStatCertInfo(Model model, MyDataStatSelectReq myDataStatSelectReq) {
+		//[[0]].반환할 정보
+		MyDataStatSelectRes myDataStatSelectRes = new MyDataStatSelectRes();
+		List<MyDataStatSelectRes> instList 		= null;
+		String brno								= "";
+
+		//[[1]].조회
+		/* 날짜 정보 조회 */
+		myDataStatSelectRes				= myDataStatService.getDateData();
+		/* 기관 정보 조회 */
+		instList						= myDataStatService.getInstList();
+
+		Integer entGrpSn = SessionUtil.getLoginEntGrpSn();
+
+		try {
+			brno							= myDataStatService.getMyDataStatBrno(entGrpSn);
+		} catch (CustomMessageException e) {
+			e.printStackTrace();
+		}
+
+		myDataStatSelectRes.setBrno(brno);
+
+		model.addAttribute("myDataStatSelectReq", myDataStatSelectReq);
+		model.addAttribute("myDataStatSelectRes", myDataStatSelectRes);
+		model.addAttribute("instList", instList);
+
+		return "/platformSvc/myData/myDataStat/myDataStatCertInfo";
+	}
+
+
+	/*****************************************************
+	 * [나의 시험인증 현황] -> [인증] -> [~년 인증 전체 현황] -> [전체 인증 건수]
+	 * @return String
+	 *****************************************************/
+	@PostMapping("/platformSvc/myData/myDataStatCert/getChartJsCertCountData")
+	public ResponseEntity<ResponseDto> chartJsCertCountData(@ModelAttribute MyDataStatSelectReq myDataStatSelectReq) throws Exception {
+		//[[0]]. 반환할 정보
+		MyDataStatSelectRes myDataStatSelectRes	= new MyDataStatSelectRes();
+		Integer resultCode						= HttpStatus.BAD_REQUEST.value();
+		String resultMsg						= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		String brno								= "";
+
+		myDataStatSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());
+
+		//[[1]]. 조회
+		try {
+			myDataStatSelectRes						= myDataStatService.getChartJsCertCountData(myDataStatSelectReq);
+
+			resultCode										= HttpStatus.OK.value();
+			resultMsg										= messageSource.getMessage("result-message.messages.common.message.search", null, SessionUtil.getLocale()); //정상적으로 조회 하였습니다.
+		} catch (Exception e) {
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(myDataStatSelectRes)
+				.resultMessage(resultMsg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+
+	/* [나의 시험인증 현황] -> [인증] -> [~년 인증 현황] -> [법정기준 인증 비율] */
+	@PostMapping("/platformSvc/myData/myDataStatCert/getChartJsCertRateData")
+	public ResponseEntity<ResponseDto> chartJsCertRateData(@ModelAttribute MyDataStatSelectReq myDataStatSelectReq) throws Exception {
+		//[[0]].반환할 정보
+		List<MyDataStatSelectRes> statCertRateList		= null;
+		Integer resultCode								= HttpStatus.BAD_REQUEST.value();
+		String resultMsg								= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+
+		myDataStatSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());
+
+		//[[1]].조회
+		try {
+			statCertRateList							= myDataStatService.getChartJsCertRateData(myDataStatSelectReq);
+
+			resultCode									= HttpStatus.OK.value();
+			resultMsg									= messageSource.getMessage("result-message.messages.common.message.search", null, SessionUtil.getLocale()); //정상적으로 조회 하였습니다.
+		} catch (Exception e) {
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(statCertRateList)
+				.resultMessage(resultMsg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+	/*****************************************************
+	 * [나의 시험인증 현황] -> [인증] -> [~년 인증 현황] -> [월별 법정기준 인증 추이(건수) ]
+	 * @return String
+	 *****************************************************/
+	@PostMapping("/platformSvc/myData/myDataStatCert/getChartJsCertProgressCount")
+	public ResponseEntity<ResponseDto> chartJsCertProgressCountData(@ModelAttribute MyDataStatSelectReq myDataStatSelectReq) throws Exception {
+		//[[0]]. 반환할 정보
+	//	List<MyDataStatSelectRes> progressList	= null;
+		MyDataStatSelectRes myDataStatSelectRes	= new MyDataStatSelectRes();
+		Integer resultCode						= HttpStatus.BAD_REQUEST.value();
+		String resultMsg						= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+
+		myDataStatSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());
+
+		try {
+			myDataStatSelectRes						= myDataStatService.getChartJsCertProgressCount(myDataStatSelectReq);
+
+			resultCode									= HttpStatus.OK.value();
+			resultMsg									= messageSource.getMessage("result-message.messages.common.message.search", null, SessionUtil.getLocale()); //정상적으로 조회 하였습니다.
+		} catch (Exception e) {
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(myDataStatSelectRes)
+				.resultMessage(resultMsg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+
+
+	}
+
+	/*****************************************************
+	 * [나의 시험인증 현황] -> [인증] -> [~년 품목별 인증 현황] -> [품목별 인증 비율]
+	 * @return String
+	 *****************************************************/
+	@PostMapping("/platformSvc/myData/myDataStatCert/getChartJsCertRateByItem")
+	public ResponseEntity<ResponseDto> chartJsCertRateByItemData(@ModelAttribute MyDataStatSelectReq myDataStatSelectReq) throws Exception {
+		//[[0]]. 반환할 정보
+		List<MyDataStatSelectRes> chartJsRateByItemList		= null;
+		List<MyDataStatSelectRes> chartJsTop3ByItemList		= null;
+		MyDataStatSelectRes	myDataStatSelectRes				= new MyDataStatSelectRes();
+		Integer resultCode									= HttpStatus.BAD_REQUEST.value();
+		String resultMsg									= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		MyDataStatSelectReq myDataSelectReq					= new MyDataStatSelectReq();
+
+		myDataStatSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());
+
+		//[[1]]. 조회
+		try {
+			//[[1-0]]. 품목별 인증 비율 조회 서비스 호출
+			chartJsRateByItemList							= myDataStatService.getChartJsCertRateByItem(myDataStatSelectReq);
+
+			/* chartJsRateByItemList의 상위 3개 품목코드 뽑아내기 */
+			int index = 0;
+			List<String> tempPdctgCdList = new ArrayList<String>();
+			for(MyDataStatSelectRes  chartJsRateByItem: chartJsRateByItemList) {
+
+				if(index >= 3) {
+					break;
+				}
+
+				String temp = chartJsRateByItem.getPdctgCd();
+				tempPdctgCdList.add(temp);
+
+				index ++;
+			}
+
+			//[[1-2]]. 월별 TOP3 품목별 인증 추이(건수) 조회 서비스 호출
+			if(tempPdctgCdList != null && tempPdctgCdList.size() != 0) {
+				myDataStatSelectReq.setPdctgCdList(tempPdctgCdList);
+
+
+				myDataStatSelectRes							= myDataStatService.getChartJsTop3ProgressByItem(myDataStatSelectReq);
+				myDataStatSelectRes.setChartJsRateByItemList(chartJsRateByItemList);
+			}
+
+			resultCode									= HttpStatus.OK.value();
+			resultMsg									= messageSource.getMessage("result-message.messages.common.message.search", null, SessionUtil.getLocale()); //정상적으로 조회 하였습니다.
+		} catch (Exception e) {
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(myDataStatSelectRes)
+				.resultMessage(resultMsg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+
+
+
+
+
+
+
+
+
+	/* ------------------------------------------- 성적서 관련 ------------------------------------------- */
+	/* ------------------------------------------- 성적서 관련 ------------------------------------------- */
+	/* ------------------------------------------- 성적서 관련 ------------------------------------------- */
+	/* ------------------------------------------- 성적서 관련 ------------------------------------------- */
+	/* ------------------------------------------- 성적서 관련 ------------------------------------------- */
+	/* ------------------------------------------- 성적서 관련 ------------------------------------------- */
+
+	/*****************************************************
+	 * [나의 시험인증 현황] - [탭] 성적서 페이지 이동
+	 * @param model
+	 * @param myDataStatSelectReq
+	 * @return
+	*****************************************************/
+	@GetMapping("/platformSvc/myData/myDataStat/myDataRprtInfo")
+	public String myDataStatRprtInfo(HttpServletResponse response, Model model, MyDataStatSelectReq myDataStatSelectReq) throws Exception {
+
+		// [0].반환할 정보
+		MyDataStatSelectRes 		myDataStatSelectRes = new MyDataStatSelectRes();
+		List<MyDataStatSelectRes> 	instList 			= null;
+
+		// [1]. 기본 정보 조회
+		myDataStatSelectRes	= myDataStatService.getDateData();
+		instList			= myDataStatService.getInstList();
+
+		Integer entGrpSn = SessionUtil.getLoginEntGrpSn();
+
+		try {
+
+			// [2]. 현재 로그인한 기업 계정의 사업자 번호 조회
+			String strBrno	= myDataStatService.getMyDataStatBrno(entGrpSn);
+
+			myDataStatSelectRes.setBrno(strBrno);
+			myDataStatSelectRes.setEntGrpSn(entGrpSn);
+
+			model.addAttribute("myDataStatSelectReq", myDataStatSelectReq);
+			model.addAttribute("myDataStatSelectRes", myDataStatSelectRes);
+			model.addAttribute("instList", instList);
+
+		} catch (CustomMessageException e) {
+			String msg = commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+
+			// ALERT창띄우면서 back
+			CommonUtil.alertMsgBack(response, msg);
+
+		} catch(Exception e) {
+			throw e;
+		}
+
+		return "/platformSvc/myData/myDataStat/myDataStatRprtInfo";
+
+	}
+
+	/*****************************************************
+	 * [나의 시험인증 현황] - [성적서] -> [판정결과별 성적서 비율(건수)] 차트 데이터 조회
+	 * @param myDataStatSelectReq
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@GetMapping("/platformSvc/myData/myDataStat/getMyDataRprtPassRateData")
+	public ResponseEntity<ResponseDto> getMyDataRprtPassRateData(@ModelAttribute MyDataStatSelectReq myDataStatSelectReq) throws Exception {
+
+		// [0]. 반환할 정보
+		Integer 			resultCode			= HttpStatus.BAD_REQUEST.value();
+		String 				resultMsg			= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		MyDataStatSelectRes myDataStatSelectRes	= new MyDataStatSelectRes();
+
+		try {
+
+			// [1]. [성적서] -> [판정결과별 성적서 비율(건수)] 차트 데이터 조회
+			myDataStatSelectRes = myDataStatService.getMyDataRprtPassRateData( myDataStatSelectReq );
+
+			if( myDataStatSelectRes != null ) {
+				resultCode = HttpStatus.OK.value();
+			} else {
+				resultCode = HttpStatus.BAD_REQUEST.value();
+			}
+
+		} catch (CustomMessageException e) {
+
+			resultCode									= HttpStatus.BAD_REQUEST.value();
+			resultMsg									= commService.rtnMessageDfError(e.getMessage());
+
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + resultMsg);
+
+		} catch (Exception e) {
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(myDataStatSelectRes)
+				.resultMessage(resultMsg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+	/*****************************************************
+	 * [나의 시험인증 현황] - [성적서] > [월별 판정결과별 성적서 추이(건수)] 차트 데이터 조회
+	 * @param myDataStatSelectReq
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@GetMapping("/platformSvc/myData/myDataStat/getMyDataRprtMonthPassCnt")
+	public ResponseEntity<ResponseDto> getMyDataRprtMonthPassCnt(@ModelAttribute MyDataStatSelectReq myDataStatSelectReq) throws Exception {
+
+		// [0]. 반환할 정보
+		Integer 			resultCode			= HttpStatus.BAD_REQUEST.value();
+		String 				resultMsg			= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		MyDataStatSelectRes myDataStatSelectRes	= new MyDataStatSelectRes();
+
+		try {
+
+			// [1]. [성적서] > [월별 판정결과별 성적서 추이(건수)] 차트 데이터 조회
+			myDataStatSelectRes = myDataStatService.getMyDataRprtMonthPassCnt( myDataStatSelectReq );
+
+			if( myDataStatSelectRes != null ) {
+				resultCode = HttpStatus.OK.value();
+			} else {
+				resultCode = HttpStatus.BAD_REQUEST.value();
+			}
+
+		} catch (CustomMessageException e) {
+
+			resultCode									= HttpStatus.BAD_REQUEST.value();
+			resultMsg									= commService.rtnMessageDfError(e.getMessage());
+
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + resultMsg);
+
+		} catch (Exception e) {
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(myDataStatSelectRes)
+				.resultMessage(resultMsg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+	/*****************************************************
+	 * [나의 시험인증 현황] - [성적서] > [TOP10 품목별 성적서 비율(건수)] 차트 데이터 조회 + [월별 TOP10 품목별 성적서 추이(건수)] 차트 데이터 조회
+	 * @param myDataStatSelectReq
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@GetMapping("/platformSvc/myData/myDataStat/getMyDataRprtTopPdctg")
+	public ResponseEntity<ResponseDto> getMyDataRprtTopPdctg(@ModelAttribute MyDataStatSelectReq myDataStatSelectReq) throws Exception {
+
+		// [0]. 반환할 정보
+		Integer 			resultCode			= HttpStatus.BAD_REQUEST.value();
+		String 				resultMsg			= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		MyDataStatSelectRes myDataStatSelectRes	= new MyDataStatSelectRes();
+
+		try {
+
+			// [1]. [성적서] > [TOP10 품목별 성적서 비율(건수)] 차트 데이터 조회 + [월별 TOP10 품목별 성적서 추이(건수)] 차트 데이터 조회
+			myDataStatSelectRes = myDataStatService.getMyDataRprtTopPdctg( myDataStatSelectReq );
+
+			if( myDataStatSelectRes != null ) {
+				resultCode = HttpStatus.OK.value();
+			} else {
+				resultCode = HttpStatus.BAD_REQUEST.value();
+			}
+
+		} catch (CustomMessageException e) {
+
+			resultCode									= HttpStatus.BAD_REQUEST.value();
+			resultMsg									= commService.rtnMessageDfError(e.getMessage());
+
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + resultMsg);
+
+		} catch (Exception e) {
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(myDataStatSelectRes)
+				.resultMessage(resultMsg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+
+	/*****************************************************
+	 * [나의 시험인증 현황] - [성적서] > [TOP10 시험항목별 비율(건수)] 차트 데이터 조회 + [월별 TOP10 시험항목별 추이(건수)] 차트 데이터 조회
+	 * @param myDataStatSelectReq
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@GetMapping("/platformSvc/myData/myDataStat/getMyDataRprtTopItem")
+	public ResponseEntity<ResponseDto> getMyDataRprtTopItem(@ModelAttribute MyDataStatSelectReq myDataStatSelectReq) throws Exception {
+
+		// [0]. 반환할 정보
+		Integer 			resultCode			= HttpStatus.BAD_REQUEST.value();
+		String 				resultMsg			= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		MyDataStatSelectRes myDataStatSelectRes	= new MyDataStatSelectRes();
+
+		try {
+
+			// [1]. [성적서] > [TOP10 시험항목별 비율(건수)] 차트 데이터 조회 + [월별 TOP10 시험항목별 추이(건수)] 차트 데이터 조회
+			myDataStatSelectRes = myDataStatService.getMyDataRprtTopItem( myDataStatSelectReq );
+
+			if( myDataStatSelectRes != null ) {
+				resultCode = HttpStatus.OK.value();
+			} else {
+				resultCode = HttpStatus.BAD_REQUEST.value();
+			}
+
+		} catch (CustomMessageException e) {
+
+			resultCode									= HttpStatus.BAD_REQUEST.value();
+			resultMsg									= commService.rtnMessageDfError(e.getMessage());
+
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + resultMsg);
+
+		} catch (Exception e) {
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(myDataStatSelectRes)
+				.resultMessage(resultMsg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+
+	/*****************************************************
+	 * [나의 시험인증 현황] - [성적서] > [TOP10 기업별 성적서 비율(건수)] 차트 데이터 조회 + [월별 TOP10기업 성적서 부적합 추이(건수)] 차트 데이터 조회
+	 * @param myDataStatSelectReq
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@GetMapping("/platformSvc/myData/myDataStat/getMyDataRprtTopEnt")
+	public ResponseEntity<ResponseDto> getMyDataRprtTopEnt(@ModelAttribute MyDataStatSelectReq myDataStatSelectReq) throws Exception {
+
+		// [0]. 반환할 정보
+		Integer 			resultCode			= HttpStatus.BAD_REQUEST.value();
+		String 				resultMsg			= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		MyDataStatSelectRes myDataStatSelectRes	= new MyDataStatSelectRes();
+
+		try {
+
+			// [1].[나의 시험인증 현황] - [성적서] > [TOP10기업별 성적서 합격률] 차트 데이터 조회 + [월별 TOP10기업 성적서 부적합 추이(건수)] 차트 데이터 조회
+			myDataStatSelectRes = myDataStatService.getMyDataRprtTopEnt( myDataStatSelectReq );
+
+			if( myDataStatSelectRes != null ) {
+				resultCode = HttpStatus.OK.value();
+			} else {
+				resultCode = HttpStatus.BAD_REQUEST.value();
+			}
+
+		} catch (CustomMessageException e) {
+
+			resultCode									= HttpStatus.BAD_REQUEST.value();
+			resultMsg									= commService.rtnMessageDfError(e.getMessage());
+
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + resultMsg);
+
+		} catch (Exception e) {
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(myDataStatSelectRes)
+				.resultMessage(resultMsg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+
+}

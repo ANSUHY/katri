@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.auth.mapper.DrmncyMapper">
+
+
+<update id="updateDrmncy">
+	/* DrmncyMapper.updateDrmncy ( 휴면 계정 해지 )*/
+	UPDATE
+		TB_USER_BAS
+	SET
+		user_stt_cd = #{ userSttCd }
+	  , last_drmncy_rmv_dt = now()
+	WHERE user_id LIKE #{ userId }
+	AND	  user_link_info_val LIKE #{ pCi }
+</update>
+
+<update id="updateDrmncyWithMail" parameterType="com.katri.web.auth.model.DrmncySaveReq">
+	/* DrmncyMapper.updateDrmncyWithMail ( 휴면 계정 해지 (이메일 인증 회원) )*/
+	UPDATE
+		TB_USER_BAS
+	SET
+		user_stt_cd = #{ userSttCd }
+	  , last_drmncy_rmv_dt = now()
+	WHERE user_id LIKE #{ userId }
+</update>
+
+
+<select id="selectUserMail" resultType="string" parameterType="string">
+	/* DrmncyMapper.selectUserMail ( 유저 메일 조회 )*/
+SELECT
+		encpt_eml_addr_val
+	FROM tb_user_bas
+	WHERE user_id = #{userId}
+</select>
+
+<insert id="insertCertNoSndngHist" parameterType="com.katri.web.auth.model.DrmncySaveReq">
+	/* DrmncyMapper.insertCertNoSndngHist ( 휴면 회원 이메일 인증 > 인증 번호 DB 저장) */
+
+	INSERT INTO
+		tb_cert_no_sndng_hist
+		(
+			rcvr_eml_addr
+		  , cert_no
+		  , crt_dt
+		)
+	 VALUES
+	 	(
+	 		#{rcvrEmlAddr}
+	 	  , #{certNo}
+	 	  , now()
+	 	)
+
+</insert>
+
+<select id="selectCertNoOfEmlAddr" parameterType="com.katri.web.auth.model.DrmncySelectReq" resultType="String">
+	/* drmncyMapper.selectCertNoOfEmlAddr( 가장 최근의 이메일 인증 번호 조회 ) */
+	SELECT
+		tcnsh.cert_no
+	FROM
+		tb_cert_no_sndng_hist tcnsh
+	WHERE
+		tcnsh.rcvr_eml_addr = #{emlAddrVal}
+	ORDER BY
+		tcnsh.crt_dt desc
+	OFFSET 0 LIMIT 1
+</select>
+
+</mapper>

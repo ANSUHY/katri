@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: bigdata-tic-bo
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh

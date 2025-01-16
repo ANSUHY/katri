@@ -1,0 +1,47 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+
+	<script>
+
+		$(document).ready(function() {
+
+			let nResultCode = ${responseNice.iReturn};		// 결과 코드
+			let strAuthType = "${responseNice.AUTH_TYPE}";	// 인증 수단
+
+			if( nResultCode === 0 ) {
+
+				// [세션값 불일치 오류]
+				if( strAuthType === "" ) {
+					alert("${responseNice.sMessage}");
+				} else {
+					// [성공]
+					alert("${responseNice.sMessage}");
+
+					// [부모창 callback 함수 호출]
+					opener.fn_nicePassSuccessCallBack(
+							  "${responseNice.REQ_SEQ}"		// CP요청번호
+							, "${responseNice.RES_SEQ}"		// 처리결과 고유번호
+							, "${responseNice.AUTH_TYPE}"	// 인증 수단
+							, "${responseNice.NAME}"		// 이름
+							, "${responseNice.UTF8_NAME}"	// UTF-8 이름
+							, "${responseNice.BIRTHDATE}"	// 생년월일
+							, "${responseNice.GENDER}"		// 성별 코드 (0:여성, 1:남성)
+							, "${responseNice.NATIONALINFO}"// 내/외국인 코드 (0:내국인, 1:외국인)
+							, "${responseNice.DI}"			// 중복가입 확인값 (DI값)
+							, "${responseNice.CI}"			// 연계정보 확인값 (CI값)
+							, "${responseNice.MOBILE_NO}"	// 휴대폰번호
+							, "${responseNice.MOBILE_CO}"	// 통신사정보
+							, nResultCode					// 결과코드 ( 0: 성공, 그 외: 실패 )
+						);
+				}
+
+			} else {
+				// [실패]
+				alert("${responseNice.sMessage}");
+			}
+
+			self.close();
+
+		});
+
+	</script>

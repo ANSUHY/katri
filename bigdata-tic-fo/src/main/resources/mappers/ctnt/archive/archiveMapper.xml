@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.ctnt.archive.mapper.ArchiveMapper">
+
+	<!-- 검색 -->
+	<sql id="searchArchiveList">
+		LEFT OUTER JOIN tb_file_mng tfm
+				ON (CAST(tnm.ntt_sn AS VARCHAR) = tfm.ref_div_val AND tfm.del_yn = 'N')
+		WHERE
+			${alias}ntt_ty_cd = #{nttTyCd} AND ${alias}del_yn = 'N'
+		<if test='searchKeyword != null and searchKeyword != ""'>
+			/* 검색 (제목 + 내용) */
+			AND (${alias}ntt_sj_nm LIKE '%' || #{searchKeyword} || '%' OR ${alias}ntt_cn LIKE '%' || #{searchKeyword} || '%')
+		</if>
+	</sql>
+
+	<!-- 자료실 목록 조회 -->
+	<select id="selectArchiveList" parameterType="com.katri.web.ctnt.archive.model.ArchiveSelectReq" resultType="com.katri.web.ctnt.archive.model.ArchiveSelectRes">
+		/* archiveMapper.selectArchiveCnt (자료실 목록 조회) */
+
+		SELECT
+			ROW_NUMBER() OVER(ORDER BY tnm.ntt_sn ASC) AS rownum
+			, tnm.ntt_sn 									-- 게시물 일련 번호
+			, COUNT(tfm.ref_div_val) AS fileDtoCnt			-- 업로드 파일 개수
+			, tnm.ntt_sj_nm 								-- 게시물 제목명
+			, TO_CHAR(tnm.crt_dt, 'YYYY-MM-DD') AS crtDt	-- 생성 일시
+		FROM
+			tb_ntt_mng tnm
+		LEFT OUTER JOIN tb_comn_cd tcc
+			ON (tcc.comn_grp_cd = 'PTC' AND tcc.use_yn = 'Y' AND tnm.ntt_clf_cd = tcc.comn_cd)
+		<include refid="searchArchiveList">
+			<property name="alias" value="tnm."/>
+		</include>
+		GROUP BY
+			tnm.ntt_sn
+		ORDER BY
+			rownum DESC
+		OFFSET #{startRow} LIMIT #{endRow}
+	</select>
+
+	<!-- 자료실 목록 개수 조회 -->
+	<select id="selectArchiveCnt" parameterType="com.katri.web.ctnt.archive.model.ArchiveSelectReq" resultType="Integer">
+		/* archiveMapper.selectArchiveList (자료실 목록 개수 조회) */
+
+		SELECT
+			COUNT(DISTINCT tnm.ntt_sn)
+		FROM
+			tb_ntt_mng tnm
+		<include refid="searchArchiveList">
+			<property name="alias" value="tnm."/>
+		</include>
+	</select>
+
+	<!-- 자료실 조회 -->
+	<select id="selectArchiveDetail" parameterType="com.katri.web.ctnt.archive.model.ArchiveSelectReq" resultType="com.katri.web.ctnt.archive.model.ArchiveSelectRes">
+		/* archiveMapper.selectArchiveDetail (자료실 조회) */
+
+		SELECT
+			  tnm.ntt_sn									-- 게시글 일련 번호
+			, tnm.ntt_sj_nm									-- 게시글 제목
+			, tnm.ntt_cn									-- 게시글 내용
+			, TO_CHAR(tnm.crt_dt, 'YYYY-MM-DD') AS crtDt	-- 게시글 작성일
+			, tmb.mngr_nm									-- 작성자 이름
+		FROM
+			tb_ntt_mng tnm
+		LEFT OUTER JOIN tb_comn_cd tcc
+			ON (tnm.ntt_clf_cd = tcc.comn_cd)
+		LEFT OUTER JOIN tb_mngr_bas tmb
+			ON (tnm.crtr_id = tmb.mngr_id)
+		WHERE
+			tnm.ntt_sn = #{nttSn} AND tnm.ntt_ty_cd = #{nttTyCd}
+	</select>
+
+	<!-- 자료실 조회수 증가 -->
+	<update id="hitArchive" parameterType="com.katri.web.ctnt.archive.model.ArchiveSaveReq">
+		/* archiveMapper.hitArchive (자료실 조회수 증가) */
+
+		UPDATE
+			tb_ntt_mng
+		SET
+			ntt_inq_cnt = COALESCE(ntt_inq_cnt, 0) + 1
+		WHERE
+			ntt_sn = #{nttSn} AND ntt_ty_cd = #{nttTyCd}
+	</update>
+
+</mapper>

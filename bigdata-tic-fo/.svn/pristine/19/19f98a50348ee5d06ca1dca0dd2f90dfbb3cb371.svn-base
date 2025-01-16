@@ -1,0 +1,1035 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.platformSvc.myData.mapper.MyDataMapper">
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] > [서비스 안내] 각 페이지에 맞는 데이터 조회-->
+	<select id="selectIntroSvcData" parameterType="com.katri.web.platformSvc.myData.model.MyDataSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataSelectRes">
+		/* MyDataMapper.selectIntroSvcData ([플랫폼 서비스] > [내 손안의 시험인증] > [서비스 안내] 각 페이지에 맞는 데이터 조회) */
+
+		SELECT
+			tmcm.menu_cptn_sn
+			, tmcm.menu_cptn_cd
+			, tmcm.menu_cptn_nm
+			, tmcm.menu_cptn_cn
+		FROM tb_menu_cptn_mng tmcm
+		WHERE tmcm.use_yn = 'Y'
+			AND tmcm.menu_cptn_cd = #{searchMenuCptnCd}
+		ORDER BY tmcm.crt_dt DESC
+		LIMIT 1
+	</select>
+
+<!-- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////// [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 시작//////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ -->
+
+	<!-- SQL : [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 리스트 WHERE -->
+	<sql id="sqlWhereMyCertList">
+		/* SQL : [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 리스트 WHERE */
+
+		INNER JOIN pt_rf_cert_rcpt_rlt prcrr	/* PT_RF_인증서접수관계 */
+			ON prcrr.inst_id = prcb.inst_id AND prcrr.cert_no = prcb.cert_no
+		INNER JOIN pt_rf_rcpt_bas prrb 			/* 접수기본 */
+			ON prrb.inst_id = prcrr.inst_id
+				AND prrb.inst_rcpt_no = prcrr.inst_rcpt_no
+				AND prrb.rcpt_co_brno = #{brno}	/* 접수기본.접수회사사업자등록번호 = 로그인한 사용자 사업자번호 */
+				AND prrb.grp_id = #{entGrpMngNo}	/* 그룹아이디 = 로그인한 사용자 그룹관리번호 */
+		<where>
+			<if test='schInstId != null and schInstId != ""'>
+				AND (${alias_cert}inst_id = #{schInstId}) 					/* [검색:인증기관] */
+			</if>
+			<if test='schCertNo != null and schCertNo != ""'>
+				AND (${alias_cert}cert_no LIKE '%' || #{schCertNo} || '%')			/* [검색:인증번호] */
+			</if>
+			<if test='schMkrNm != null and schMkrNm != ""'>
+				AND (${alias_cert}mnftr_custco_nm LIKE '%' || #{schMkrNm} || '%')	/* [검색:제조업체명] */
+			</if>
+			<if test='schMdlNm != null and schMdlNm != ""'>
+				AND (${alias_cert}mdl_nm LIKE '%' || #{schMdlNm} || '%')			/* [검색:모델명] */
+			</if>
+			<if test='schIptrNm != null and schIptrNm != ""'>
+				AND (${alias_cert}incm_custco_nm LIKE '%' || #{schIptrNm} || '%')	/* [검색:수입업체명] */
+			</if>
+			<if test='schPhotoYN != null and schPhotoYN != ""'>
+				<choose>
+					<when test='schPhotoYN == "Y"'>
+						AND EXISTS 						/* [검색:사진유무:Y] */
+					</when>
+					<otherwise>
+						AND NOT EXISTS 					/* [검색:사진유무:N] */
+					</otherwise>
+				</choose>
+				(	SELECT img.file_nm
+					FROM pt_rf_cert_img_txn img
+					WHERE img.inst_id = ${alias_cert}inst_id
+						AND img.cert_no = ${alias_cert}cert_no
+				)
+			</if>
+			<if test='schCertYmdF != null and schCertYmdF != ""'>
+				AND (${alias_cert}cert_ymd <![CDATA[>=]]> TO_CHAR(TO_DATE(#{schCertYmdF}, 'YYYY-MM-DD'), 'YYYYMMDD') ) /* [검색:인증일자_시작일] */
+			</if>
+			<if test='schCertYmdT != null and schCertYmdT != ""'>
+				AND (${alias_cert}cert_ymd <![CDATA[<=]]> TO_CHAR(TO_DATE(#{schCertYmdT}, 'YYYY-MM-DD'), 'YYYYMMDD') ) /* [검색:인증일자_끝일] */
+			</if>
+			<if test='schSttCd != null and schSttCd != ""'>
+				AND (${alias_cert}cert_stt_cd = #{schSttCd}) 						/* [검색:인증상태] */
+			</if>
+			<if test='schPrdtClfCd != null and schPrdtClfCd != ""'>
+				AND (${alias_cert}stty_prdt_clf_cd = #{schPrdtClfCd}) 				/* [검색:제품분류] */
+			</if>
+			<if test='schPrdtNm != null and schPrdtNm != ""'>
+				AND (${alias_cert}prdt_nm LIKE '%' || #{schPrdtNm} || '%') 			/* [검색:제품명] */
+			</if>
+		</where>
+	</sql>
+
+	<!-- SQL : [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 리스트 쿼리 -->
+	<sql id="sqlQueryMyCertList">
+		/*  SQL : [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 리스트 쿼리 */
+
+		SELECT
+			mycr.inst_id --기관아이디
+			, (SELECT CONCAT (pcib.inst_nm, '(' , pcib.inst_eng_nm, ')' ) FROM pt_co_inst_bas pcib WHERE pcib.use_yn ='Y' AND pcib.inst_id = mycr.inst_id LIMIT 1) AS inst_ko_eng_nm --기관명(국문, 영문)
+			, mycr.mdl_nm 					--모델명
+			, mycr.prdt_nm 					--제품명
+			, mycr.cert_stt_cd				--인증상태코드
+			, (SELECT pcicdc.dtl_cd_nm FROM pt_co_intgr_comn_dtl_cd pcicdc WHERE pcicdc.use_yn ='Y' AND pcicdc.grp_cd='ATC007' AND pcicdc.dtl_cd = mycr.cert_stt_cd LIMIT 1) AS cert_stt_nm --인증상태명
+			, mycr.cert_no					--인증번호
+			, mycr.inst_cert_idntfc_val		--통합접수번호
+			, mycr.cert_ymd					--인증일자
+			, fn_date_fmt(mycr.cert_ymd, 'YYYY-MM-DD') AS cert_ymd_fmt --인증일자_포맷팅
+
+			, coalesce( (SELECT 'Y' FROM tb_cert_adit_info_mng tcaim WHERE tcaim.inst_id = mycr.inst_id AND tcaim.cert_no = mycr.cert_no LIMIT 1), 'N') AS have_cert_adit_info --추가정보 등록여부
+			, coalesce( (SELECT 'Y' FROM tb_file_mng tfm WHERE tfm.del_yn = 'N' AND tfm.file_div_nm = 'qr_img' AND tfm.ref_div_val = CONCAT(mycr.inst_id,'||',mycr.cert_no) LIMIT 1) , 'N') AS have_qr_img_file --QR코드 생성여부
+
+			, (CASE
+				WHEN mycr.cert_ymd = '0'
+				THEN '00000000'
+				ELSE fn_date_fmt(to_char(to_date(mycr.cert_ymd, 'YYYYMMDD') + interval '5 year', 'YYYYMMDD'), 'YYYY-MM-DD')
+			END) AS cert_end_ymd_fmt
+			, (CASE
+				WHEN mycr.cert_ymd = '0'
+				THEN '0'
+				ELSE date_part('day', now() - (to_date(mycr.cert_ymd, 'YYYYMMDD') + interval '5 year'))
+			END) AS cert_end_minus_day
+		FROM (
+				SELECT
+					prcb.inst_id --기관아이디
+					, prcb.mdl_nm 					--모델명
+					, prcb.prdt_nm 					--제품명
+					, prcb.cert_stt_cd				--인증상태코드
+					, prcb.cert_no					--인증번호
+					, prcb.inst_cert_idntfc_val		--통합접수번호
+					, prcb.cert_ymd					--인증일자
+				FROM pt_rf_cert_bas prcb
+				<include refid='sqlWhereMyCertList'>
+					<property name="alias_cert" value="prcb."/>
+				</include>
+				ORDER BY prcb.cert_ymd DESC, prcb.clct_file_ymd ASC, prcb.cert_no ASC
+				<if test='startRow != null and endRow != null'>
+					OFFSET #{startRow} LIMIT #{endRow}
+				</if>
+		) AS mycr
+	</sql>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 리스트 개수 조회 -->
+	<select id="selectMyCertCount" parameterType="com.katri.web.platformSvc.myData.model.MyDataSelectReq" resultType="int">
+		/* MyDataMapper.selectMyCertCount ([플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 리스트 개수 조회) */
+
+		SELECT
+			count(prcb.cert_no) as count
+		FROM pt_rf_cert_bas prcb
+		<include refid='sqlWhereMyCertList'>
+			<property name="alias_cert" value="prcb."/>
+		</include>
+	</select>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 리스트 조회 -->
+	<select id="selectMyCertList" parameterType="com.katri.web.platformSvc.myData.model.MyDataSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataSelectRes">
+		/* MyDataMapper.selectMyCertList ([플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 리스트 조회) */
+
+		<include refid="sqlQueryMyCertList"/>
+	</select>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 리스트 조회(Map으로 반환) -->
+	<select id="selectMyCertListMap" parameterType="com.katri.web.platformSvc.myData.model.MyDataSelectReq" resultType="HashMap">
+		/* MyDataMapper.selectMyCertListMap ([플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 리스트 조회(Map으로 반환)) */
+
+		<include refid="sqlQueryMyCertList"/>
+	</select>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 상세 조회 -->
+	<select id="selectMyCertDetail" parameterType="com.katri.web.platformSvc.myData.model.MyDataSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataSelectRes">
+		/* MyDataMapper.selectMyCertDetail ([플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 상세 조회) */
+
+		SELECT
+			UPPER(prcb.inst_id) AS inst_id 	--기관아이디
+			, (SELECT pcib.inst_nm FROM pt_co_inst_bas pcib WHERE pcib.use_yn ='Y' AND pcib.inst_id = prcb.inst_id LIMIT 1) AS inst_nm --기관명(국문)
+			, (SELECT pcib.inst_eng_nm FROM pt_co_inst_bas pcib WHERE pcib.use_yn ='Y' AND pcib.inst_id = prcb.inst_id LIMIT 1) AS inst_eng_nm --기관명(영문)
+			, prcb.cert_no					--인증번호
+			, prcb.inst_cert_idntfc_val		--기관인증식별값
+			, prcb.cert_div_cd				--인증구분코드
+			, (SELECT pcicdc.dtl_cd_nm FROM pt_co_intgr_comn_dtl_cd pcicdc WHERE pcicdc.use_yn ='Y' AND pcicdc.grp_cd='ATC006' AND pcicdc.dtl_cd = prcb.cert_div_cd LIMIT 1) AS cert_div_nm --인증구분명
+			, prcb.cert_stt_cd				--인증상태코드
+			, (SELECT pcicdc.dtl_cd_nm FROM pt_co_intgr_comn_dtl_cd pcicdc WHERE pcicdc.use_yn ='Y' AND pcicdc.grp_cd='ATC007' AND pcicdc.dtl_cd = prcb.cert_stt_cd LIMIT 1) AS cert_stt_nm --인증상태명
+			, prcb.cert_ymd					--인증일자
+			, prcb.cert_last_chg_ymd		--인증최종변경일자
+			, prcb.cert_chg_resn_cn			--인증변경사유내용
+			, prcb.frst_cert_no				--최초인증번호
+			, prcb.prdt_nm					--제품명
+			, prcb.brd_nm					--브랜드명
+			, prcb.mdl_nm					--모델명
+			, prcb.drvn_mdl_nm				--파생모델명
+			, prcb.stty_prdt_clf_cd			--법정제품분류코드
+			, (SELECT pcspcc.stty_prdt_dtclf_nm FROM pt_co_stty_prdt_clf_cd pcspcc WHERE pcspcc.use_yn ='Y' AND pcspcc.stty_prdt_clf_cd = prcb.stty_prdt_clf_cd LIMIT 1) AS stty_prdt_clf_nm --법정제품분류명
+			, prcb.stty_prdt_dtclf_nm		--법정제품세분류명
+			, prcb.stty_prdt_dtclf_nm		--법정제품세분류명
+			, prcb.stnd_nm					--규격명
+			, prcb.rmk_cn					--비고내용
+			, prcb.incm_mnftr_div_cd		--수입제조구분코드
+
+			, prcb.mnftr_custco_nm			--제조고객회사명
+			, prcb.mnftr_custco_brno		--제조고객회사사업자등록번호
+			, prcb.mnftr_custco_ntn_nm		--제조고객회사국가명
+			, prcb.mnftr_custco_rprsv_nm	--제조고객회사대표자명
+			, prcb.mnftr_custco_zip			--제조고객회사우편번호
+			, prcb.mnftr_custco_addr		--제조고객회사주소
+			, prcb.mnftr_custco_telno		--제조고객회사전화번호
+
+			, prcb.incm_custco_nm			--수입고객회사명
+			, prcb.incm_custco_brno			--수입고객회사사업자등록번호
+			, prcb.incm_custco_rprsv_nm		--수입고객회사대표자명
+			, prcb.incm_custco_zip			--수입고객회사우편번호
+			, prcb.incm_custco_addr			--수입고객회사주소
+			, prcb.incm_custco_telno		--수입고객회사전화번호
+
+			, (SELECT tcaim.adit_info_nm FROM tb_cert_adit_info_mng tcaim WHERE tcaim.inst_id = prcb.inst_id AND tcaim.cert_no = prcb.cert_no LIMIT 1) AS cert_adit_info_nm --추가정보명
+			, (SELECT tcaim.adit_info_cn FROM tb_cert_adit_info_mng tcaim WHERE tcaim.inst_id = prcb.inst_id AND tcaim.cert_no = prcb.cert_no LIMIT 1) AS cert_adit_info_cn --추가정보내용
+
+			, (SELECT CONCAT(tfm.strg_file_path_addr, tfm.strg_file_nm) FROM tb_file_mng tfm WHERE tfm.del_yn = 'N' AND tfm.file_div_nm = 'qr_img' AND tfm.ref_div_val = CONCAT(prcb.inst_id,'||',prcb.cert_no) LIMIT 1) AS qr_img_file_full_addr --QR이미지파일주소
+
+		FROM pt_rf_cert_bas prcb
+		INNER JOIN pt_rf_cert_rcpt_rlt prcrr	/* PT_RF_인증서접수관계 */
+			ON prcrr.inst_id = prcb.inst_id AND prcrr.cert_no = prcb.cert_no
+		INNER JOIN pt_rf_rcpt_bas prrb 			/* 접수기본 */
+			ON prrb.inst_id = prcrr.inst_id
+				AND prrb.inst_rcpt_no = prcrr.inst_rcpt_no
+				AND prrb.rcpt_co_brno = #{brno}	/* 접수기본.접수회사사업자등록번호 = 로그인한 사용자 사업자번호 */
+				AND prrb.grp_id = #{entGrpMngNo}	/* 그룹아이디 = 로그인한 사용자 그룹관리번호 */
+		WHERE UPPER(prcb.inst_id) = #{targetInstId} AND prcb.cert_no = #{targetCertNo}
+		LIMIT 1
+	</select>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 이미지 리스트 조회 -->
+	<select id="selectMyCertImgList" parameterType="com.katri.web.platformSvc.myData.model.MyDataSelectReq" resultType="String">
+		/* MyDataMapper.selectMyCertImgList ([플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 이미지 리스트 조회) */
+
+		SELECT
+			prcit.cert_img_file_nm --인증이미지파일명
+		FROM pt_rf_cert_img_txn prcit
+		WHERE UPPER(prcit.inst_id) = #{targetInstId} AND prcit.cert_no = #{targetCertNo}
+		ORDER BY prcit.file_nm
+	</select>
+
+	<!-- [인증서추가정보관리] 등록,수정 -->
+	<insert id="mergeCertAditInfoMng" parameterType="com.katri.web.platformSvc.myData.model.MyDataSaveRes">
+		/* MyDataMapper.mergeCertAditInfoMng ([인증서추가정보관리] 등록,수정) */
+
+		WITH upsert AS
+						(
+							UPDATE tb_cert_adit_info_mng
+							SET
+								adit_info_nm = #{aditInfoNm}
+								, adit_info_cn = #{aditInfoCn}
+								, mdfcn_dt = now()
+								, mdfr_id = #{crtrId}
+							WHERE inst_id = #{instId} AND cert_no = #{certNo}
+							RETURNING *
+						)
+		INSERT INTO tb_cert_adit_info_mng
+						(
+							inst_id
+							, cert_no
+							, adit_info_nm
+							, adit_info_cn
+							, crt_dt
+							, crtr_id
+						)
+		SELECT
+			#{instId}
+			, #{certNo}
+			, #{aditInfoNm}
+			, #{aditInfoCn}
+			, now()
+			, #{crtrId}
+		WHERE NOT EXISTS(SELECT * FROM upsert);
+	</insert>
+
+<!-- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////// [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 끝//////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ -->
+
+<!-- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////// [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 시작//////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ -->
+
+	<!-- SQL : [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 리스트 FROM WHERE -->
+	<sql id="sqlFromWhereMyRprtList">
+		/*  SQL : [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 리스트 FROM WHERE */
+
+		FROM pt_rf_rprt_bas rprt	/* 성적서기본 */
+		INNER JOIN (
+						SELECT
+							U.inst_id
+							, U.inst_rcpt_no
+							, U.rprt_no
+						FROM
+							(
+							<if test='(schEDivi == null or schEDivi == "") or (schEDivi != null and schEDivi != "" and schEDivi == "appli")'>
+								/* [검색:입장구분:전체] or [검색:입장구분:신청] */
+								/***** 접수사업자등록번호로 조회한 접수와 품목 *****/
+								SELECT
+									rcpt.inst_id
+									, rcpt.inst_rcpt_no
+									, rcpt.rprt_no
+								FROM pt_rf_rcpt_bas rcpt			/* 접수기본 */
+								<if test='(schStdLgclfCd != null and schStdLgclfCd != "") or (schStdMlclfCd != null and schStdMlclfCd != "") or (schPdctgNm != null and schPdctgNm != "")'>
+								INNER JOIN pt_rf_pdctg_bas pdctg	/* 품목기본 */
+									ON rcpt.inst_id = pdctg.inst_id
+									AND rcpt.inst_rcpt_no = pdctg.inst_rcpt_no
+									AND rcpt.rprt_no = pdctg.rprt_no
+								</if>
+								WHERE
+									rcpt.rcpt_co_brno = #{brno}	 /* 접수회사사업자등록번호 = 로그인한 사용자 사업자번호 */
+									AND rcpt.grp_id = #{entGrpMngNo}  /* 그룹아이디 = 로그인한 사용자 그룹관리번호 */
+								<if test='schInstId != null and schInstId != ""'>
+									AND (rcpt.inst_id = #{schInstId}) 					/* [검색:시험기관] */
+								</if>
+								<if test='schRprtNo != null and schRprtNo != ""'>
+									AND (rcpt.rprt_no LIKE '%' || #{schRprtNo} || '%') 	/* [검색:성적서 번호] */
+								</if>
+								<if test='schStdLgclfCd != null and schStdLgclfCd != ""'>
+									AND (pdctg.std_lgclf_cd  = #{schStdLgclfCd}) 		/* [검색:제품분류_대] */
+								</if>
+								<if test='schStdMlclfCd != null and schStdMlclfCd != ""'>
+									AND (pdctg.std_mlclf_cd  = #{schStdMlclfCd}) 		/* [검색:제품분류_중] */
+								</if>
+								<if test='schPdctgNm != null and schPdctgNm != ""'>
+									AND (pdctg.inst_pdctg_nm LIKE '%' || #{schPdctgNm} || '%') 	/* [검색:품목명] */
+								</if>
+								/***** 접수사업자등록번호로 조회한 접수와 품목 끝 *****/
+							</if>
+
+							<if test='schEDivi == null or schEDivi == ""'>
+								UNION ALL	/* [검색:입장구분:전체] */
+							</if>
+
+							<if test='(schEDivi == null or schEDivi == "") or (schEDivi != null and schEDivi != "" and schEDivi == "subm")'>
+								/* [검색:입장구분:전체] or [검색:입장구분:제출] */
+								/***** 제출사업자등록번호로 조회한 접수와 품목 *****/
+								SELECT
+									rcpt.inst_id
+									, rcpt.inst_rcpt_no
+									, rcpt.rprt_no
+								FROM pt_rf_rcpt_bas rcpt
+								<if test='(schStdLgclfCd != null and schStdLgclfCd != "") or (schStdMlclfCd != null and schStdMlclfCd != "") or (schPdctgNm != null and schPdctgNm != "")'>
+								INNER JOIN pt_rf_pdctg_bas pdctg	/* 품목기본 */
+									ON rcpt.inst_id = pdctg.inst_id
+									AND rcpt.inst_rcpt_no = pdctg.inst_rcpt_no
+									AND rcpt.rprt_no = pdctg.rprt_no
+								</if>
+								INNER JOIN tb_ent_grp_clct_agre_mng mng	/* 기업그룹수집동의관리 */
+									ON rcpt.inst_id = mng.inst_id
+									AND rcpt.rcpt_co_brno = mng.brno
+									AND rcpt.grp_id = (case when mng.ent_grp_mng_no = '9999999999' then '_' else mng.ent_grp_mng_no end)
+									AND mng.sbmsn_co_rls_agre_yn = 'Y'
+								WHERE
+									rcpt.sbmsn_co_brno = #{brno}	/* 제출회사사업자등록번호 = 로그인한 사용자 사업자번호 */
+								<if test='schInstId != null and schInstId != ""'>
+									AND (rcpt.inst_id = #{schInstId}) 					/* [검색:시험기관] */
+								</if>
+								<if test='schRprtNo != null and schRprtNo != ""'>
+									AND (rcpt.rprt_no LIKE '%' || #{schRprtNo} || '%') 	/* [검색:성적서 번호] */
+								</if>
+								<if test='schStdLgclfCd != null and schStdLgclfCd != ""'>
+									AND (pdctg.std_lgclf_cd  = #{schStdLgclfCd}) 		/* [검색:제품분류_대] */
+								</if>
+								<if test='schStdMlclfCd != null and schStdMlclfCd != ""'>
+									AND (pdctg.std_mlclf_cd  = #{schStdMlclfCd}) 		/* [검색:제품분류_중] */
+								</if>
+								<if test='schPdctgNm != null and schPdctgNm != ""'>
+									AND (pdctg.inst_pdctg_nm LIKE '%' || #{schPdctgNm} || '%') 	/* [검색:품목명] */
+								</if>
+								/***** 제출사업자등록번호로 조회한 접수와 품목 끝 *****/
+							</if>
+							) U
+						GROUP BY U.inst_id, U.inst_rcpt_no, U.rprt_no
+					) rprt_pdctg	/* 접수,품목 */
+			ON rprt.inst_id = rprt_pdctg.inst_id
+			AND rprt.inst_rcpt_no = rprt_pdctg.inst_rcpt_no
+			AND rprt.rprt_no = rprt_pdctg.rprt_no
+		<where>
+			<if test='schRprtYmdF != null and schRprtYmdF != ""'>
+				AND (rprt.rprt_issu_ymd <![CDATA[>=]]> TO_CHAR(TO_DATE(#{schRprtYmdF}, 'YYYY-MM-DD'), 'YYYYMMDD') ) /* [검색:발급일자_시작일] */
+			</if>
+			<if test='schRprtYmdT != null and schRprtYmdT != ""'>
+				AND (rprt.rprt_issu_ymd <![CDATA[<=]]> TO_CHAR(TO_DATE(#{schRprtYmdT}, 'YYYY-MM-DD'), 'YYYYMMDD') ) /* [검색:발급일자_끝일] */
+			</if>
+			<if test='schJgmtCd != null and schJgmtCd != ""'>
+				AND (rprt.intgr_gnrlz_jgmt_rslt_cd  = #{schJgmtCd}) 				/* [검색:종합판정] */
+			</if>
+		</where>
+	</sql>
+
+	<!-- SQL : [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 리스트 쿼리 -->
+	<sql id="sqlQueryMyRprtList">
+		/*  SQL : [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 리스트 쿼리 */
+
+		SELECT
+			myrr.inst_id	 					--기관아이디
+			, (SELECT CONCAT (pcib.inst_nm, '(' , pcib.inst_eng_nm, ')' ) FROM pt_co_inst_bas pcib WHERE pcib.use_yn ='Y' AND pcib.inst_id = myrr.inst_id LIMIT 1) AS inst_ko_eng_nm --기관명(국문, 영문)
+			, myrr.inst_rcpt_no					--기관접수번호
+			, myrr.rprt_no						--성적서번호
+			, myrr.rprt_issu_ymd				--성적서발급일자
+			, fn_date_fmt(myrr.rprt_issu_ymd, 'YYYY-MM-DD') AS rprt_issu_ymd_fmt  --성적서발급일자_포맷팅
+			, myrr.intgr_gnrlz_jgmt_rslt_cd		--통합종합판정결과코드
+			, (SELECT pcicdc.dtl_cd_nm FROM pt_co_intgr_comn_dtl_cd pcicdc WHERE pcicdc.use_yn ='Y' AND pcicdc.grp_cd='ATC005' AND pcicdc.dtl_cd = myrr.intgr_gnrlz_jgmt_rslt_cd  LIMIT 1) AS intgr_gnrlz_jgmt_rslt_nm --통합종합판정결과명
+			, COALESCE (
+				(SELECT STRING_AGG(lgclf.std_lgclf_nm, ',')
+				FROM pt_rf_pdctg_bas pdctg	 /* 품목기본 */
+				INNER JOIN pt_co_indst_std_lgclf_cd lgclf
+					ON pdctg.std_lgclf_cd = lgclf.std_lgclf_cd AND lgclf.use_yn = 'Y'
+				WHERE myrr.inst_id = pdctg.inst_id AND myrr.inst_rcpt_no = pdctg.inst_rcpt_no AND myrr.rprt_no = pdctg.rprt_no
+				), ''
+			) AS std_lgclf_nm					--제품대분류명
+			, COALESCE (
+				(SELECT STRING_AGG(mlclf_cd.std_mlclf_nm, ',')
+				FROM pt_rf_pdctg_bas pdctg	 /* 품목기본 */
+				INNER JOIN pt_co_indst_std_mlclf_cd mlclf_cd
+					ON pdctg.std_lgclf_cd = mlclf_cd.std_lgclf_cd AND pdctg.std_mlclf_cd = mlclf_cd.std_mlclf_cd AND mlclf_cd.use_yn = 'Y'
+				WHERE myrr.inst_id = pdctg.inst_id AND myrr.inst_rcpt_no = pdctg.inst_rcpt_no AND myrr.rprt_no = pdctg.rprt_no
+				), ''
+			) AS std_mlclf_nm					--제품중분류명
+			, COALESCE (
+				(SELECT string_agg(pdctg.inst_pdctg_nm, ',')
+				FROM pt_rf_pdctg_bas pdctg	 /* 품목기본 */
+				WHERE myrr.inst_id = pdctg.inst_id AND myrr.inst_rcpt_no = pdctg.inst_rcpt_no AND myrr.rprt_no = pdctg.rprt_no
+				), ''
+			) AS inst_pdctg_nm					--품목명
+		FROM (
+				SELECT
+					 rprt.inst_id	 					--기관아이디
+					, rprt.inst_rcpt_no					--기관접수번호
+					, rprt.rprt_no						--성적서번호
+					, rprt.rprt_issu_ymd				--성적서발급일자
+					, rprt.intgr_gnrlz_jgmt_rslt_cd		--통합종합판정결과코드
+				<include refid="sqlFromWhereMyRprtList"/>
+				ORDER BY rprt.rprt_issu_ymd DESC, rprt.inst_rcpt_no ASC
+				<if test='startRow != null and endRow != null'>
+					OFFSET #{startRow} LIMIT #{endRow}
+				</if>
+		) AS myrr
+
+	</sql>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 리스트 개수 조회 -->
+	<select id="selectMyRprtCount" parameterType="com.katri.web.platformSvc.myData.model.MyDataSelectReq" resultType="int">
+		/* MyDataMapper.selectMyRprtCount ([플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 리스트 개수 조회) */
+
+		SELECT
+			count(1) as count
+		<include refid="sqlFromWhereMyRprtList"/>
+	</select>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 리스트 조회 -->
+	<select id="selectMyRprtList" parameterType="com.katri.web.platformSvc.myData.model.MyDataSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataSelectRes">
+		/* MyDataMapper.selectMyRprtList ([플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 리스트 조회) */
+
+		<include refid="sqlQueryMyRprtList"/>
+	</select>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 리스트 조회(Map으로 반환) -->
+	<select id="selectMyRprtListMap" parameterType="com.katri.web.platformSvc.myData.model.MyDataSelectReq" resultType="HashMap">
+		/* MyDataMapper.selectMyRprtListMap ([플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 리스트 조회(Map으로 반환)) */
+
+		<include refid="sqlQueryMyRprtList"/>
+	</select>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 상세 조회 -->
+	<select id="selectMyRprtDetail" parameterType="com.katri.web.platformSvc.myData.model.MyDataSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataSelectRes">
+		/* MyDataMapper.selectMyRprtDetail ([플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 상세 조회) */
+
+		SELECT
+			prrb.inst_id 					--기관아이디
+			, (SELECT CONCAT (pcib.inst_nm, '(' , pcib.inst_eng_nm, ')' ) FROM pt_co_inst_bas pcib WHERE pcib.use_yn ='Y' AND pcib.inst_id = prrb.inst_id LIMIT 1) AS inst_ko_eng_nm --기관명(국문, 영문)
+			, prrb.inst_rcpt_no 			--기관접수번호
+			, prrb.rprt_no 					--성적서번호
+			, prrb.rprt_issu_ymd 			--발급일자
+			, prrb.intgr_rprt_prpos_div_cd 	--통합성적서용도구분코드
+			, prrb.rprt_issu_tms_no 		--성적서발급회차번호
+			, prrb.intgr_gnrlz_jgmt_rslt_cd	--통합종합판정결과코드
+			, (SELECT pcicdc.dtl_cd_nm FROM pt_co_intgr_comn_dtl_cd pcicdc WHERE pcicdc.use_yn ='Y' AND pcicdc.grp_cd='ATC005' AND pcicdc.dtl_cd = prrb.intgr_gnrlz_jgmt_rslt_cd  LIMIT 1) AS intgr_gnrlz_jgmt_rslt_nm --통합종합판정결과명
+			, prrb.rmk_cn 					--비고
+
+			, rprt_pdctg.rcpt_co_nm
+			, rprt_pdctg.sbmsn_co_nm
+
+		FROM pt_rf_rprt_bas prrb 		/*성적서 기본*/
+		INNER JOIN ( /* 볼 권한 없으면 데이터 안나오게 하기 위해 join */
+						SELECT
+							U.inst_id
+							, U.inst_rcpt_no
+							, U.rprt_no
+							, U.rcpt_co_nm
+							, U.sbmsn_co_nm
+						FROM
+							(
+								/* [검색:입장구분:전체] or [검색:입장구분:신청] */
+								/***** 접수사업자등록번호로 조회한 접수와 품목 *****/
+								SELECT
+									rcpt.inst_id
+									, rcpt.inst_rcpt_no
+									, rcpt.rprt_no
+									, rcpt.rcpt_co_nm
+									, rcpt.sbmsn_co_nm
+								FROM pt_rf_rcpt_bas rcpt			/* 접수기본 */
+								WHERE
+									rcpt.rcpt_co_brno = #{brno}	 /* 접수회사사업자등록번호 = 로그인한 사용자 사업자번호 */
+									AND rcpt.grp_id = #{entGrpMngNo}  /* 그룹아이디 = 로그인한 사용자 그룹관리번호 */
+
+								/***** 접수사업자등록번호로 조회한 접수와 품목 끝 *****/
+
+								UNION ALL	/* [검색:입장구분:전체] */
+
+								/* [검색:입장구분:전체] or [검색:입장구분:제출] */
+								/***** 제출사업자등록번호로 조회한 접수와 품목 *****/
+								SELECT
+									rcpt.inst_id
+									, rcpt.inst_rcpt_no
+									, rcpt.rprt_no
+									, rcpt.rcpt_co_nm
+									, rcpt.sbmsn_co_nm
+								FROM pt_rf_rcpt_bas rcpt
+								INNER JOIN tb_ent_grp_clct_agre_mng mng	/* 기업그룹수집동의관리 */
+									ON rcpt.inst_id = mng.inst_id
+									AND rcpt.rcpt_co_brno = mng.brno
+									AND rcpt.grp_id = (case when mng.ent_grp_mng_no = '9999999999' then '_' else mng.ent_grp_mng_no end)
+									AND mng.sbmsn_co_rls_agre_yn = 'Y'
+								WHERE
+									rcpt.sbmsn_co_brno = #{brno}	/* 제출회사사업자등록번호 = 로그인한 사용자 사업자번호 */
+
+								/***** 제출사업자등록번호로 조회한 접수와 품목 끝 *****/
+							) U
+						GROUP BY U.inst_id, U.inst_rcpt_no, U.rprt_no, U.rcpt_co_nm , U.sbmsn_co_nm
+					) rprt_pdctg	/* 접수,품목 */
+			ON rprt_pdctg.inst_id = prrb.inst_id AND rprt_pdctg.inst_rcpt_no = prrb.inst_rcpt_no AND rprt_pdctg.rprt_no = prrb.rprt_no
+		WHERE UPPER(prrb.inst_id) = #{targetInstId} AND prrb.inst_rcpt_no = #{targetInstRcptNo} AND prrb.rprt_no = #{targetRprtNo}
+		LIMIT 1
+	</select>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] [##품목 정보##] 리스트 조회 -->
+	<select id="selectMyRprtPdctgList" parameterType="com.katri.web.platformSvc.myData.model.MyDataSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataSelectRes">
+		/* MyDataMapper.selectMyRprtPdctgList ([플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] [##품목 정보##] 리스트 조회) */
+
+		SELECT
+			rcpt.inst_id			--기관아이디
+			, rcpt.inst_rcpt_no 	--기관접수번호
+			, rcpt.rprt_no			--성적서번호
+			, pdctg.inst_pdctg_cd 	--기관품목코드
+			, pdctg.inst_pdctg_nm 	--기관품목명
+		FROM pt_rf_rcpt_bas rcpt				/* 접수기본 */
+		INNER JOIN pt_rf_pdctg_bas pdctg		/* 품목기본 */
+			ON rcpt.inst_id = pdctg.inst_id
+				AND rcpt.inst_rcpt_no = pdctg.inst_rcpt_no
+				AND rcpt.rprt_no = pdctg.rprt_no
+		WHERE  UPPER(rcpt.inst_id) = #{targetInstId}  		/* 기관아이디 */
+			AND rcpt.inst_rcpt_no = #{targetInstRcptNo} 	/* 기관접수번호 */
+			AND rcpt.rprt_no = #{targetRprtNo}				/* 성적서번호 */
+		ORDER BY rcpt.inst_rcpt_no ASC
+	</select>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] [##품목 정보##] 디테일 조회 -->
+	<select id="selectMyRprtPdctgDetail" parameterType="com.katri.web.platformSvc.myData.model.MyDataSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataSelectRes">
+		/* MyDataMapper.selectMyRprtPdctgDetail ([플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] [##품목 정보##] 디테일 조회) */
+
+		SELECT
+			pdctg.inst_pdctg_nm	 	--기관품목명
+			, (
+				SELECT
+					STRING_AGG(sample.mnftr_ntn_nm, ',')
+				FROM PT_RF_SAMPLE_BAS sample	/* 시료기본 */
+				WHERE pdctg.inst_id = sample.inst_id
+					AND pdctg.inst_rcpt_no = sample.inst_rcpt_no
+					AND pdctg.rprt_no = sample.rprt_no
+					AND pdctg.inst_pdctg_cd = sample.inst_pdctg_cd
+			) AS mnftr_ntn_nm		--제조국가명
+			, (
+				SELECT
+					STRING_AGG(sample.mdl_nm, ',')
+				FROM pt_rf_sample_bas sample	/* 시료기본 */
+				WHERE pdctg.inst_id = sample.inst_id
+					AND pdctg.inst_rcpt_no = sample.inst_rcpt_no
+					AND pdctg.rprt_no = sample.rprt_no
+					AND pdctg.inst_pdctg_cd = sample.inst_pdctg_cd
+			) AS mdl_nm				--모델명
+			, (
+				SELECT
+					string_agg(sample.mnftr_entrps_nm, ',')
+				FROM pt_rf_sample_bas sample	/* 시료기본 */
+				WHERE pdctg.inst_id = sample.inst_id
+					AND pdctg.inst_rcpt_no = sample.inst_rcpt_no
+					AND pdctg.rprt_no = sample.rprt_no
+					AND pdctg.inst_pdctg_cd = sample.inst_pdctg_cd
+			) AS mnftr_entrps_nm	--제조업체명
+			, (
+				SELECT
+					 COUNT(1)
+				FROM pt_rf_sample_bas sample		/* 시료기본 */
+				WHERE pdctg.inst_id = sample.inst_id
+					AND pdctg.inst_rcpt_no = sample.inst_rcpt_no
+					AND pdctg.rprt_no = sample.rprt_no
+					AND pdctg.inst_pdctg_cd = sample.inst_pdctg_cd
+			) AS sample_total_cnt --시료건수
+		FROM pt_rf_rcpt_bas rcpt			/* 접수기본 */
+		INNER JOIN pt_rf_pdctg_bas pdctg	/* 품목기본 */
+			ON rcpt.inst_id = pdctg.inst_id
+				AND rcpt.inst_rcpt_no = pdctg.inst_rcpt_no
+				AND rcpt.rprt_no = pdctg.rprt_no
+		WHERE UPPER(rcpt.inst_id) = #{targetInstId}  		/*기관아이디*/
+			AND rcpt.inst_rcpt_no = #{targetInstRcptNo} 	/*기관접수번호*/
+			AND rcpt.rprt_no = #{targetRprtNo}				/*성적서번호*/
+			AND pdctg.inst_pdctg_cd = #{targetInstPdctgCd}	/*기관품목코드*/
+		LIMIT 1
+	</select>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] [##시료 정보##] 리스트 조회 -->
+	<select id="selectMyRprtInstSampleList" parameterType="com.katri.web.platformSvc.myData.model.MyDataSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataSelectRes">
+		/* MyDataMapper.selectMyRprtInstSampleList ([플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] [##시료 정보##] 리스트 조회) */
+
+		SELECT
+			sample.inst_id				--기관아이디
+			, sample.inst_rcpt_no		--기관접수번호
+			, sample.rprt_no			--성적서번호
+			, sample.inst_pdctg_cd		--기관품목코드
+			, sample.inst_sample_no		--기관시료번호
+		--	, sample.inst_sample_nm		--기관시료명
+			, MAX(sample.inst_sample_nm) AS inst_sample_nm	/* 기관시료명-중복제거임시*/
+		FROM pt_rf_sample_bas sample		/* 시료기본 */
+		INNER JOIN pt_rf_pdctg_bas pdctg	/* 품목기본 */
+			ON sample.inst_id = pdctg.inst_id
+				AND sample.inst_rcpt_no = pdctg.inst_rcpt_no
+				AND sample.rprt_no = pdctg.rprt_no
+				AND sample.inst_pdctg_cd = pdctg.inst_pdctg_cd
+		INNER JOIN pt_rf_rcpt_bas rcpt		/* 접수기본 */
+			ON rcpt.inst_id = pdctg.inst_id
+				AND rcpt.inst_rcpt_no = pdctg.inst_rcpt_no
+				AND rcpt.rprt_no = pdctg.rprt_no
+		WHERE UPPER(sample.inst_id) = #{targetInstId}  		/*기관아이디*/
+			AND sample.inst_rcpt_no = #{targetInstRcptNo} 	/*기관접수번호*/
+			AND sample.rprt_no = #{targetRprtNo}			/*성적서번호*/
+			AND sample.inst_pdctg_cd = #{targetInstPdctgCd}	/*기관품목코드*/
+
+		GROUP BY sample.inst_id, sample.inst_rcpt_no, sample.rprt_no, sample.inst_pdctg_cd, sample.inst_sample_no/* groupby-중복제거임시*/
+		ORDER BY sample.inst_sample_no ASC
+	</select>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] [##시료별 시험항목 정보##] 리스트 조회 -->
+	<select id="selectMyRprtInstTestItemList" parameterType="com.katri.web.platformSvc.myData.model.MyDataSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataSelectRes">
+		/* MyDataMapper.selectMyRprtInstTestItemList ([플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] [##시료별 시험항목 정보##] 리스트 조회) */
+
+		SELECT
+			item.inst_id			--기관아이디
+			, item.inst_rcpt_no		--기관접수번호
+			, item.rprt_no			--성적서번호
+			, item.inst_pdctg_cd	--기관품목코드
+			, item.inst_sample_no	--기관시료번호
+			, item.inst_test_item_cd --기관시험항목코드
+		--	, item.inst_test_item_nm --기관시험항목명
+		--	, item.inst_stnd_nm --기관규격명
+		--	, item.inst_cond_nm --기관조건명
+		--	, item.inst_unit_nm --기관단위명
+		--	, item.item.use_istmt_nm --사용기기명
+		--	, item.dtct_limit_cn --검출한계내용
+			, max(item.inst_test_item_nm) AS inst_test_item_nm	/* 기관시험항목명-중복제거임시*/
+			, max(item.inst_stnd_nm) AS inst_stnd_nm --기관규격명-중복제거임시
+			, max(item.inst_cond_nm) AS inst_cond_nm --기관조건명-중복제거임시
+			, max(item.inst_unit_nm) AS inst_unit_nm --기관단위명-중복제거임시
+			, max(item.use_istmt_nm) AS use_istmt_nm --사용기기명-중복제거임시
+			, max(item.dtct_limit_cn) AS dtct_limit_cn --검출한계내용-중복제거임시
+		FROM pt_rf_test_item_bas item			/*시험항목기본*/
+		INNER JOIN pt_rf_sample_bas sample		/* 시료기본 */
+			ON item.inst_id = sample.inst_id
+				AND item.inst_rcpt_no = sample.inst_rcpt_no
+				AND item.rprt_no = sample.rprt_no
+				AND item.inst_pdctg_cd = sample.inst_pdctg_cd
+				AND item.inst_sample_no = sample.inst_sample_no
+		INNER JOIN pt_rf_pdctg_bas pdctg		/* 품목기본 */
+			ON sample.inst_id = pdctg.inst_id
+				AND sample.inst_rcpt_no = pdctg.inst_rcpt_no
+				AND sample.rprt_no = pdctg.rprt_no
+				AND sample.inst_pdctg_cd = pdctg.inst_pdctg_cd
+		INNER JOIN pt_rf_rcpt_bas rcpt			/* 접수기본 */
+			ON rcpt.inst_id = pdctg.inst_id
+				AND rcpt.inst_rcpt_no = pdctg.inst_rcpt_no
+				AND rcpt.rprt_no = pdctg.rprt_no
+		WHERE UPPER(item.inst_id)	= #{targetInstId}  		/*기관아이디*/
+			AND item.inst_rcpt_no 	= #{targetInstRcptNo} 	/*기관접수번호*/
+			AND item.rprt_no		= #{targetRprtNo}		/*성적서번호*/
+			AND item.inst_pdctg_cd	= #{targetInstPdctgCd}	/*기관품목코드*/
+			AND item.inst_sample_no =  #{targetInstSampleNo}/*기관시료번호*/
+		GROUP BY item.inst_id, item.inst_rcpt_no, item.rprt_no, item.inst_pdctg_cd, item.inst_sample_no, item.inst_test_item_cd/* groupby-중복제거임시*/
+		ORDER BY item.inst_test_item_cd ASC
+
+	</select>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] [##시험항목 별 시험결과 정보##] 리스트 조회 -->
+	<select id="selectMyRprtInstTestItemRsltList" parameterType="com.katri.web.platformSvc.myData.model.MyDataSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataSelectRes">
+		/* MyDataMapper.selectMyRprtInstTestItemRsltList ([플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] [##시험항목 별 시험결과 정보##] 리스트 조회) */
+
+		SELECT
+			rslt.inst_id			--기관아이디
+			, rslt.inst_rcpt_no		--기관접수번호
+			, rslt.rprt_no			--성적서번호
+			, rslt.inst_pdctg_cd	--기관품목코드
+			, rslt.inst_sample_no	--기관시료번호
+			, rslt.inst_test_item_cd --기관시험항목코드
+			, rslt.test_rslt_mng_no	--시험결과관리번호
+		--	, rslt.test_rslt_nm		--시험결과명
+		--	, rslt.test_crtra_val	--시험기준값
+		--	, rslt.test_msrmt_val	--시험측정값
+		--	, rslt.inst_jgmt_rslt_nm --기관판정결과명
+		--	, rslt.cas_no --CAS번호
+			, max(rslt.test_rslt_nm) 	AS test_rslt_nm 		--시험결과명-중복제거임시
+			, max(rslt.test_crtra_val)	AS test_crtra_val 		--시험기준값-중복제거임시
+			, max(rslt.test_msrmt_val) 	AS test_msrmt_val 		--시험측정값-중복제거임시
+			, max(rslt.inst_jgmt_rslt_nm) AS inst_jgmt_rslt_nm	--기관판정결과명-중복제거임시
+			, max(rslt.cas_no) 			AS cas_no				--CAS번호-중복제거임시
+		FROM pt_rf_test_rslt_txn rslt		/*시험결과내역*/
+		INNER JOIN pt_rf_test_item_bas item	/*시험항목기본*/
+			ON rslt.inst_id = item.inst_id
+				AND rslt.inst_rcpt_no = item.inst_rcpt_no
+				AND rslt.rprt_no = item.rprt_no
+				AND rslt.inst_pdctg_cd = item.inst_pdctg_cd
+				AND rslt.inst_sample_no = item.inst_sample_no
+				AND rslt.inst_test_item_cd = item.inst_test_item_cd
+		INNER JOIN pt_rf_sample_bas sample	/* 시료기본 */
+			ON item.inst_id = sample.inst_id
+				AND item.inst_rcpt_no = sample.inst_rcpt_no
+				AND item.rprt_no = sample.rprt_no
+				AND item.inst_pdctg_cd = sample.inst_pdctg_cd
+				AND item.inst_sample_no = sample.inst_sample_no
+		INNER JOIN pt_rf_pdctg_bas pdctg	/* 품목기본 */
+			ON sample.inst_id = pdctg.inst_id
+				AND sample.inst_rcpt_no = pdctg.inst_rcpt_no
+				AND sample.rprt_no = pdctg.rprt_no
+				AND sample.inst_pdctg_cd = pdctg.inst_pdctg_cd
+		INNER JOIN pt_rf_rcpt_bas rcpt	/* 접수기본 */
+			ON rcpt.inst_id = pdctg.inst_id
+				AND rcpt.inst_rcpt_no = pdctg.inst_rcpt_no
+				AND rcpt.rprt_no = pdctg.rprt_no
+		WHERE UPPER(rslt.inst_id)	= #{targetInstId}  			/* 기관아이디 */
+			AND rslt.inst_rcpt_no 	= #{targetInstRcptNo} 		/* 기관접수번호 */
+			AND rslt.rprt_no		= #{targetRprtNo}			/* 성적서번호 */
+			AND rslt.inst_pdctg_cd	= #{targetInstPdctgCd}		/* 기관품목코드 */
+			AND rslt.inst_sample_no =  #{targetInstSampleNo}	/* 기관시료번호 */
+			AND rslt.inst_test_item_cd = #{targetInstTestItemCd}/* 기관시험항목코드 */
+		GROUP BY rslt.inst_id, rslt.inst_rcpt_no, rslt.rprt_no, rslt.inst_pdctg_cd, rslt.inst_sample_no, rslt.inst_test_item_cd, rslt.test_rslt_mng_no /*  groupby-중복제거임시 */
+		ORDER BY rslt.test_rslt_mng_no ASC
+	</select>
+
+<!-- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/////// [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 끝//////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ -->
+
+	<!-- [기업그룹수집동의이력] 등록 -->
+	<insert id="insertEntGrpClctAgreHist" parameterType="com.katri.web.platformSvc.myData.model.MyDataSaveRes" useGeneratedKeys="true" keyProperty="histSn">
+		/* MyDataMapper.insertEntGrpClctAgreHist ([기업그룹수집동의이력] 등록) */
+
+		INSERT INTO tb_ent_grp_clct_agre_hist (
+			ent_grp_sn
+			, inst_id
+			, info_pvsn_agre_yn
+			, crt_dt
+			, crtr_id
+		) VALUES (
+			#{entGrpSn}
+			, #{clctAgreInstId}
+			, #{infoPvsnAgreYn}
+			, now()
+			, #{crtrId}
+		)
+	</insert>
+
+	<!-- [기업그룹수집동의약관이력] 등록 -->
+	<insert id="insertEntGrpClctAgreTrmsHist" parameterType="com.katri.web.platformSvc.myData.model.MyDataSaveRes">
+		/* MyDataMapper.insertEntGrpClctAgreTrmsHist ([기업그룹수집동의약관이력] 등록) */
+
+		INSERT INTO tb_ent_grp_clct_agre_trms_hist (
+			hist_sn
+			, trms_sn
+			, crt_dt
+			, crtr_id
+		) VALUES (
+			#{histSn}
+			, #{trmsSn}
+			, now()
+			, #{crtrId}
+		)
+	</insert>
+
+	<!-- [기업그룹제출회사공개동의이력] 등록 -->
+	<insert id="insertEntGrpSbmsnCoRlsAgreHist" parameterType="com.katri.web.platformSvc.myData.model.MyDataSaveRes" useGeneratedKeys="true" keyProperty="histSn">
+		/* MyDataMapper.insertEntGrpSbmsnCoRlsAgreHist ([기업그룹제출회사공개동의이력] 등록) */
+
+		INSERT INTO tb_ent_grp_sbmsn_co_rls_agre_hist (
+			ent_grp_sn
+			, inst_id
+			, sbmsn_co_rls_agre_yn
+			, crt_dt
+			, crtr_id
+		) VALUES (
+			#{entGrpSn}
+			, #{sbmsnCoRlsInstId}
+			, #{sbmsnCoRlsAgreYn}
+			, now()
+			, #{crtrId}
+		)
+	</insert>
+
+	<!-- [기업그룹제출회사공개약관동의이력] 등록 -->
+	<insert id="insertEntGrpSbmsnCoRlsTrmsAgreHist" parameterType="com.katri.web.platformSvc.myData.model.MyDataSaveRes">
+		/* MyDataMapper.insertEntGrpSbmsnCoRlsTrmsAgreHist ([기업그룹제출회사공개약관동의이력] 등록) */
+
+		INSERT INTO tb_ent_grp_sbmsn_co_rls_trms_agre_hist (
+			hist_sn
+			, trms_sn
+			, crt_dt
+			, crtr_id
+		) VALUES (
+			#{histSn}
+			, #{trmsSn}
+			, now()
+			, #{crtrId}
+		)
+	</insert>
+
+	<insert id="mergeEntGrpClctAgreMng" parameterType="com.katri.web.platformSvc.myData.model.MyDataSaveRes">
+		/* MyDataMapper.mergeEntGrpClctAgreMng ([기업그룹수집동의관리] 등록,수정) */
+
+		WITH updata AS
+						(
+							UPDATE tb_ent_grp_clct_agre_mng
+							SET
+								<if test='infoPvsnAgreYn != null and infoPvsnAgreYn != ""'>
+								info_pvsn_agre_yn = #{infoPvsnAgreYn}
+								, last_info_pvsn_agre_yn_dt = now()
+								</if>
+								<if test='sbmsnCoRlsAgreYn != null and sbmsnCoRlsAgreYn != ""'>
+								sbmsn_co_rls_agre_yn = #{sbmsnCoRlsAgreYn}
+								, last_sbmsn_co_rls_agre_yn_dt = now()
+								</if>
+								, mdfcn_dt = now()
+								, mdfr_id = #{crtrId}
+							WHERE inst_id = #{instId} AND ent_grp_sn = #{entGrpSn}
+							RETURNING *
+						)
+		INSERT INTO tb_ent_grp_clct_agre_mng
+						(
+							ent_grp_sn
+							, inst_id
+							<if test='infoPvsnAgreYn != null and infoPvsnAgreYn != ""'>
+							, info_pvsn_agre_yn
+							, last_info_pvsn_agre_yn_dt
+							</if>
+							<if test='sbmsnCoRlsAgreYn != null and sbmsnCoRlsAgreYn != ""'>
+							, sbmsn_co_rls_agre_yn
+							, last_sbmsn_co_rls_agre_yn_dt
+							</if>
+							, crt_dt
+							, crtr_id
+							, brno
+							, ent_grp_mng_no
+						)
+		SELECT
+			#{entGrpSn}
+			, #{instId}
+			<if test='infoPvsnAgreYn != null and infoPvsnAgreYn != ""'>
+			, #{infoPvsnAgreYn}
+			, now()
+			</if>
+			<if test='sbmsnCoRlsAgreYn != null and sbmsnCoRlsAgreYn != ""'>
+			, #{sbmsnCoRlsAgreYn}
+			, now()
+			</if>
+			, now()
+			, #{crtrId}
+			, #{brno}
+			, #{entGrpMngNo}
+		WHERE NOT EXISTS(SELECT * FROM updata);
+	</insert>
+
+	<!-- [기업그룹수집동의관리] + [사업자정보] 데이터 조회(Map으로 반환) -->
+	<select id="selectEntGrpClctAgreData" parameterType="com.katri.web.platformSvc.myData.model.MyDataSelectReq" resultType="HashMap">
+		/* MyDataMapper.selectEntGrpClctAgreData ( [기업그룹수집동의관리] + [사업자정보] 데이터 조회(Map으로 반환) ) */
+
+		SELECT
+			tegcam.inst_id
+			, tegcam.ent_grp_sn
+
+			, teb.brno 					--사업자등록번호
+			, teb.ent_nm 				--기업명
+			, tegb.ent_grp_mng_no 		--기업그룹ID
+			, tegb.ent_grp_nm 			--기업그룹명
+			, tegcam.info_pvsn_agre_yn	--수집동의여부
+			, TO_CHAR(tegcam.last_info_pvsn_agre_yn_dt, 'YYYYMMDDHH24MISS') as crt_dt_fmt --수집동의여부일시
+		FROM tb_ent_grp_clct_agre_mng tegcam
+		LEFT OUTER JOIN tb_ent_grp_bas tegb
+			ON tegb.use_yn = 'Y'
+			AND tegb.ent_grp_sn = tegcam.ent_grp_sn
+		LEFT OUTER JOIN tb_ent_bas teb
+			ON teb.use_yn = 'Y'
+			AND teb.brno = tegb.brno
+		WHERE tegcam.inst_id = #{targetInstId} AND tegcam.ent_grp_sn = #{entGrpSn}
+		LIMIT 1
+	</select>
+
+	<!-- [접수기본 : pt_rf_rcpt_bas] 비식별처리 UPDATE(*로 처리) -->
+	<update id="updatePtRfRcptBasNonIdenti" parameterType="com.katri.web.platformSvc.myData.model.MyDataSaveRes">
+		/* MyDataMapper.updatePtRfRcptBasNonIdenti ([접수기본 : pt_rf_rcpt_bas] 비식별처리 UPDATE(*로 처리)) */
+
+		UPDATE pt_rf_rcpt_bas
+		SET
+			rcpt_co_nm = '*'
+			, rcpt_co_brno = '*'
+			, rcpt_co_rprsv_nm = '*'
+			, rcpt_co_telno = '*'
+			, rcpt_co_addr = '*'
+			, grp_id = '*'
+			, grp_nm = '*'
+			, sbmsn_co_nm = '*'
+			, sbmsn_co_brno = '*'
+			, sbmsn_co_rprsv_nm = '*'
+			, sbmsn_co_telno = '*'
+			, sbmsn_co_addr = '*'
+			, agent_co_nm = '*'
+			, agent_co_brno = '*'
+			, agent_co_rprsv_nm = '*'
+			, agent_co_telno = '*'
+			, agent_co_addr = '*'
+
+		WHERE (inst_id = #{clctAgreInstId})
+			AND rcpt_co_brno = #{brno}			/* 접수회사사업자등록번호 = 로그인한 사용자 사업자번호 */
+			AND grp_id = #{entGrpMngNoDefault}	/* 그룹아이디 = 로그인한 사용자 그룹관리번호 */
+	</update>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] 각 이용약관 조회 -->
+	<select id="selectMyDataTerms" parameterType="String" resultType="com.katri.web.platformSvc.myData.model.MyDataSelectRes">
+		/* MyDataMapper.selectMyDataTerms ([플랫폼 서비스] > [내 손안의 시험인증] 각 이용약관 조회 */
+
+		SELECT
+			ttb.trms_sn		--약관일련번호
+			, ttb.trms_cn	--약관내용
+		FROM tb_trms_bas ttb
+		WHERE  ttb.use_yn = 'Y'
+			AND ttb.trms_ty_cd = #{temsCode}
+		ORDER BY ttb.trms_sn DESC
+		LIMIT 1
+	</select>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] [##인증기관+기업그룹수집동의이력##] 리스트 조회 -->
+	<select id="selectCoInstEntGrpClctAgreList" parameterType="com.katri.web.platformSvc.myData.model.MyDataSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataSelectRes">
+		/* MyDataMapper.selectCoInstEntGrpClctAgreList ([플랫폼 서비스] > [내 손안의 시험인증] [##인증기관+기업그룹수집동의이력##] 리스트 조회) */
+
+		SELECT
+			pcib2.inst_id AS inst_id
+			, pcib2.inst_nm AS inst_nm
+			, COALESCE(pcib2.info_pvsn_agre_yn, 'N')	AS info_pvsn_agre_yn
+			<if test='needSbmsnCoRlsAgreYn != null and needSbmsnCoRlsAgreYn != "" and needSbmsnCoRlsAgreYn == "Y"'>
+			, COALESCE(pcib2.sbmsn_co_rls_agre_yn, 'N') AS sbmsn_co_rls_agre_yn
+			</if>
+		FROM (
+			SELECT
+				pcib.inst_id AS inst_id 	--기관아이디
+				, pcib.inst_nm AS inst_nm 	--기관명
+				, (SELECT tegcam.info_pvsn_agre_yn FROM tb_ent_grp_clct_agre_mng tegcam WHERE tegcam.inst_id = pcib.inst_id AND tegcam.ent_grp_sn = #{entGrpSn} LIMIT 1) AS info_pvsn_agre_yn --정보제공동의여부
+				<if test='needSbmsnCoRlsAgreYn != null and needSbmsnCoRlsAgreYn != "" and needSbmsnCoRlsAgreYn == "Y"'>
+				, (SELECT tegcam.sbmsn_co_rls_agre_yn FROM tb_ent_grp_clct_agre_mng tegcam WHERE tegcam.inst_id = pcib.inst_id AND tegcam.ent_grp_sn = #{entGrpSn} LIMIT 1) AS sbmsn_co_rls_agre_yn --제출회사공개여부
+				</if>
+			FROM pt_co_inst_bas pcib
+			WHERE pcib.use_yn = 'Y'
+				AND pcib.inst_id != 'T000' /* 공통기관 제외 */
+		) pcib2
+		<if test='searchInfoPvsnAgreYn != null and searchInfoPvsnAgreYn != ""'>
+			WHERE (COALESCE(pcib2.info_pvsn_agre_yn, 'N') = #{searchInfoPvsnAgreYn}) /* 정보제공동의여부 */
+		</if>
+		ORDER BY pcib2.inst_id;
+	</select>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] [##인증기관##] 리스트 조회 -->
+	<select id="selectCoInstList" resultType="com.katri.web.platformSvc.myData.model.MyDataSelectRes">
+		/* MyDataMapper.selectCoInstList ([플랫폼 서비스] > [내 손안의 시험인증] [##인증기관##] 리스트 조회) */
+
+		SELECT
+			pcib.inst_id AS ls_inst_id 		--기관아이디
+			, pcib.inst_nm AS ls_inst_nm 	--기관명
+		FROM pt_co_inst_bas pcib
+		WHERE pcib.use_yn = 'Y'
+			AND pcib.inst_id != 'T000' /* 공통기관 제외 */
+		ORDER BY pcib.inst_id ASC
+	</select>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] [##통합공통상세코드##] 리스트 조회 -->
+	<select id="selectPtComnDtlCdList" parameterType="String" resultType="com.katri.web.platformSvc.myData.model.MyDataSelectRes">
+		/* MyDataMapper.selectPtComnDtlCdList ([플랫폼 서비스] > [내 손안의 시험인증] [##통합공통상세코드##] 리스트 조회) */
+
+		SELECT
+			pcicdc.dtl_cd AS ls_dtl_cd			--디테일코드
+			, pcicdc.dtl_cd_nm AS ls_dtl_cd_nm	--디테일코드명
+		FROM pt_co_intgr_comn_dtl_cd pcicdc
+		WHERE pcicdc.use_yn = 'Y'
+			AND pcicdc.grp_cd = #{grpCd}
+		ORDER BY pcicdc.srt_seq ASC
+	</select>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] [##CO_법정제품분류##] 리스트 조회 -->
+	<select id="selectPtCoSttyPrdtClfCdList" resultType="com.katri.web.platformSvc.myData.model.MyDataSelectRes">
+		/* MyDataMapper.selectPtCoSttyPrdtClfCdList ([플랫폼 서비스] > [내 손안의 시험인증] [##CO_법정제품분류##] 리스트 조회) */
+
+		SELECT
+			pcspcc.stty_prdt_clf_cd AS ls_stty_prdt_clf_cd			--법정제품분류코드
+			, pcspcc.stty_prdt_dtclf_nm AS ls_stty_prdt_dtclf_nm	--법정제품세분류명
+		FROM pt_co_stty_prdt_clf_cd pcspcc
+		WHERE pcspcc.use_yn = 'Y'
+		ORDER BY pcspcc.stty_prdt_clf_cd ASC
+	</select>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] [##제품분류_대##] 리스트 조회 -->
+	<select id="selectPtCoIndstStdLgclfCdList" resultType="com.katri.web.platformSvc.myData.model.MyDataSelectRes">
+		/* MyDataMapper.selectPtCoIndstStdLgclfCdList ([플랫폼 서비스] > [내 손안의 시험인증] [##제품분류_대##] 리스트 조회) */
+
+		SELECT
+			pcislc.std_lgclf_cd AS ls_std_lgclf_cd			--표준대분류코드
+			, pcislc.std_lgclf_nm AS ls_std_lgclf_nm		--표준대분류명
+		FROM pt_co_indst_std_lgclf_cd pcislc
+		WHERE pcislc.use_yn = 'Y'
+		ORDER BY pcislc.std_lgclf_cd ASC
+	</select>
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] [##제품분류_중##] 리스트 조회 -->
+	<select id="selectPtCoIndstStdMlclfCdList" parameterType="String" resultType="com.katri.web.platformSvc.myData.model.MyDataSelectRes">
+		/* MyDataMapper.selectPtCoIndstStdMlclfCdList ([플랫폼 서비스] > [내 손안의 시험인증] [##제품분류_중##] 리스트 조회) */
+
+		SELECT
+			pcismc.std_mlclf_cd AS ls_std_mlclf_cd			--표준중분류코드
+			, pcismc.std_mlclf_nm AS ls_std_mlclf_nm		--표준중분류명
+		FROM pt_co_indst_std_mlclf_cd pcismc
+		WHERE pcismc.use_yn = 'Y'
+			AND pcismc.std_lgclf_cd = #{upStdLgclfCd} /* 찾을 기준이 되는 표준대분류코드 */
+		ORDER BY pcismc.std_mlclf_cd ASC
+	</select>
+
+
+</mapper>

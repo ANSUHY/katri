@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.auth.mapper.UserFindMapper">
+
+	<!-- user 회원 현황 목록 조회 sql -->
+	<sql id="sqlUserBas">
+
+		SELECT	  tub.user_id
+				, tub.user_nm
+				, tub.user_pwd
+				, tub.user_lgcy_pwd
+
+				, tub.user_ty_cd
+				, tcc1.comn_cd_nm as user_ty_nm
+				, tub.user_stt_cd
+				, tcc2.comn_cd_nm as user_stt_nm
+
+				, tub.user_link_info_val
+				, tub.encpt_mbl_telno_val
+				, tub.encpt_eml_addr_val
+				, tub.eml_cert_no_val
+				, tub.authrt_grp_sn
+
+				, tub.join_aply_dmnd_dt
+				, tub.join_aply_prcs_dt
+				, tub.join_aply_prcr_id
+				, tub.join_ymd
+
+				, tub.whdwl_aply_dmnd_dt
+				, tub.whdwl_aply_prcs_dt
+				, tub.whdwl_aply_prcr_id
+				, tub.whdwl_ymd
+				, tub.whdwl_resn_cn
+
+				, tub.last_lgn_dt
+				, tub.last_lgn_ip_addr
+				, tub.lgn_fir_cnt
+				, tub.last_lgn_fir_dt
+				, tub.last_pwd_chg_dt
+
+				, tub.drmncy_ymd
+				, tub.last_drmncy_dt
+				, tub.last_drmncy_rmv_dt
+
+				, tub.crt_dt
+				, tub.crtr_id
+				, tub.mdfcn_dt
+				, tub.mdfr_id
+				, tub.anls_env_user_id
+
+		FROM	tb_user_bas tub
+		/* 사용자 유형 코드 */
+		LEFT OUTER JOIN tb_comn_cd tcc1 ON ( tub.user_ty_cd  = tcc1.comn_cd and tcc1.comn_grp_cd = 'MTC' and tcc1.use_yn = 'Y' )
+		/* 사용자 상태 코드 */
+		LEFT OUTER JOIN tb_comn_cd tcc2 ON ( tub.user_stt_cd = tcc2.comn_cd and tcc2.comn_grp_cd = 'USC' and tcc2.use_yn = 'Y' )
+	</sql>
+
+	<!-- 인증번호 발송 이력 저장 -->
+	<insert id="insertCertNoSndngHist" parameterType="com.katri.web.auth.model.UserFindSaveReq">
+		/* userFindMapper.insertCertNoSndngHist (인증번호 발송 이력 저장) */
+
+		INSERT INTO
+			tb_cert_no_sndng_hist
+			(
+				  rcvr_eml_addr
+				, cert_no
+				, crt_dt
+			)
+
+		VALUES
+			(
+				  #{rcvrEmlAddr}
+				, #{certNo}
+				, now()
+			)
+	</insert>
+
+	<!-- 가장 최근의 이메일 인증 번호 조회 -->
+	<select id="selectCertNoOfEmlAddr" parameterType="com.katri.web.auth.model.UserFindSelectReq" resultType="com.katri.web.auth.model.UserFindSelectRes">
+		/* userFindMapper.selectCertNoOfEmlAddr (가장 최근의 이메일 인증 번호와 인증 실패 횟수 조회) */
+
+		SELECT
+			  tcnsh.cert_no
+			, tcnsh.cert_fir_cnt
+		FROM
+			tb_cert_no_sndng_hist tcnsh
+		WHERE
+			tcnsh.rcvr_eml_addr = #{rcvrEmlAddr}
+		ORDER BY
+			tcnsh.crt_dt desc
+		OFFSET 0 LIMIT 1
+	</select>
+
+	<!-- 암호화된 이메일로 회원 정보 조회 -->
+	<select id="selectFindByEmail" parameterType="com.katri.web.auth.model.UserFindSelectReq" resultType="com.katri.web.auth.model.UserFindSelectRes">
+		/* userFindMapper.selectFindByEmail (암호화된 이메일로 회원 정보 조회) */
+
+		SELECT
+			tub.user_id
+		FROM
+			tb_user_bas tub
+		WHERE
+			tub.encpt_eml_addr_val = #{encptEmlAddrVal} AND tub.user_ty_cd = #{userTyCd}
+	</select>
+
+	<!-- 아이디와 암호화된 이메일로 회원 정보 조회 -->
+	<select id="selectFindByIdAndEmail" parameterType="com.katri.web.auth.model.UserFindSelectReq" resultType="com.katri.web.auth.model.UserFindSelectRes">
+		/* userFindMapper.selectFindByIdAndEmail (아이디와 암호화된 이메일로 회원 정보 조회) */
+
+		SELECT
+			tub.user_id
+		FROM
+			tb_user_bas tub
+		WHERE
+			tub.encpt_eml_addr_val = #{encptEmlAddrVal} AND tub.user_id = #{userId} AND tub.user_ty_cd = #{userTyCd}
+	</select>
+
+	<!-- 회원 상세 조회 -->
+	<select id="selectUserPwd" parameterType="com.katri.web.auth.model.UserFindSelectReq" resultType="com.katri.web.auth.model.UserFindSelectRes">
+		/* userFindMapper.selectUserPwd ( 회원 상세 조회 ) */
+
+		SELECT
+			<!-- 사용자 패스워드 -->
+			  ud.user_pwd
+			<!-- 데이터 분석 api 요청 데이터 관련 -->
+			, ud.user_id
+			, ud.encpt_eml_addr_val
+			, ud.user_ty_cd
+			, ud.anls_env_user_id
+		FROM (
+			<include refid="sqlUserBas"/>
+			WHERE tub.user_id = #{targetUserId}
+		) ud
+	</select>
+
+	<!-- 비밀번호 변경 -->
+	<update id="updateUserPwd" parameterType="com.katri.web.auth.model.UserFindSaveReq">
+		/* userFindMapper.updateUserPwd ( 비밀번호 변경 ) */
+
+		UPDATE
+			tb_user_bas
+		SET
+			  user_pwd 			= #{chgUserPwd}
+			, mdfcn_dt 			= now()
+			, mdfr_id 			= #{mdfrId}
+			, last_pwd_chg_dt	= now()
+		WHERE
+			user_id = #{targetUserId}
+	</update>
+
+	<!-- 로그인 시도 횟수 초기화 -->
+	<update id="resetLgnCnt" parameterType="com.katri.web.auth.model.UserFindSaveReq">
+		/* userFindMapper.resetLgnCnt ( 로그인 시도 횟수 초기화 ) */
+
+		UPDATE
+			tb_user_bas
+		SET
+			lgn_fir_cnt = 0
+		WHERE user_id = #{targetUserId}
+	</update>
+
+	<!-- 연계정보 확인값으로 회원정보 조회 -->
+	<select id="selectFindByCi" parameterType="com.katri.web.auth.model.UserFindSelectReq" resultType="com.katri.web.auth.model.UserFindSelectRes">
+		/* userFindMapper.selectFindByCi (연계정보 확인값으로 회원정보 조회) */
+
+		SELECT
+			tub.user_id
+		FROM
+			tb_user_bas tub
+		WHERE
+			tub.user_ty_cd = #{userTyCd} AND tub.user_link_info_val = #{pCi}
+	</select>
+
+	<!-- 연계정보 확인값과 아이디로 회원정보 조회 -->
+	<select id="selectFindByCiAndId" parameterType="com.katri.web.auth.model.UserFindSelectReq" resultType="com.katri.web.auth.model.UserFindSelectRes">
+		/* userFindMapper.selectFindByCiAndId (연계정보 확인값과 아이디로 회원정보 조회) */
+
+		SELECT
+			tub.user_id
+		FROM
+			tb_user_bas tub
+		WHERE
+			tub.user_ty_cd = #{userTyCd} AND tub.user_link_info_val = #{pCi} AND tub.user_id = #{userId}
+	</select>
+
+	<!-- [아이디 찾기/비밀번호 재설정] > 인증 메일 정보 조회 -->
+	<select id="selectCertMailSendChkInfo" resultType="com.katri.web.auth.model.UserFindSelectRes">
+		/* userFindMapper.selectCertMailSendChkInfo ( [아이디 찾기/비밀번호 재설정] > 인증 메일 정보 조회 ) */
+
+		SELECT	  tcc.comn_cd_three_val	as cert_eml_limit_cnt
+				, tcc.comn_cd_four_val	as cert_eml_limit_time
+				, tcc.comn_cd_five_val	as cert_chk_limit_cnt
+		FROM	tb_comn_cd tcc
+		WHERE	tcc.comn_grp_cd = 'EMT'
+		AND		tcc.comn_cd 	= 'EMT01'
+		AND		tcc.use_yn 		= 'Y'
+	</select>
+
+	<!-- [아이디 찾기/비밀번호 재설정] > 전송된 인증 메일 건수 조회 -->
+	<select id="selectCertMailSendCount" parameterType="com.katri.web.auth.model.UserFindSelectReq" resultType="int">
+		/* userFindMapper.selectCertMailSendCount ( [아이디 찾기/비밀번호 재설정] > 전송된 인증 메일 건수 조회 ) */
+
+		SELECT 		count(tcnsh.hist_sn) as cnt
+		FROM 		tb_cert_no_sndng_hist tcnsh
+		WHERE		tcnsh.rcvr_eml_addr = #{rcvrEmlAddr}
+		and			tcnsh.crt_dt > now() - #{certEmlLimitTime}::interval
+	</select>
+
+	<!-- [아이디 찾기/비밀번호 재설정] > 인증 번호 실패 횟수 증가 -->
+	<update id="updateCertNoFailCnt" parameterType="com.katri.web.auth.model.UserFindSaveReq">
+
+		UPDATE	tb_cert_no_sndng_hist
+		SET		cert_fir_cnt = coalesce(cert_fir_cnt, 0) + 1
+		WHERE	hist_sn = (
+					SELECT	max(tcnsh.hist_sn) as hist_sn
+					FROM	tb_cert_no_sndng_hist tcnsh
+					WHERE	tcnsh.rcvr_eml_addr = #{rcvrEmlAddr}
+					AND		tcnsh.cert_no 		= #{certNo}
+				)
+	</update>
+
+</mapper>

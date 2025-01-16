@@ -1,0 +1,327 @@
+package com.katri.web.auth.controller;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.springframework.context.MessageSource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.katri.common.GlobalExceptionHandler.CustomMessageException;
+import com.katri.common.model.ResponseDto;
+import com.katri.common.util.SessionUtil;
+import com.katri.common.util.StringUtil;
+import com.katri.web.auth.model.UserFindSaveReq;
+import com.katri.web.auth.model.UserFindSaveRes;
+import com.katri.web.auth.model.UserFindSelectReq;
+import com.katri.web.auth.model.UserFindSelectRes;
+import com.katri.web.auth.service.UserFindService;
+import com.katri.web.comm.service.CommService;
+import com.katri.web.comm.service.NiceService;
+
+import io.swagger.annotations.Api;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Controller
+@RequiredArgsConstructor
+@Api(tags = {"findUserInfo Controller"})
+@RequestMapping("/auth")
+public class UserFindController {
+
+	private final CommService commService;
+
+	private final MessageSource messageSource;
+
+	private final NiceService niceService;
+
+	private final UserFindService userFindService;
+
+	/*****************************************************
+	 * 아이디 찾기 페이지
+	 * @return String
+	*****************************************************/
+	@GetMapping("/findId")
+	public String findId(HttpSession session, Model model) throws Exception {
+
+		String sEncData = "";
+
+		// [NICE 업체정보를 암호화 한 데이터] 가져오기
+		sEncData = niceService.getNiceData(session);
+
+		model.addAttribute("sEncData", sEncData);
+
+		return "/auth/findId";
+	}
+
+	/*****************************************************
+	 * 아이디 찾기 결과 페이지
+	 * @param model
+	 * @param userFindSelectReq
+	 * @return String
+	*****************************************************/
+	@PostMapping("/findIdRes")
+	public String findIdRes(Model model, @ModelAttribute UserFindSelectReq userFindSelectReq) {
+		model.addAttribute("user", userFindSelectReq);
+
+		return "/auth/findIdRes";
+	}
+
+	/*****************************************************
+	 * 비밀번호 초기화 페이지
+	 * @return
+	*****************************************************/
+	@GetMapping("/resetPwd")
+	public String resetPwd(HttpSession session, Model model, @ModelAttribute UserFindSelectReq userFindSelectReq) throws Exception {
+
+		String sEncData = "";
+
+		// [NICE 업체정보를 암호화 한 데이터] 가져오기
+		sEncData = niceService.getNiceData(session);
+
+		model.addAttribute("sEncData", sEncData);
+		model.addAttribute("user", userFindSelectReq);
+
+		return "/auth/resetPwd";
+	}
+
+	/*****************************************************
+	 * 비밀번호 재설정 페이지
+	 * @param model
+	 * @param userFindSelectReq
+	 * @return String
+	*****************************************************/
+	@PostMapping("/resetPwdRes")
+	public String resetPwdRes(HttpServletResponse response, Model model, @ModelAttribute UserFindSelectReq userFindSelectReq) {
+
+		/* 뒤로가기 방지 */
+		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
+		response.setHeader("Pragma", "no-cache"); // HTTP 1.0.
+		response.setHeader("Expires", "0"); // Proxies.
+
+		model.addAttribute("user", userFindSelectReq);
+
+		return "/auth/resetPwdRes";
+	}
+
+	/*****************************************************
+	 * 비밀번호 초기화 저장
+	 * @param userFindSaveReq
+	 * @return ResponseEntity<ResponseDto>
+	 * @throws Exception
+	*****************************************************/
+	@PostMapping("/chgUserPwd")
+	public ResponseEntity<ResponseDto> chgUserPwd(@ModelAttribute UserFindSaveReq userFindSaveReq) throws Exception {
+		// [[0]]. 반환할 정보들
+		String 			msg 			= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer 		resultCode 		= HttpStatus.BAD_REQUEST.value();
+		UserFindSaveRes userFindSaveRes = new UserFindSaveRes();
+
+		try {
+
+			// [[1]]. 저장 시작
+			String strUserId = userFindSaveReq.getTargetUserId();
+
+			if( !"".equals(strUserId) ) {
+
+				/* 수정자 셋팅 */
+				userFindSaveReq.setMdfrId(SessionUtil.getLoginUserId());
+
+				/* 비밀번호 초기화 시작 */
+				userFindSaveRes = userFindService.chgUserPwd(userFindSaveReq);
+			}
+
+			// [[2]]. 성공 여부에 따른 메시지 셋팅 */
+			if( "".equals( userFindSaveRes.getUserId() ) ) {
+				resultCode = HttpStatus.BAD_REQUEST.value();
+				msg = messageSource.getMessage("result-message.messages.common.message.save.error", null, SessionUtil.getLocale()); // 저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+			} else {
+				resultCode = HttpStatus.OK.value();
+				msg = messageSource.getMessage("result-message.messages.pwd.message.save.success", null, SessionUtil.getLocale()); // 비밀번호가 변경되었습니다.
+			}
+
+		} catch(CustomMessageException e) {
+			// 값 셋팅
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			msg 		= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+		} catch(Exception e) {
+
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(userFindSaveRes)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+	/*****************************************************
+	 * [마스터 회원] 메인 인증 번호 발송
+	 * @param request
+	 * @param userFindSelectReq
+	 * @return ResponseEntity<ResponseDto>
+	 * @throws Exception
+	*****************************************************/
+	@PostMapping(value = {"/certMailSend"})
+	public ResponseEntity<ResponseDto> userFindCertMailSend(HttpServletRequest request, @ModelAttribute UserFindSelectReq userFindSelectReq) throws Exception {
+		// [[0]]. 반환할 정보들
+		String 	msg 		= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); // 에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer resultCode 	= HttpStatus.BAD_REQUEST.value();
+		boolean mailSuccess = false;
+
+		try {
+			// [[1]]. 인증 번호 발송
+			mailSuccess = userFindService.userFindCertMailSend(request, userFindSelectReq);
+
+			// 메일 발송 성공
+			if (mailSuccess) {
+				resultCode = HttpStatus.OK.value();
+				msg	= messageSource.getMessage("result-message.messages.user.message.mail.success", null, SessionUtil.getLocale()); // 메일이 발송되었습니다.
+			}
+		} catch(CustomMessageException e) {
+			// 값 셋팅
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			msg 		= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+		} catch(Exception e) {
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(mailSuccess)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+	/*****************************************************
+	 * [마스터 회원] 이메일 인증 번호 체크
+	 * @param request
+	 * @param userFindSelectReq
+	 * @return ResponseEntity<ResponseDto>
+	 * @throws Exception
+	*****************************************************/
+	@PostMapping(value = {"/certNoChk"})
+	public ResponseEntity<ResponseDto> certNoChk(HttpServletRequest request, @ModelAttribute UserFindSelectReq userFindSelectReq) throws Exception {
+
+		// [0]. 반환할 정보들
+		String 			msg 				= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); // 에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer 		resultCode 			= HttpStatus.BAD_REQUEST.value();
+		boolean 		bCertYn				= false;
+		UserFindSelectRes userFindSelectRes = null;
+
+		try {
+
+			// 0_0. 해당 이메일의 가장 최신 인증 번호 가져오기
+			bCertYn = userFindService.getCertNoOfEmlAddr(userFindSelectReq);
+
+			// 0_1. 가져온 값 비교
+			if( bCertYn ) {
+				if ("".equals(StringUtil.nvl(userFindSelectReq.getUserId()))) {
+					// (아이디 찾기) 이메일로 회원 정보 조회
+					userFindSelectRes = userFindService.getFindByEmail(userFindSelectReq);
+				} else {
+					// (비밀번호 찾기)
+					userFindSelectRes = userFindService.getFindByIdAndEmail(userFindSelectReq);
+				}
+				resultCode = HttpStatus.OK.value();
+				msg = messageSource.getMessage("result-message.messages.common.message.cert.code.checked.success", null, SessionUtil.getLocale()); // 인증코드 완료
+			} else {
+				resultCode = HttpStatus.OK.value();
+				msg = messageSource.getMessage("result-message.messages.common.message.cert.code.checked.fail", null, SessionUtil.getLocale()); // 인증코드가 틀립니다. 다시 확인해 주세요.
+			}
+
+		} catch(CustomMessageException e) {
+
+			// 값 셋팅
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			msg 		= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+
+		} catch(Exception e) {
+
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(userFindSelectRes)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+	/*****************************************************
+	 * [일반 회원] 연계정보 확인값 일치하는 회원정보 조회
+	 * @param userFindSelectReq
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@PostMapping("/getFindByCi")
+	public ResponseEntity<ResponseDto> getFindByCi(@ModelAttribute UserFindSelectReq userFindSelectReq) throws Exception {
+
+		// [0]. 반환할 정보들
+		String msg							= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); // 에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer resultCode					= HttpStatus.BAD_REQUEST.value();
+		UserFindSelectRes userFindSelectRes = null;
+
+		try {
+			if ("".equals(StringUtil.nvl(userFindSelectReq.getUserId()))) {
+				// [아이디 찾기] 연계정보 확인값으로 회원 정보 조회
+				userFindSelectRes = userFindService.getFindByCi(userFindSelectReq);
+			} else {
+				// [비밀번호 찾기] 연계정보 확인값과 아이디로 회원 정보 조회
+				userFindSelectRes = userFindService.getFindByCiAndId(userFindSelectReq);
+			}
+
+			resultCode = HttpStatus.OK.value();
+			msg = messageSource.getMessage("result-message.messages.common.message.cert.code.checked.success", null, SessionUtil.getLocale()); // 인증코드 완료
+		} catch(CustomMessageException e) {
+
+			// 값 셋팅
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			msg 		= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+
+		} catch(Exception e) {
+
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(userFindSelectRes)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+}

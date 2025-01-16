@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.particiLounge.mapper.DataGatherStatusMapper">
+
+	<!-- 기관코드 조회 -->
+	<select id="selectInstIdList"  resultType="com.katri.web.particiLounge.model.DataGatherStatusSelectRes">
+		SELECT
+			  pcib.inst_id
+			, pcib.inst_nm
+			, pcib.inst_eng_nm
+		FROM
+			pt_co_inst_bas pcib
+		WHERE
+			pcib.inst_id NOT IN ('T000')
+	</select>
+
+	<!-- 최근 수집 일자 -->
+	<select id="selectLastGatherDt" resultType="com.katri.web.particiLounge.model.DataGatherStatusSelectRes">
+		SELECT
+			MAX(crtra_ymd) AS lastGatherDt
+		FROM
+			pt_vf_clct_info_txn pvcit
+	</select>
+
+	<!-- 기관별 데이터 수집 현황 -->
+	<select id="selectDataGatherStatus" parameterType="com.katri.web.particiLounge.model.DataGatherStatusSelectReq" resultType="com.katri.web.particiLounge.model.DataGatherStatusSelectRes">
+		/* dataGatherStatusMapper.getDataGatherStatus (기관별 데이터 수집 현황) */
+
+		SELECT
+			  id.inst_id
+			, id.inst_nm
+			, COALESCE(SUM(CASE WHEN SPLIT_PART(pvcit.trgt_tbl_nm, '_', 2) = 'cert' THEN pvcit.clct_data_cnt END), 0) AS certCnt		-- 인증데이터
+			, COALESCE(SUM(CASE WHEN SPLIT_PART(pvcit.trgt_tbl_nm, '_', 2) = 'rcpt' THEN pvcit.clct_data_cnt END), 0) AS rcptCnt		-- 접수데이터
+			, COALESCE(SUM(CASE WHEN SPLIT_PART(pvcit.trgt_tbl_nm, '_', 2) = 'test' THEN pvcit.clct_data_cnt END), 0) AS testItemCnt	-- 시험데이터
+			, COALESCE(SUM(CASE WHEN SPLIT_PART(pvcit.trgt_tbl_nm, '_', 2) = 'rprt' THEN pvcit.clct_data_cnt END), 0) AS rprtCnt		-- 성적데이터
+			, COALESCE(SUM(CASE WHEN SPLIT_PART(pvcit.trgt_tbl_nm, '_', 2) = 'cert' THEN pvcit.clct_img_cnt END), 0) AS certImgCnt		-- 인증이미지
+			, STRING_AGG(DISTINCT procStt.err_cn, CHR(13)||CHR(10)) AS errCn																		-- 오류메시지
+		FROM
+			(
+				SELECT	inst_id, inst_nm
+				FROM	pt_co_inst_bas
+				WHERE 	inst_id not in ('T000')
+			) AS id
+		LEFT OUTER JOIN pt_vf_clct_info_txn pvcit
+			ON ( id.inst_id = pvcit.inst_id )
+		LEFT OUTER JOIN (SELECT pvcit.inst_id, pvcit.err_cn FROM pt_vf_clct_info_txn pvcit WHERE pvcit.job_stt_val = 'FAILURE' AND pvcit.crtra_ymd = #{lastGatherDt}) AS procStt -- 기관별 비정상 메시지
+			ON (procStt.inst_id = id.inst_id)
+		WHERE
+			TO_DATE(pvcit.crtra_ymd, 'YYYYMMDD') <![CDATA[ < ]]> TO_DATE(#{lastGatherDt}, 'YYYYMMDD') + '1 day'::INTERVAL
+		GROUP BY id.inst_id, id.inst_nm
+		ORDER BY id.inst_id ASC
+	</select>
+
+	<!-- 수집건수 추이 -->
+	<select
+		id="selectNumberOfCollection"
+		parameterType="com.katri.web.particiLounge.model.DataGatherStatusSelectReq"
+		resultType="com.katri.web.particiLounge.model.DataGatherStatusSelectRes">
+		/* dataGatherStatusMapper.selectNumberOfCollection (수집건수 추이) */
+
+		SELECT
+			  TO_CHAR(TO_DATE(dt.weeks, 'YYYYMMDD'), 'MM.DD') AS gatherDt																-- 수집일자
+			, COALESCE(SUM(CASE WHEN SPLIT_PART(pvcit.trgt_tbl_nm, '_', 2) = 'cert' THEN pvcit.clct_data_cnt END), 0) AS certCnt		-- 인증데이터
+			, COALESCE(SUM(CASE WHEN SPLIT_PART(pvcit.trgt_tbl_nm, '_', 2) = 'rcpt' THEN pvcit.clct_data_cnt END), 0) AS rcptCnt		-- 접수데이터
+			, COALESCE(SUM(CASE WHEN SPLIT_PART(pvcit.trgt_tbl_nm, '_', 2) = 'test' THEN pvcit.clct_data_cnt END), 0) AS testItemCnt	-- 시험데이터
+			, COALESCE(SUM(CASE WHEN SPLIT_PART(pvcit.trgt_tbl_nm, '_', 2) = 'rprt' THEN pvcit.clct_data_cnt END), 0) AS rprtCnt		-- 성적데이터
+			, COALESCE(SUM(CASE WHEN SPLIT_PART(pvcit.trgt_tbl_nm, '_', 2) = 'cert' THEN pvcit.clct_img_cnt END), 0) AS certImgCnt		-- 인증이미지`
+		FROM
+			(
+				SELECT
+					TO_CHAR(GENERATE_SERIES(#{lastGatherDt}::DATE - '6 day'::INTERVAL, #{lastGatherDt}::DATE, '1 day'::INTERVAL)::DATE, 'YYYYMMDD') AS weeks -- 현재 날짜 기준 최근 일주일 조회
+			) AS dt
+		LEFT OUTER JOIN pt_vf_clct_info_txn pvcit
+			ON ( dt.weeks = pvcit.crtra_ymd <if test='instId != null and instId !=""'> AND pvcit.inst_id = #{instId} </if>)
+		GROUP BY dt.weeks
+		ORDER BY dt.weeks ASC
+	</select>
+
+	<!-- 접수데이터 수집결과 추이 -->
+	<select
+		id="selectRcptCollectionResult"
+		parameterType="com.katri.web.particiLounge.model.DataGatherStatusSelectReq"
+		resultType="com.katri.web.particiLounge.model.DataGatherStatusSelectRes">
+		/* dataGatherStatusMapper.selectRcptCollectionResult (접수데이터 수집결과 추이) */
+
+		SELECT
+			  TO_CHAR(TO_DATE(dt.weeks, 'YYYYMMDD'), 'MM.DD') AS gatherDt												-- 수집일자
+			, COALESCE(SUM(CASE WHEN pvcit.job_stt_val = 'SUCCESS' THEN pvcit.clct_data_cnt END), 0) AS normalData		-- 정상
+			, COALESCE(SUM(CASE WHEN pvcit.job_stt_val = 'FAILURE' THEN pvcit.clct_data_cnt END), 0) AS abnormalData	-- 비정상
+		FROM
+			(
+				SELECT
+					TO_CHAR(GENERATE_SERIES(#{lastGatherDt}::DATE - '6 day'::INTERVAL, #{lastGatherDt}::DATE, '1 day'::INTERVAL)::DATE, 'YYYYMMDD') AS weeks -- 현재 날짜 기준 최근 일주일 조회
+			) AS dt
+		LEFT OUTER JOIN pt_vf_clct_info_txn pvcit
+			ON (dt.weeks = pvcit.crtra_ymd AND SPLIT_PART(pvcit.trgt_tbl_nm, '_', 2) = 'rcpt' <if test='instId != null and instId !=""'> AND pvcit.inst_id = #{instId} </if>)
+		GROUP BY dt.weeks
+		ORDER BY dt.weeks ASC
+	</select>
+
+	<!-- 시험데이터 수집결과 추이 -->
+	<select
+		id="selectTestItemCollectionResult"
+		parameterType="com.katri.web.particiLounge.model.DataGatherStatusSelectReq"
+		resultType="com.katri.web.particiLounge.model.DataGatherStatusSelectRes">
+		/* dataGatherStatusMapper.selectTestItemCollectionResult (시험데이터 수집결과 추이) */
+
+		SELECT
+			  TO_CHAR(TO_DATE(dt.weeks, 'YYYYMMDD'), 'MM.DD') AS gatherDt												-- 수집일자
+			, COALESCE(SUM(CASE WHEN pvcit.job_stt_val = 'SUCCESS' THEN pvcit.clct_data_cnt END), 0) AS normalData		-- 정상
+			, COALESCE(SUM(CASE WHEN pvcit.job_stt_val = 'FAILURE' THEN pvcit.clct_data_cnt END), 0) AS abnormalData	-- 비정상
+		FROM
+			(
+				SELECT
+					TO_CHAR(GENERATE_SERIES(#{lastGatherDt}::DATE - '6 day'::INTERVAL, #{lastGatherDt}::DATE, '1 day'::INTERVAL)::DATE, 'YYYYMMDD') AS weeks -- 현재 날짜 기준 최근 일주일 조회
+			) AS dt
+		LEFT OUTER JOIN pt_vf_clct_info_txn pvcit
+			ON (dt.weeks = pvcit.crtra_ymd AND SPLIT_PART(pvcit.trgt_tbl_nm, '_', 2) = 'test' <if test='instId != null and instId !=""'> AND pvcit.inst_id = #{instId} </if>)
+		GROUP BY dt.weeks
+		ORDER BY dt.weeks ASC
+	</select>
+
+	<!-- 성적데이터 수집결과 추이 -->
+	<select
+		id="selectRprtCollectionResult"
+		parameterType="com.katri.web.particiLounge.model.DataGatherStatusSelectReq"
+		resultType="com.katri.web.particiLounge.model.DataGatherStatusSelectRes">
+		/* dataGatherStatusMapper.selectRprtCollectionResult (성적데이터 수집결과 추이) */
+
+		SELECT
+			  TO_CHAR(TO_DATE(dt.weeks, 'YYYYMMDD'), 'MM.DD') AS gatherDt												-- 수집일자
+			, COALESCE(SUM(CASE WHEN pvcit.job_stt_val = 'SUCCESS' THEN pvcit.clct_data_cnt END), 0) AS normalData		-- 정상
+			, COALESCE(SUM(CASE WHEN pvcit.job_stt_val = 'FAILURE' THEN pvcit.clct_data_cnt END), 0) AS abnormalData	-- 비정상
+		FROM
+			(
+				SELECT
+					TO_CHAR(GENERATE_SERIES(#{lastGatherDt}::DATE - '6 day'::INTERVAL, #{lastGatherDt}::DATE, '1 day'::INTERVAL)::DATE, 'YYYYMMDD') AS weeks -- 현재 날짜 기준 최근 일주일 조회
+			) AS dt
+		LEFT OUTER JOIN pt_vf_clct_info_txn pvcit
+			ON (dt.weeks = pvcit.crtra_ymd AND SPLIT_PART(pvcit.trgt_tbl_nm, '_', 2) = 'rprt' <if test='instId != null and instId !=""'> AND pvcit.inst_id = #{instId} </if>)
+		GROUP BY dt.weeks
+		ORDER BY dt.weeks ASC
+	</select>
+
+	<!-- 인증데이터 수집결과 추이 -->
+	<select
+		id="selectCertCollectionResult"
+		parameterType="com.katri.web.particiLounge.model.DataGatherStatusSelectReq"
+		resultType="com.katri.web.particiLounge.model.DataGatherStatusSelectRes">
+		/* dataGatherStatusMapper.selectCertCollectionResult (인증데이터 수집결과 추이) */
+
+		SELECT
+			  TO_CHAR(TO_DATE(dt.weeks, 'YYYYMMDD'), 'MM.DD') AS gatherDt												-- 수집일자
+			, COALESCE(SUM(CASE WHEN pvcit.job_stt_val = 'SUCCESS' THEN pvcit.clct_data_cnt END), 0) AS normalData		-- 정상
+			, COALESCE(SUM(CASE WHEN pvcit.job_stt_val = 'FAILURE' THEN pvcit.clct_data_cnt END), 0) AS abnormalData	-- 비정상
+		FROM
+			(
+				SELECT
+					TO_CHAR(GENERATE_SERIES(#{lastGatherDt}::DATE - '6 day'::INTERVAL, #{lastGatherDt}::DATE, '1 day'::INTERVAL)::DATE, 'YYYYMMDD') AS weeks -- 현재 날짜 기준 최근 일주일 조회
+			) AS dt
+		LEFT OUTER JOIN pt_vf_clct_info_txn pvcit
+			ON (dt.weeks = pvcit.crtra_ymd AND SPLIT_PART(pvcit.trgt_tbl_nm, '_', 2) = 'cert' <if test='instId != null and instId !=""'> AND pvcit.inst_id = #{instId} </if>)
+		GROUP BY dt.weeks
+		ORDER BY dt.weeks ASC
+	</select>
+
+	<!-- 인증이미지 수집결과 추이 -->
+	<select
+		id="selectCertImgCollectionResult"
+		parameterType="com.katri.web.particiLounge.model.DataGatherStatusSelectReq"
+		resultType="com.katri.web.particiLounge.model.DataGatherStatusSelectRes">
+		/* dataGatherStatusMapper.selectCertImgCollectionResult (인증이미지 수집결과 추이) */
+
+		SELECT
+			  TO_CHAR(TO_DATE(dt.weeks, 'YYYYMMDD'), 'MM.DD') AS gatherDt												-- 수집일자
+			, COALESCE(SUM(CASE WHEN pvcit.job_stt_val = 'SUCCESS' THEN pvcit.clct_img_cnt END), 0) AS normalData		-- 정상
+			, COALESCE(SUM(CASE WHEN pvcit.job_stt_val = 'FAILURE' THEN pvcit.clct_img_cnt END), 0) AS abnormalData		-- 비정상
+		FROM
+			(
+				SELECT
+					TO_CHAR(GENERATE_SERIES(#{lastGatherDt}::DATE - '6 day'::INTERVAL, #{lastGatherDt}::DATE, '1 day'::INTERVAL)::DATE, 'YYYYMMDD') AS weeks -- 현재 날짜 기준 최근 일주일 조회
+			) AS dt
+		LEFT OUTER JOIN pt_vf_clct_info_txn pvcit
+			ON (dt.weeks = pvcit.crtra_ymd AND SPLIT_PART(pvcit.trgt_tbl_nm, '_', 2) = 'cert' <if test='instId != null and instId !=""'> AND pvcit.inst_id = #{instId} </if>)
+		GROUP BY dt.weeks
+		ORDER BY dt.weeks ASC
+	</select>
+
+</mapper>

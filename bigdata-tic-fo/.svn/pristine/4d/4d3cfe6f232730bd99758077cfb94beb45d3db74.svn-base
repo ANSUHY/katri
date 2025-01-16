@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="61.249" height="54.25" viewBox="0 0 61.249 54.25">
+    <g data-name="그룹 675">
+        <path data-name="패스 349" d="M171.788 165.107a9.544 9.544 0 1 1 9.544-9.544 9.544 9.544 0 0 1-9.544 9.544z" transform="translate(-141.166 -135.345)" style="stroke-width:2.5px;stroke-linecap:round;stroke-linejoin:round;stroke:#0021ff;fill:none"/>
+    </g>
+    <path data-name="패스 350" d="M159.875 172.683a14.308 14.308 0 0 1 12.459-7.264h0a14.3 14.3 0 0 1 12.458 7.264" transform="translate(-141.712 -130.869)" style="stroke-width:2.5px;stroke-linecap:round;stroke-linejoin:round;stroke:#0021ff;fill:none"/>
+    <path data-name="패스 351" d="M201 182.335a29.375 29.375 0 1 0-50.99 0" transform="translate(-144.883 -137.112)" style="stroke:#1e1e1e;stroke-width:2.5px;stroke-linecap:round;stroke-linejoin:round;fill:none"/>
+    <g data-name="타원 24" transform="translate(26.243 44.25)" style="stroke:#1e1e1e;stroke-width:2.5px;fill:none">
+        <circle cx="5" cy="5" r="5" style="stroke:none"/>
+        <circle cx="5" cy="5" r="3.75" style="fill:none"/>
+    </g>
+</svg>

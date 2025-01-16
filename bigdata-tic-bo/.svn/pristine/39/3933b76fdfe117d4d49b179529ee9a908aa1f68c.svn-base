@@ -1,0 +1,723 @@
+$( document ).ready( function(){
+	/* 숫자 + - */
+	$(document).on("keyup", ".number", function(){
+		if(event.keyCode == 8 || event.keyCode == 9 || event.keyCode == 37 || event.keyCode == 39 || event.keyCode == 46 )
+			return;
+
+		$(this).val($(this).val().replace(/[^0-9\-]/g,""));
+	});
+
+	/* 숫자 + . */
+	$(document).on("keyup", ".number_dot", function(){
+		if(event.keyCode == 8 || event.keyCode == 9 || event.keyCode == 37 || event.keyCode == 39 || event.keyCode == 46 )
+			return;
+
+		$(this).val($(this).val().replace(/[^0-9\.]/g,""));
+	});
+
+	/* 영문과 숫자 입력 */
+	$(document).on("keyup", ".engNumber", function(){
+		if(event.keyCode == 8 || event.keyCode == 9 || event.keyCode == 37 || event.keyCode == 39 || event.keyCode == 46 )
+			return;
+
+		$(this).val($(this).val().replace(/[^0-9\a-zA-Z]/g,""));
+	});
+
+	/* 3자리 콤마 삽입 numberComma */
+	$(document).on("blur, keyup", ".numberComma", function(){
+		$(this).val(fn_addComma($(this).val().replace(/[^0-9]/g,"")));
+	});
+
+	/* 영문과 숫자 입력 */
+	$(document).on("keyup", ".eng", function(){
+		if(event.keyCode == 8 || event.keyCode == 9 || event.keyCode == 37 || event.keyCode == 39 || event.keyCode == 46 )
+			return;
+
+		$(this).val($(this).val().replace(/[^a-zA-Z]/g,""));
+	});
+	/*오직 숫자만*/
+	$(document).on("keyup", ".onlyNum", function(){
+		if(event.keyCode == 8 || event.keyCode == 9 || event.keyCode == 37 || event.keyCode == 39 || event.keyCode == 46 )
+			return;
+
+		$(this).val($(this).val().replace(/[^0-9]/g,""));
+	});
+
+
+	/* 핸드폰 번호 자동 */
+	$(document).on("keyup", ".phone", function(){
+		if(event.keyCode == 8 || event.keyCode == 9 || event.keyCode == 37 || event.keyCode == 39 || event.keyCode == 46 )
+			return;
+		$(this).val( $(this).val().replace(/[^0-9]/g, "").replace(/(^02|^0505|^1[0-9]{3}|^0[0-9]{2})([0-9]+)?([0-9]{4})$/,"$1-$2-$3").replace("--", "-") );
+
+	});
+
+
+	/*달력*/
+	$(document).on("keyup", ".dateform", function(){
+		if(event.keyCode == 8 || event.keyCode == 9 || event.keyCode == 37 || event.keyCode == 39 || event.keyCode == 46 )
+			return;
+
+			//$(this).val($(this).val().replace(/[^0-9\.]/g,""));
+		var flag = UI_NAT_CD;
+
+		if(flag=='DE' || flag=='US'){
+			$(this).val($(this).val().replace(/(\d{2})(\d{2})(\d{4})/, '$1.$2.$3'));
+		}else{
+			$(this).val($(this).val().replace(/(\d{4})(\d{2})(\d{2})/, '$1.$2.$3'));
+		}
+
+	});
+
+});
+
+/************************************************************************
+ * URL에서 파라미터 정보 가지고 오기
+ *************************************************************************/
+(function($){
+		$.QueryString = (function(key){
+			if(key == "") return {};
+			var rtnVal = {};
+
+			for (var i = 0; i < key.length; i++){
+				var p=key[i].split('=');
+				if (p.length != 2) continue;
+				rtnVal[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
+			}
+			return rtnVal;
+		}) (window.location.search.substr(1).split('&'))
+})(jQuery);
+
+/************************************************************************
+ * 빈값 체크 함수
+ *************************************************************************/
+function fn_emptyCheck(val) {
+	return (val == null || val === '' || typeof val == 'undefined' || (Array.isArray(val) && val.length == 0)) ? true : false;
+}
+
+/************************************************************************
+ * 페이징 처리 함수
+ *************************************************************************/
+function fn_makePaging(target, totalCount, currPage, rowCount, fnCallback) {
+	let pagePerBlcok = 10;
+
+	// 페이징 관련 디폴트 값 설정
+	if ($(target).length <= 0) target = ".paginate_complex";
+	if (currPage <= 0) currPage = 1;
+
+	// 총 페이지 수 계산
+	var totalPage = Math.ceil(parseInt(totalCount) / parseInt(rowCount));
+	// 현재 페이지 블럭 번호
+	let currBlock = Math.ceil(parseInt(currPage) / parseInt(pagePerBlcok));
+	// 총 블럭 수
+	let totalBlcok = Math.ceil(parseInt(totalPage) / parseInt(pagePerBlcok));
+
+	// 현재 블록의 시작 페이지
+	let startPage = (currBlock - 1) * pagePerBlcok + 1;
+	// 현재 블록의 마지막 페이지
+	let endPage = startPage + pagePerBlcok - 1;
+	if (endPage > totalPage) endPage = totalPage;
+
+	// paging HTML 생성
+	let pageHtml = "";
+
+	if (currBlock > 1) {
+
+		pageHtml += "<a href='javascript:void(0);' onclick='" + fnCallback + "(1); return false;' class='direction prev'><span></span><span></span> 처음</a> ";
+		pageHtml += "<a href='javascript:void(0);' onclick='" + fnCallback + "(" + ((currBlock - 1) * pagePerBlcok) + "); return false;' class='direction prev'><span></span> 이전</a> ";
+
+	} else {
+
+		if (totalPage > 1) {
+			pageHtml += "<a href='javascript:void(0);' onclick='" + fnCallback + "(1); return false;' class='direction prev'><span></span><span></span> 처음</a> ";
+		}
+
+	}
+
+	if (endPage == 0) {
+		pageHtml += "<strong>1</strong>";
+	} else {
+		for (let i = startPage; i <= endPage; i++) {
+			if (i == currPage) {
+				pageHtml += "<strong>" + i + "</strong> ";
+			} else {
+				pageHtml += "<a href='javascript:void(0);' onclick='" + fnCallback + "(" + i + "); return false;'>" + i + "</a> ";
+			}
+		}
+	}
+
+	if (currBlock < totalBlcok) {
+
+		pageHtml += "<a href='javascript:void(0);' onclick='" + fnCallback + "(" + ((currBlock * pagePerBlcok) + 1) + "); return false;' class='direction next'>다음 <span></span></a> ";
+		pageHtml += "<a href='javascript:void(0);' onclick='" + fnCallback + "(" + totalPage + "); return false;' class='direction next'>끝 <span></span><span></span></a> ";
+
+	} else {
+
+		if (totalPage > 1) {
+			pageHtml += "<a href='javascript:void(0);' onclick='" + fnCallback + "(" + totalPage + "); return false;' class='direction next'>끝 <span></span><span></span></a> ";
+		}
+	}
+
+	$(target).html(pageHtml);
+}
+
+/************************************************************************
+ * 쿠키 생성
+ *************************************************************************/
+function fn_setCookie(cookieName, value, exdays){
+	var exdate = new Date();
+	exdate.setDate(exdate.getDate() + exdays);
+	var cookieValue = escape(value) + ((exdays==null) ? "" : "; expires=" + exdate.toGMTString());
+	document.cookie = cookieName + "=" + cookieValue;
+}
+
+/************************************************************************
+ * 쿠키 삭제
+ *************************************************************************/
+function fn_deleteCookie(cookieName){
+	var expireDate = new Date();
+	expireDate.setDate(expireDate.getDate() - 1);
+	document.cookie = cookieName + "= " + "; expires=" + expireDate.toGMTString();
+}
+
+/************************************************************************
+ * 쿠키 가져오기
+ *************************************************************************/
+function fn_getCookie(cookieName) {
+	cookieName = cookieName + '=';
+	var cookieData = document.cookie;
+	var start = cookieData.indexOf(cookieName);
+	var cookieValue = '';
+	if(start != -1){
+		start += cookieName.length;
+		var end = cookieData.indexOf(';', start);
+		if(end == -1)end = cookieData.length;
+		cookieValue = cookieData.substring(start, end);
+	}
+	return unescape(cookieValue);
+}
+
+$.ajaxSettings.traditional = true;
+/************************************************************************
+ * ajax 통신 함수
+ *************************************************************************/
+function fn_submitAjax( $formObj, jData, returnMethod, sdataType, url, params, asyncType ) {
+	var contentType = "application/x-www-form-urlencoded; charset=utf-8";
+
+	if (typeof url == 'undefined' || url == '') {
+		url = $formObj.attr("action");
+	}
+	var method = "get";
+	if (typeof $formObj != 'undefined' && $formObj != '') {
+		method = $formObj.attr("method");
+
+		if ($formObj.data("json") == 'Y') contentType = "application/json; charset=utf-8";
+	}
+	if (typeof sdataType == 'undefined') {
+		sdataType = 'html';
+	}
+
+	if (fn_emptyCheck(asyncType) && asyncType != false) {
+		asyncType = true;
+	}
+
+	$.ajax({
+		dataType	: sdataType
+		,	type	: method
+		,	url		: url
+		,	cache	: false
+		,	data	: jData
+		,	async	: asyncType
+		,	contentType: contentType
+		,	success	: function(result) {
+			returnMethod(result, params);
+		}
+	})
+}
+/************************************************************************
+ * ajax 파일 업로드 통신 함수
+ *************************************************************************/
+function fn_fileSubmitAjax( $formObj, fileData, returnMethod, sdataType, url ) {
+	if (typeof url == 'undefined' || url == '') {
+		url = $formObj.attr("action");
+	}
+	var method = "post";
+
+	if (typeof sdataType == 'undefined') {
+		sdataType = 'html';
+	}
+
+	var form = $formObj[0];
+	var formData = new FormData(form);
+
+	// 첨부파일 추가
+	if (fileData != null) {
+		var vUploadFileList = Object.keys(fileData);
+		for (var i = 0; i < vUploadFileList.length; i++) {
+			console.log("test>>>", fileData[vUploadFileList[i]]);
+			formData.append('files', fileData[vUploadFileList[i]]);
+		}
+	}
+
+	$.ajax({
+		dataType	: sdataType
+		,	type	: method
+		,	url		: url
+		,	cache	: false
+		,	processData: false
+		,	contentType: false
+		,	data	: formData
+		,	success	: eval(returnMethod)
+	})
+}
+
+/************************************************************************
+ * ajax 기본설정
+ *************************************************************************/
+$.ajaxSetup({
+	beforeSend: function(request) {
+		request.setRequestHeader("ajax-forward", "ajax");
+	}
+	, error: function(xhr, status, error) {
+		$.unblockUI();
+
+		console.log("code:", xhr.status, "\n","message:",xhr.responseText,"\n","error:"+error);
+
+		let result = JSON.parse(xhr.responseText);
+
+		if (fn_emptyCheck(result.resultMessage)) {
+			alert("통신 오류가 발생했습니다.\n관리자에게 문의하십시오.")
+		} else {
+
+			alert(result.resultMessage);
+
+			// 로그인 화면으로 이동(세션이 없는경우)
+			if(result.resultCode == 440) {
+				if(typeof fn_loginMove() == "undefined") {
+					fn_loginMove();
+				}
+			}
+		}
+	}
+
+});
+
+/************************************************************************
+ * 홈 페이지로 이동
+ *************************************************************************/
+function fn_homeMove() {
+	top.location.href = "/";
+}
+
+/************************************************************************
+ * login 페이지로 이동
+ *************************************************************************/
+function fn_loginMove() {
+	top.location.href = "/login/login";
+}
+
+/************************************************************************
+ * 오늘날짜 구하기
+ *************************************************************************/
+function fn_today() {
+	var today = new Date();
+	var dd = today.getDate();
+	var mm = today.getMonth()+1;
+	var yyyy = today.getFullYear();
+
+	if(dd < 10) {
+		dd='0'+dd
+	}
+
+	if(mm < 10) {
+		mm='0'+mm
+	}
+
+	return mm + '.' + dd + '.'+yyyy;
+}
+
+/************************************************************************
+ * 오늘날짜 기준 이후 날짜 구하기
+ *************************************************************************/
+function fn_dayAfterToday(addDay) {
+
+	var today = new Date();
+
+	var loadDt = new Date();
+	loadDt = loadDt.getTime() + (addDay * 24 * 60 * 60 * 1000);
+	today.setTime(loadDt);
+
+	var dd = today.getDate();
+	var mm = today.getMonth()+1;
+	var yyyy = today.getFullYear();
+
+	if(dd < 10) { dd='0'+dd }
+
+	if(mm < 10) { mm='0'+mm }
+
+	return mm + '.' + dd + '.'+yyyy;
+}
+
+/************************************************************************
+ * 주 날짜 변환하기
+ *************************************************************************/
+function fn_getWeekNo(day, mondayStart) {
+
+	var startYearDay;
+	var today;
+	var setYear;
+
+	if(null != day){
+		var tempVal = day.split('\.');
+		startYearDay = '1/1/'+tempVal[2];
+		today = tempVal[1] + '/' + tempVal[0] + '/' + tempVal[2];
+		setYear = tempVal[2];
+	}else{
+
+		var today = new Date();
+		var dd = today.getDate();
+		var mm = today.getMonth()+1;
+		var yyyy = today.getFullYear();
+
+		if(dd < 10) {
+			dd='0'+dd
+		}
+
+		if(mm < 10) {
+			mm='0'+mm
+		}
+
+		startYearDay = '1/1/' + yyyy;
+		today = mm + '/' + dd + '/' + yyyy;
+		setYear = yyyy;
+	}
+
+	var dt = new Date(startYearDay);
+	var tDt = new Date(today);
+
+	var diffDay = (tDt-dt) / 86400000;//1day milisec
+
+	var weekDay = parseInt(diffDay / 7) + 1;
+
+	if( tDt.getDay() < dt.getDay() ){
+		weekDay += 1;
+	}
+
+	if (mondayStart==undefined) mondayStart = false;
+	if (mondayStart) weekDay = Math.ceil((((tDt - dt) / 86400000) - 1 + dt.getDay() + 1) / 7);
+
+	return weekDay + '.' + setYear;
+}
+
+/************************************************************************
+ * 날짜 변환하기
+ *************************************************************************/
+function fn_changeDateFormat(dateVal) {
+	var tempDate = dateVal.split('\.');
+	return tempDate[2] + tempDate[0] + tempDate[1];
+}
+
+/************************************************************************
+ *  DB에서 가져온 DATE 형식에 맞게 변경
+ *  ex)$.fn_dbDateFormat("date_val", ".");
+ *************************************************************************/
+function fn_dbDateFormat(dateVal, stradd) {
+	if( dateVal == null || dateVal == "" || dateVal == undefined ) return "";
+
+	var d = new Date(dateVal)
+
+	var month = '' + (d.getMonth() + 1);
+	if (month.length < 2) {month = '0' + month; }
+	var day = '' + d.getDate()
+	if (day.length < 2) {day = '0' + day;}
+	var year = d.getFullYear();
+
+	return [year, month, day].join(stradd);
+}
+
+
+/************************************************************************
+ * 천단위 콤마 펑션
+ *************************************************************************/
+function fn_addPoint(value) {
+	var value = value + "";
+	value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+	return value;
+}
+
+/************************************************************************
+ * 문자열 일괄 변환
+ *************************************************************************/
+function fn_replaceAll(str, searchStr, replaceStr) {
+	if (!fn_emptyCheck(str))
+		str = str.split(searchStr).join(replaceStr)
+	return str;
+}
+
+/************************************************************************
+ * Cross Site Script로 인해 변경되었던 부분 converting
+ *************************************************************************/
+function fn_convertXss(text){
+
+	if(text != 'undefined' && text != ''  && text != undefined ){
+		 text = text.replace(/&amp;/ig, "&");
+		 text = text.replace(/&lt;/ig, "<");
+		 text = text.replace(/&gt;/ig, ">");
+		 text = text.replace(/&#34;/ig, "\"");
+		 text = text.replace(/&#39;/ig, "\'");
+		 text = text.replace(/null;/ig, "%00");
+		 text = text.replace(/&#37;/ig, "%");
+		 text = text.replace(/&#37;/ig, "%");
+		 text = text.replace(/&quot;/ig, "\"");
+//		 text = text.replace(/&nbsp;/ig, " ");
+		 text = text.replace("<script>", "&lt;script&gt;");
+		 text = text.replace("</script>", "&lt;/script&gt;");
+		 text = text.replace(/&deg;/ig, "°");
+
+	}
+
+	 return text;
+}
+
+/************************************************************************
+ * 소수점 포함 숫자를 세자리마다 컴마를 찍은 형식으로 바꾸어 준다.
+ * @param argStr : 변환시킬 문자열
+ * @param argSize : 소수점 반올림 자릿수
+ * @returns {String}
+ *************************************************************************/
+function fn_addComma(argStr, argSize){
+	if (argStr == null)  return;
+
+	var rule = /[^0-9-.]/g;  // 숫자, 부호 및 소수점 이외의 데이터 제거
+	var argStr = argStr.toString();
+	var boolMinus = false;
+
+	argStr = argStr.replace(rule, "");
+
+	if ($.isNumeric(argStr)) {
+
+		if (parseFloat(argStr) < 0) {
+			boolMinus = true;
+			argStr = (parseFloat(argStr) * -1).toString();
+		}
+
+		if (argStr.indexOf(".") != -1) {
+			var decimal = (argSize != null && argStr.split(".")[1].length > argSize? (parseFloat("0." + argStr.split(".")[1]).toFixed(argSize)).toString().split(".")[1] : argStr.split(".")[1]);
+
+			return (boolMinus ? "-" : "" ) + fn_addFilledComma(argStr.split(".")[0]) + "." + decimal;
+		} else {
+			return (boolMinus ? "-" : "" ) + fn_addFilledComma(argStr);
+		}
+	} else {
+		return;
+	}
+}
+
+/************************************************************************
+ * 테이블 행 json List 타입으로 변환
+ *************************************************************************/
+function fn_tableRowToJson(id) {
+	var listJson = [];
+
+	$("#" + id + " > tr").each(function(index, item){
+		var json = {};
+
+		$(this).find("input").each(function(index2, item2) {
+			json[$(this).attr("name")] = $(this).val()
+		});
+
+		$(this).find("select").each(function(index2, item2) {
+			json[$(this).attr("name")] = $(this).val()
+		});
+
+		$(this).find("textarea").each(function(index3, item3) {
+			json[$(this).attr("name")] = $(this).val()
+		});
+
+		listJson.push(json);
+	});
+
+	return listJson;
+}
+
+
+/************************************************************************
+* 달력 생성기
+* @param sDate 파라미터만 넣으면 1개짜리 달력 생성
+* @example   datePickerSet($("#datepicker"),null, true);
+* @param sDate,
+* @param eDate 2개 넣으면 연결달력 생성되어 서로의 날짜를 넘어가지 않음
+* @example   datePickerSet($("#datepicker1"), $("#datepicker2"), true);
+ *************************************************************************/
+function datePickerSet(sDate, eDate, flags){
+
+	var flag;
+	var sFlag;
+	var eFlag;
+
+	if(flags == true){
+		sFlag = '';
+		eFlag = '';
+		flag = '';
+	}else{
+		flag = flags;
+	}
+
+	if(flag.substr(0,1) == '-'){
+
+		sFlag = flag;
+		eFlag = 'today';
+
+	}else if(flag.substr(0,1) == '+'){
+		sFlag = 'today';
+		eFlag = flag;
+	}else{
+		sFlag = flag;
+		eFlag = flag;
+	}
+
+
+
+	//(-1D:하루전, -1M:한달전, -1Y:일년전), (+1D:하루후, -1M:한달후, -1Y:일년후)
+
+	var nat = UI_NAT_CD;
+	var df = 'yy.mm.dd';
+	var showMonYear = false;
+	/*
+	if(nat == 'US'){
+		df = 'dd.mm.yy';
+		showMonYear = false;
+	}else if(nat == 'DE'){
+		df = 'dd.mm.yy';
+		showMonYear = false;
+	}
+*/
+	var opt = 	{
+
+		 prevText: 'Last',
+			nextText: 'Next',
+			currentText: 'Today',
+			monthNames: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'],
+			monthNamesShort: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'],
+			dayNames: ['일', '월', '화', '수', '목', '금', '토'],
+			dayNamesShort: ['일', '월', '화', '수', '목', '금', '토'],
+			dayNamesMin:['일', '월', '화', '수', '목', '금', '토'],
+			buttonImageOnly: false,
+			changeMonth: true,
+			changeYear: true,
+			showMonthAfterYear:false,
+			dateFormat: df
+
+		};
+	var s = df,
+	from = sDate
+		.datepicker(opt)
+		.datepicker('setDate',sFlag)
+		.on( "change", function() {
+			if(eDate){
+				to.datepicker( "option", "minDate", getDate( this ) );
+			}
+		}),
+
+	to = (eDate ? eDate.datepicker(opt)
+		.datepicker('setDate',eFlag)
+		.on( "change", function() {
+			from.datepicker( "option", "maxDate", getDate( this ) );
+		}) : null);
+
+
+	function getDate( element ) {
+		var date;
+		try {
+			date = $.datepicker.parseDate( df, element.value );
+		} catch( error ) {
+			date = null;
+		}
+
+		return date;
+	}
+}
+
+/************************************************************************
+ * call APP logout
+ *************************************************************************/
+function fn_appLogout() {
+	var userAgent = navigator.userAgent;
+	if(userAgent.match(".*Android.*")) {
+		//안드로이드 웹
+		window.AndroidNative.logout();
+	} else if(userAgent.match(".*iPhone.*") || userAgent.match(".*iPad.*")) {
+		var params = {}
+		webkit.messageHandlers.logout.postMessage(params);
+	}
+}
+
+/************************************************************************
+ * call APP loginFail
+ *************************************************************************/
+function fn_loginFail(err_msg) {
+	var userAgent = navigator.userAgent;
+	if(userAgent.match(".*Android.*")){
+		//안드로이드 웹
+		window.AndroidNative.loginFail(err_msg);
+	}else if(userAgent.match(".*iPhone.*") || userAgent.match(".*iPad.*")){
+		var params = {"msg":err_msg}
+		webkit.messageHandlers.loginFail.postMessage(params);
+	}
+}
+
+/************************************************************************
+ * 가이드 리턴
+ *************************************************************************/
+function fn_returnGuid() {
+	function s4() {
+		return ((1 + Math.random()) * 0x10000 | 0).toString(16).substring(1);
+	}
+	return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+/************************************************************************
+ * 모바일 디바이스 여부 체크
+ *************************************************************************/
+function fn_checkMobileDevice() {
+	var mobileKeyWords = new Array('Android', 'iPhone', 'iPod', 'BlackBerry', 'Windows CE', 'SAMSUNG', 'LG', 'MOT', 'SonyEricsson');
+	for (var info in mobileKeyWords) {
+		if (navigator.userAgent.match(mobileKeyWords[info]) != null) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/************************************************************************
+ * 모바일 디바이스명 확인
+ *************************************************************************/
+function fn_mobileDeviceNm() {
+	var mobileKeyWords = new Array('Android', 'iPhone', 'iPod', 'BlackBerry', 'Windows CE', 'SAMSUNG', 'LG', 'MOT', 'SonyEricsson');
+	for (var info in mobileKeyWords) {
+		if (navigator.userAgent.match(mobileKeyWords[info]) != null) {
+			return mobileKeyWords[info];
+		}
+	}
+	return "windows";
+}
+
+/************************************************************************
+ * 공통 팝업
+ *************************************************************************/
+function fn_openPop(url, name, width, height, centerYn) {
+
+	let option = ("toolbar=no, memubar=no, scrollbars=no, status=no, location=0, resizable=no, width=" + width + ", height=" + height);
+
+	if(centerYn === "Y"){ //센터로 여는거면
+		let popupX = Math.ceil(( window.screen.width - width )/2) + window.screenLeft;	// 듀얼모니터 처리
+		let popupY = Math.ceil(( window.screen.height - height )/2);
+
+		option += (", left=" + popupX + ", top=" + popupY);
+
+	}
+
+	/* 팝업 열기 */
+	window.open(url, name, option);
+}
+

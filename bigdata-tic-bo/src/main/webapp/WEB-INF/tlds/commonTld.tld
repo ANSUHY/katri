@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<taglib xmlns="http://java.sun.com/xml/ns/j2ee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee; http://java.sun.com/xml/ns/j2ee/web-jsptaglibrary_2_0.xsd"
+	version="2.0">
+	<description>Common Custom Tag Library Descriptor</description>
+	<display-name>Common Custom Tag Library Descriptor</display-name>
+	<tlib-version>1.0</tlib-version>
+	<short-name>commonTld</short-name>
+	<uri>/WEB-INF/tlds</uri>
+
+	<tag>
+		<description>select, checkbox, radio 태그 생성</description>
+		<name>makeTag</name>
+		<tag-class>com.katri.common.tlds.MakeTag</tag-class>
+		<body-content>empty</body-content>
+		<attribute>
+			<description>태그타입(select, checkbox, radio)</description>
+			<name>tagType</name>
+			<required>true</required>
+		</attribute>
+		<attribute>
+			<description>태그명</description>
+			<name>name</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<description>태그ID</description>
+			<name>tagId</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<description>태그class</description>
+			<name>cls</name>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<description>태그style</description>
+			<name>style</name>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<description>태그event</description>
+			<name>event</name>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<description>선택값</description>
+			<name>selVal</name>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<description>태그목록이 있는 경우 Map의 code name(default : CODE_ID)</description>
+			<name>codeId</name>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<description>태그목록이 있는 경우 Map의 code value(default : CODE_NM)</description>
+			<name>codeNm</name>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<description>태그를 감싸는 label의 class(checkbox와 radio에서만 사용)</description>
+			<name>labelCls</name>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<description>태그disabled(disabled 또는 true/false)</description>
+			<name>disabled</name>
+		</attribute>
+		<attribute>
+			<description>태그readonly(readonly 또는 true/false)</description>
+			<name>readonly</name>
+		</attribute>
+		<attribute>
+			<description>태그기본값사용여부(Y 또는 N, default : N)</description>
+			<name>defaultUseYn</name>
+		</attribute>
+		<attribute>
+			<description>태그기본값명(default : 선택하세요(select) / 전체(checkbox, radio))</description>
+			<name>defaultNm</name>
+		</attribute>
+		<attribute>
+			<description>태그기본값</description>
+			<name>defaultVal</name>
+		</attribute>
+		<attribute>
+			<description>태그기본체크값</description>
+			<name>defaultChk</name>
+		</attribute>
+		<attribute>
+			<description>공통코드</description>
+			<name>code</name>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<description>태그목록문자열(코드 구분은 ','로 하며, 코드값과 코드명은 ':'으로 구분 / 예:[코드값1]:[코드명1],[코드값2]:[코드명2])</description>
+			<name>strList</name>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<description>태그목록(List&lt;Map&lt;String, Object&gt;&gt;)</description>
+			<name>list</name>
+			<rtexprvalue>true</rtexprvalue>
+			<type>List</type>
+		</attribute>
+		<attribute>
+			<description>선택값문자열(콤마로 구분한 문자열, checkbox에서만 사용)</description>
+			<name>selValArrStr</name>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<description>선택값목록(List&lt;String&gt;, checkbox에서만 사용)</description>
+			<name>listSelVal</name>
+			<rtexprvalue>true</rtexprvalue>
+			<type>List</type>
+		</attribute>
+		<attribute>
+			<description>선택값배열(String[], checkbox에서만 사용)</description>
+			<name>arraySelVal</name>
+			<rtexprvalue>true</rtexprvalue>
+			<type>String[]</type>
+		</attribute>
+		<attribute>
+			<description>제외값문자열(코드 구분은 ','로 하며, checkbox에서만 사용)</description>
+			<name>strExceptVal</name>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+	<tag>
+		<description>문자열 포맷팅</description>
+		<name>stringFormat</name>
+		<tag-class>com.katri.common.tlds.StringFormat</tag-class>
+		<body-content>empty</body-content>
+		<attribute>
+			<description>타입(date, money, decimal, phone, decimal_comma, masking)</description>
+			<name>type</name>
+			<required>true</required>
+		</attribute>
+		<attribute>
+			<description>변환할 문자열(delimeter 없는 문자열 / date에서 현재일시는 today 입력)</description>
+			<name>value</name>
+			<required>true</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<description>형식(date default:YYYY-MM-DD, money default:###,###, masking : name, phone, id, email, birthday, address)</description>
+			<name>format</name>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<description>소수점 출력 자릿수</description>
+			<name>decimalLen</name>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+</taglib>

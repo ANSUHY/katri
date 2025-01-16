@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.common.tlds.mapper.CommonTldMapper">
+
+	<!-- 공통코드 목록 조회 -->
+	<select id="selectCodeList" parameterType="com.katri.common.tlds.model.CommonTldReq" resultType="com.katri.common.tlds.model.CommonTldRes">
+		/* CommonTldMapper.selectCodeList (공통코드 목록 조회) */
+
+		SELECT
+			tcc.comn_cd AS code_id
+			, tcc.comn_cd_nm AS code_nm
+			, tcc.comn_cd_val AS code_val
+		FROM tb_comn_cd tcc
+		WHERE tcc.comn_grp_cd = #{code}
+			AND tcc.use_yn ='Y' /* '사용' 인것만*/
+		ORDER BY tcc.srt_seq asc, tcc.comn_cd asc
+	</select>
+
+</mapper>

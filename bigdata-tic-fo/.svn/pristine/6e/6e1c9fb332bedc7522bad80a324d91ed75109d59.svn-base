@@ -1,0 +1,290 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="c"		uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="cm" 		uri="/WEB-INF/tlds" %>
+<%@ taglib prefix="spring"  uri="http://www.springframework.org/tags" %>
+<%@ page import="com.katri.common.Const" %>
+<c:set var="POST_TYPE_CD_INQUIRY" value="<%=Const.Code.PostTypeCd.INQUIRY%>" />
+<c:set var="ROW_COUNT" value="<%=Const.Paging.ROW_COUNT%>" />
+
+<c:set var="USER_TYPE_INST_MASTER" value="<%=Const.Code.UserTyCd.INST_MASTER%>" />
+<c:set var="USER_TYPE_ENT_MASTER" 	value="<%=Const.Code.UserTyCd.ENT_MASTER%>" />
+
+<style>
+	div.re-cont p span:after {background:none !important;}
+
+	.one-line {
+		idsplay:inline-block;
+		overflow: hidden;
+		white-space:nowrap;
+		text-overflow: ellipsis;
+		width:800px;
+	}
+
+</style>
+
+<script type="text/javascript">
+
+	$(document).ready(function(){
+		//목록, 페이지 초기화
+		$("#inquiryArea").html("");
+
+		//목록 조회
+		fn_getInquiryList($("#currPage").val());
+
+		/* 셀렉트 박스 검색 */
+		$("#selectbox-inquiry").on("change", function(){
+			/* 선택된 공통 코드 값 frm 에 셋팅*/
+			$("#nttClfCd").val($("#selectbox-inquiry option:selected").val());
+			fn_inquirySearch();
+		});
+
+		//페이지 초기화
+		if($("#currPage").val() === "0") {
+			$("#currPage").val(1);
+		}
+
+		//더보기
+		$(".btn-wr .btn-more").on("click", function(){
+			//페이지 증가
+			const chgPage = parseInt($("#chgPage").val()) + 1;
+			$("#chgPage").val(chgPage);
+
+			const currPage = parseInt($("#currPage").val()) + 1;
+			$("#currPage").val(currPage);
+
+			//더보기는 10개씩 조회
+			$("#rowCount").val(${ROW_COUNT});
+
+			//목록 조회
+			fn_getInquiryList(chgPage);
+		});
+
+		//답변 조회
+		$(document).on("click", "li.li-q", function(key) {
+			$(this).next("li.li-a").stop().slideToggle(300);
+			$(this).toggleClass('on').siblings().removeClass('on');
+			$(this).next("li.li-a").siblings("li.li-a").slideUp(300); // 1개씩 펼치기
+			//조회수 올리기
+			fn_addInquiryViewCount(this);
+		});
+	});
+
+	/*
+	 * 함수명	: fn_getInquiryList
+	 * 설 명	: 1:1 문의 리스트 가져오기
+	 */
+	function fn_getInquiryList(page) {
+		if(page == ''){
+			page = 1;
+		}
+		//현재 페이지
+		$("#currPage").val(page);
+		//변경 페이지
+		$("#chgPage").val() < 1 ? $("#chgPage").val(1) : "";
+
+		$.blockUI();
+
+		$.ajax({
+			url		: "/mypage/inquiry/getInquiryList"
+		  , type	: "GET"
+		  , data	: $("#frm_inquiry").serialize()
+		  , async	: "true"
+		  , dataType: "json"
+		  , success	: function(jsonData, textStatus, jqXHR) {
+			  $.unblockUI();
+
+			  let html = '';
+
+			  const noData = "<spring:message code='result-message.messages.mypage.inquiry.message.common.no.data'/>"; // 등록된 1:1 문의가 없습니다.
+			  const noResult = "<spring:message code='result-message.messages.ctnt.message.common.no.search'/>"; // 검색 결과가 없습니다.
+
+			  if(jsonData.resultCode == 200) {
+				  //더보기 버튼 초기화
+				  $(".btn-wr .btn-more").show();
+
+				  //################
+				 // const bigdataList	= "#board-List .one-list:not(.active)";
+				  const totalCount	= jsonData.data.totCnt; 	 //총 길이
+				  const length		= jsonData.data.list.length; //조회된 길이
+				  const rowCount	= $("#rowCount").val();
+
+				  if(jsonData.data.list !== null && jsonData.data.list.length > 0){
+					  //버튼 숨기기
+					  if(Math.ceil(totalCount/${ROW_COUNT}) === parseInt($("#chgPage").val())) {
+						  $(".btn-wr .btn-more").hide();
+					  }
+
+					  //데이터 O
+					  $.each(jsonData.data.list, function(index, data){
+						  html	+= fn_returnInquiryList(data);
+					 });
+				  } else {
+					  //데이터 X
+					  $(".btn-wr .btn-more").hide();
+					  html += "<li class='no-data'>"
+					  html +=  ($("#selectbox-inquiry").val() === '' ? noData : noResult)
+					  html += "</li>"
+				  }
+
+			  // 리스트 뿌리기
+			  $("#inquiryArea").append(html);
+
+		  } else {
+			  alert(result.resultMessage);
+		  }
+		 }
+	 });
+	}
+
+	/*
+	 * 함수명	: fn_returnInquiryList
+	 * 설 명	: 1:1 문의 리스트 html 만들기
+	 */
+	function fn_returnInquiryList(data) {
+		let returnHtml = '';
+
+		returnHtml	+= " <li class='li-q board-tr' value='" + data.nttSn + "'>";
+		/* 답변 O/X */
+		data.nttAnsYn	== 'Y' ? returnHtml += "<span class='ok'>답변<br class='pc-block'>완료</span>" : returnHtml += "<span class='ing'>답변<br class='pc-block'>대기</span>";
+		returnHtml	+= "<p class='one-line'>" + data.nttCn  + "</p><em class='date'>" + data.crtDt.substring(0,10) +"</em></li>";
+		returnHtml	+= "<li class='li-a' >"
+		returnHtml	+= "<div class='q-cont'>";
+		returnHtml	+= 	"<span>문의</span><span>"+ data.comnCdNm +"</span>";
+		returnHtml	+=  "<p style='white-space:break-spaces;'>" + data.nttCn +"</p>";
+
+		if(data.nttAnsYn == 'Y') {
+
+			returnHtml	+= "<div class='re-cont'>";
+			returnHtml	+= "<span class='ok'>답변완료</span><span>" + data.nttAnsCrtDt.substring(0,10) +"</span>"
+			returnHtml	+= "<p>" + fn_convertXss(data.nttAnsCn) + "</p>";
+			returnHtml	+= "</div>";
+			returnHtml	+= "</li>";
+
+		} else {
+			returnHtml	+= "</li>";
+		}
+
+        return returnHtml;
+	}
+
+	/*
+	 * 함수명	: fn_goInquiryReg
+	 * 설 명	: 1:1 문의 등록 화면 이동
+	 */
+	function fn_goInquiryReg() {
+		$("#frm_inquiry").attr("action", "/mypage/inquiry/inquiryReg")
+		$("#frm_inquiry").attr("method", "GET")
+		$("#frm_inquiry").submit();
+	}
+
+	 /*
+	 * 함수명	: fn_addInquiryViewCount
+	 * 설 명 : 조회수 증가
+	 */
+	function fn_addInquiryViewCount(e) {
+		 let nttSn = $(e).val();
+
+		 if($(e).hasClass('on') === true) {
+			$.ajax({
+				url		: "/mypage/inquiry/addViewCount"
+			  , method	: "POST"
+			  , data	: { "num" : nttSn }
+			  , success	: function(jsonData){
+				if(jsonData.resultCode != 200){
+					alert("<spring:message code='result-message.messages.common.message.error'/>"); //에러가 발생했습니다. 관리자에게 문의해 주십시오.
+				}
+			  }
+			})
+		} else {
+			return;
+		}
+	}
+
+	/*
+	 * 함수명	: fn_inquirySearch
+	 * 설 명 : 1:1 문의 검색
+	 */
+	 function fn_inquirySearch() {
+		 $("#inquiryArea").html("");
+		 $("#rowCount").val(${ROW_COUNT});
+		 $("#currPage").val(1);
+		 $("#chgPage").val(1);
+
+		 //검색
+		 fn_getInquiryList(1);
+	 }
+
+
+</script>
+
+<form id="frm_inquiry" name="frm_inquiry">
+	<input type="hidden" id="currPage"	name="currPage"	value="${ inquiryData.currPage }"/>
+	<input type="hidden" id="nttTyCd"	name="nttTyCd"	value="${ POST_TYPE_CD_INQUIRY }"/>
+	<input type="hidden" id="nttClfCd"	name="nttClfCd"	value="${ inquiryData.nttClfCd }"/> <!-- 여기에 셀렉트 박스 바뀔때 값 넣어주기 -->
+	<input type="hidden" id="rowCount"	name="rowCount" value="${ inquiryData.rowCount }"/>
+	<input type="hidden" id="chgPage"   name="chgPage"  value="${ inquiryData.chgPage }"/>
+</form>
+
+
+  <!-- ===== header ====== -->
+    <header id="header">
+        <div id="sub-mv" class="sub-mypage">
+            <div class="inner">
+              <h2>마이페이지</h2>
+              <div class="sub-obj">오브젝트</div>
+          </div>
+        </div>
+    </header>
+    <!-- ===== /header ====== -->
+
+
+	<!-- ===== container ====== -->
+    <div id="container">
+
+
+        <!--container-->
+        <div id="cont" class="cont-mypage">
+            <!--서브메뉴-->
+			<c:choose>
+				<c:when test="${userInfoData.userTyCd eq USER_TYPE_INST_MASTER }">
+					<ul class="sub-tabs grid3">
+						<li class=""><a href="/mypage/infoMng/infoMngPwdChk">기관정보관리</a></li>
+						<li class=""><a href="/mypage/accountMng/accountMngList">기관계정관리</a></li>
+						<li class="on"><a href="/mypage/inquiry/inquiryList">1:1문의</a></li>
+					</ul>
+				</c:when>
+				<c:when test="${userInfoData.userTyCd eq USER_TYPE_ENT_MASTER }">
+					<ul class="sub-tabs grid3">
+						<li class=""><a href="/mypage/infoMng/infoMngPwdChk">기업정보관리</a></li>
+						<li class=""><a href="/mypage/accountMng/accountMngList">기업계정관리</a></li>
+						<li class="on"><a href="/mypage/inquiry/inquiryList">1:1문의</a></li>
+					</ul>
+				</c:when>
+				<c:otherwise>
+					<ul class="sub-tabs grid2">
+						<li class=""><a href="/mypage/infoMng/infoMngPwdChk">회원정보관리</a></li>
+						<li class="on"><a href="/mypage/inquiry/inquiryList">1:1문의</a></li>
+					</ul>
+				</c:otherwise>
+			</c:choose>
+            <!--1:1문의-->
+            <div class="board-one-list-wr">
+              <div class="one-sch-wr" id="board-List">
+                <label>문의유형</label>
+                <select class="select" id="selectbox-inquiry">
+                	<option value="">전체</option>
+                		<c:forEach items="${categoryList}" var="categoryList">
+                			<option value="${categoryList.comnCd}">${categoryList.comnCdNm}</option>
+                		</c:forEach>
+                </select>
+              </div>
+              <ul class="one-list" id="inquiryArea">
+              </ul>
+            </div>
+            <div class="btn-wr" id="inq-scroll">
+              <a href="javascript:void(0)" class="btn cancel btn-more" id="btn-inquiry-more">더보기<i></i></a>
+              <a href="javascript:void(0)" class="btn" id="btn-reg-inquiry" onclick="fn_goInquiryReg()">1:1문의하기</a>
+            </div>
+        </div>
+    </div>
+    <!-- ===== /container ====== -->

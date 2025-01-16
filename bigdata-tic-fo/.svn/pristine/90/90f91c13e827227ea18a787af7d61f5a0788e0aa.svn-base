@@ -1,0 +1,948 @@
+package com.katri.web.platformSvc.myData.service;
+
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
+
+import com.katri.common.Const;
+import com.katri.common.GlobalExceptionHandler.CustomMessageException;
+import com.katri.common.util.EncryptUtil;
+import com.katri.common.util.SessionUtil;
+import com.katri.web.auth.mapper.LoginMapper;
+import com.katri.web.comm.model.FileDto;
+import com.katri.web.comm.model.QRReq;
+import com.katri.web.comm.service.QRService;
+import com.katri.web.platformSvc.myData.mapper.MyDataMapper;
+import com.katri.web.platformSvc.myData.model.MyDataSaveReq;
+import com.katri.web.platformSvc.myData.model.MyDataSaveRes;
+import com.katri.web.platformSvc.myData.model.MyDataSelectReq;
+import com.katri.web.platformSvc.myData.model.MyDataSelectRes;
+import com.nhncorp.lucy.security.xss.XssPreventer;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(rollbackFor = {Exception.class})
+public class MyDataService {
+
+	/** QR Service */
+	private final QRService qrService;
+
+	/** 로그인 Mapper */
+	private final LoginMapper loginMapper;
+
+	/** [플랫폼 서비스] > [내 손안의 시험인증] Mapper */
+	private final MyDataMapper myDataMapper;
+
+	/** FO 도메인 주소  */
+	@Value("${domain.web.fo}")
+	String domainWebFo;
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [서비스 안내] 각 페이지에 맞는 데이터 조회
+	 * @param MyDataSelectReq
+	 * @return MyDataSelectRes 페이지콘텐츠 정보
+	 * @throws Exception
+	*****************************************************/
+	public MyDataSelectRes getIntroSvcData(MyDataSelectReq myDataSelectReq) throws Exception{
+
+		// [[0]]. 반환할 정보들
+		MyDataSelectRes introSvcData = null;
+
+		// [[1]]. [플랫폼 서비스] > [내 손안의 시험인증] > [서비스 안내] 각 페이지에 맞는 데이터 조회
+		introSvcData = myDataMapper.selectIntroSvcData(myDataSelectReq);
+		/* 딱히 할 필요 없을듯
+ 		if(myDataData == null) {
+			throw new CustomMessageException("result-message.messages.common.message.no.data"); //데이터가 없습니다.
+		}
+		*/
+
+		// [[2]]. 메뉴구성내용 UNESCAPE 처리
+		if(introSvcData != null) {
+			String menuCptnCn = introSvcData.getMenuCptnCn();
+			introSvcData.setMenuCptnCnUnescape(XssPreventer.unescape(menuCptnCn));
+		}
+
+		return introSvcData;
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 리스트 개수
+	 * @param myCertSelectReq
+	 * @return Integer [나의 시험인증 정보조회 : 인증] 리스트 개수
+	 * @throws Exception
+	*****************************************************/
+	public Integer getMyCertCnt(MyDataSelectReq myCertSelectReq) throws Exception{
+
+		// [[0]]. ========= 반환할 정보들
+		int myCertCtnt = 0;
+
+		// [[1]]. ========= validataion check
+		/* 1-1. 기업그룹일련번호 */
+		if( SessionUtil.getLoginEntGrpSn() == null  || SessionUtil.getLoginEntGrpSn() == 0 ){
+			throw new CustomMessageException("필수값 오류_로그인 사용자 기업그룹일련번호");
+		}
+
+		// [[2]]. ========= 개수 조회
+		myCertSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());	//기업그룹일련번호
+		myCertCtnt = myDataMapper.selectMyCertCount(myCertSelectReq);
+
+		return myCertCtnt;
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 리스트
+	 * @param myCertSelectReq
+	 * @return List<MyDataSelectRes> [나의 시험인증 정보조회 : 인증] 리스트
+	 * @throws Exception
+	*****************************************************/
+	public List<MyDataSelectRes> getMyCertList(MyDataSelectReq myCertSelectReq) throws Exception{
+
+		// [[0]]. ========= 반환할 정보들
+		List<MyDataSelectRes> myCertList = null;
+
+		// [[1]]. ========= validataion check
+		/* 1-1. 기업그룹일련번호 */
+		if( SessionUtil.getLoginEntGrpSn() == null  || SessionUtil.getLoginEntGrpSn() == 0 ){
+			throw new CustomMessageException("필수값 오류_로그인 사용자 기업그룹일련번호");
+		}
+
+		// [[2]]. ========= 리스트 조회
+		myCertSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());	//기업그룹일련번호
+		myCertList = myDataMapper.selectMyCertList(myCertSelectReq);
+
+		return myCertList;
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 리스트(Map으로 반환)
+	 * @param myCertSelectReq
+	 * @return List<Map<String, Object>> [나의 시험인증 정보조회 : 인증] 리스트(Map으로 반환)
+	 * @throws Exception
+	*****************************************************/
+	public List<Map<String, Object>> getMyCertListMap(MyDataSelectReq myCertSelectReq) throws Exception{
+
+		// [[0]]. ========= 반환할 정보들
+		List<Map<String, Object>> myCertList = null;
+
+		// [[1]]. ========= validataion check
+		/* 1-1. 기업그룹일련번호 */
+		if( SessionUtil.getLoginEntGrpSn() == null  || SessionUtil.getLoginEntGrpSn() == 0 ){
+			throw new CustomMessageException("필수값 오류_로그인 사용자 기업그룹일련번호");
+		}
+
+		// [[2]]. ========= 리스트 조회
+		myCertSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());	//기업그룹일련번호
+		myCertList = myDataMapper.selectMyCertListMap(myCertSelectReq);
+
+		return myCertList;
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 상세
+	 * @param myCertSelectReq
+	 * @return MyDataSelectRes [인증데이터 조회]  상세
+	 * @throws Exception
+	*****************************************************/
+	public MyDataSelectRes getMyCertDetail(MyDataSelectReq myCertSelectReq) throws Exception {
+
+		// [[0]]. 반환할 정보들
+		MyDataSelectRes myCertDetail = null;
+
+		// [[1]]. Validation check
+		/* 1-1. TAGET 기관아이디 */
+		if(myCertSelectReq.getTargetInstId() == null  || "".equals(myCertSelectReq.getTargetInstId())) {
+			throw new CustomMessageException("result-message.messages.common.message.wrong.appr"); //잘못된 접근입니다.
+		}
+		/* 1-2. TAGET 인증번호 */
+		if(myCertSelectReq.getTargetCertNo() == null  || "".equals(myCertSelectReq.getTargetCertNo())) {
+			throw new CustomMessageException("result-message.messages.common.message.wrong.appr"); //잘못된 접근입니다.
+		}
+		/* 1-3. 기업그룹일련번호 */
+		if( SessionUtil.getLoginEntGrpSn() == null  || SessionUtil.getLoginEntGrpSn() == 0 ){
+			throw new CustomMessageException("필수값 오류_로그인 사용자 기업그룹일련번호");
+		}
+
+		// [[2]]. 상세 조회
+		myCertSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());	//기업그룹일련번호
+		myCertDetail = myDataMapper.selectMyCertDetail(myCertSelectReq);
+
+		if(myCertDetail != null) {
+
+			//기관명(영문)_소문자
+			myCertDetail.setInstEngNmLower(myCertDetail.getInstEngNm().toLowerCase());
+
+			// [[3]]. 이미지 파일 정보 셋팅
+			List<String> imgNames = myDataMapper.selectMyCertImgList(myCertSelectReq);
+			List<String> newImgNames = new ArrayList<>();
+			for(String imgName : imgNames) {
+				imgName =  URLEncoder.encode(imgName, "UTF-8");
+				newImgNames.add(imgName);
+			}
+			myCertDetail.setImgNameList(newImgNames);
+
+		} else {
+
+			// 반환값 셋팅
+			throw new CustomMessageException("result-message.messages.common.message.no.data"); //데이터가 없습니다.
+
+		}
+
+		return myCertDetail;
+
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] QR이미지파일 정보(없으면 저장 후 파일정보)
+	 * @param myCertSelectReq
+	 * @return FileDto [QR이미지파일 정보]
+	 * @throws Exception
+	*****************************************************/
+	public FileDto getMyCertQrImgFileData(MyDataSelectReq myCertSelectReq) throws Exception {
+
+		// [[0]]. 반환할 정보들
+		FileDto fileDto = null;
+
+		// [[1]]. Validation check
+		/* 1-1. TAGET 기관아이디 */
+		if(myCertSelectReq.getTargetInstId() == null  || "".equals(myCertSelectReq.getTargetInstId())) {
+			throw new CustomMessageException("필수값 오류_기관아이디");
+		}
+		/* 1-2. TAGET 인증번호 */
+		if(myCertSelectReq.getTargetCertNo() == null  || "".equals(myCertSelectReq.getTargetCertNo())) {
+			throw new CustomMessageException("필수값 오류_인증번호");
+		}
+
+		// [[2]]. 값 지정
+		/* 2-1. 참조구분값 (ex. T006||SU071294-17002B) */
+		String qrKey = myCertSelectReq.getTargetInstId() + "||" + myCertSelectReq.getTargetCertNo();
+
+		/* 2-2. QR에서 가르키는 URL (ex. http://localhost:18083/svc/certInfo/{암호화된값}) */
+		String encQrKey =  (URLEncoder.encode( EncryptUtil.encryptAes256(qrKey).replaceAll("\\/", "-SLASH-"), "UTF-8"));
+		String qrUrl = domainWebFo + "/svc/certInfo/" + encQrKey;
+
+		/* 2-3. qrFileNm (ex. qr_image_SU071294-17002B) */
+		String qrFileNm = "qr_image_" + myCertSelectReq.getTargetCertNo();
+
+		// [[3]]. QR DTO로 생성
+		QRReq qrReq = new QRReq();
+		qrReq.setQrRefDivVal(qrKey);
+		qrReq.setQrUrl(qrUrl);
+		qrReq.setQrFileNm(qrFileNm);
+
+		// [[4]]. QR 파일 정보 조회 (없으면 저장 후 파일정보)
+		fileDto = qrService.getQRFileData(qrReq);
+
+		return fileDto;
+
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 추가정보 등록,수정
+	 * @param myDataSaveReq 서비스 신청 정보
+	 * @return MyDataSaveRes
+	 * @throws Exception
+	*****************************************************/
+	public MyDataSaveRes mergeCertAditInfoMng(MyDataSaveReq myDataSaveReq) throws Exception {
+
+		// ========= [[0]]. 반환할 정보들 & 변수 지정
+		MyDataSaveRes myDataSaveRes = new MyDataSaveRes();
+
+		// ========= [[1]]. validataion check
+		/* 1-1. 저장하는 사용자가 [기업마스터] 인지 체크 */
+		if( ! Const.Code.UserTyCd.ENT_MASTER.equals(SessionUtil.getLoginUserTyCd()) ){
+			throw new CustomMessageException("result-message.messages.login.message.not.auth"); //''해당 아이디에 권한이 부여되어 있지 않습니다. 관리자에게 문의하여 주십시요.'
+		}
+		/* 1-2. 기관아이디 */
+		if(myDataSaveReq.getInstId() == null  || "".equals(myDataSaveReq.getInstId())) {
+			throw new CustomMessageException("필수값 오류_기관아이디");
+		}
+		/* 1-3. 인증번호 */
+		if(myDataSaveReq.getCertNo() == null  || "".equals(myDataSaveReq.getCertNo())) {
+			throw new CustomMessageException("필수값 오류_인증번호");
+		}
+
+		// ========= [[2]]. [인증서추가정보관리] 등록
+		myDataSaveReq.setCrtrId(SessionUtil.getLoginUserId()); 		//생성자아이디
+		myDataMapper.mergeCertAditInfoMng(myDataSaveReq);
+
+		return myDataSaveRes;
+
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 리스트 개수
+	 * @param myRprtSelectReq
+	 * @return Integer [나의 시험인증 정보조회 : 성적서] 리스트 개수
+	 * @throws Exception
+	*****************************************************/
+	public Integer getMyRprtCnt(MyDataSelectReq myRprtSelectReq) throws Exception{
+
+		// [[0]]. ========= 반환할 정보들
+		int myRprtCtnt = 0;
+
+		// [[1]]. ========= validataion check
+		/* 1-1. 기업그룹일련번호 */
+		if( SessionUtil.getLoginEntGrpSn() == null  || SessionUtil.getLoginEntGrpSn() == 0 ){
+			throw new CustomMessageException("필수값 오류_로그인 사용자 기업그룹일련번호");
+		}
+
+		// [[2]]. ========= 개수 조회
+		myRprtSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());	//기업그룹일련번호
+		myRprtCtnt = myDataMapper.selectMyRprtCount(myRprtSelectReq);
+
+		return myRprtCtnt;
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 리스트
+	 * @param myRprtSelectReq
+	 * @return List<MyDataSelectRes> [나의 시험인증 정보조회 : 성적서] 리스트
+	 * @throws Exception
+	*****************************************************/
+	public List<MyDataSelectRes> getMyRprtList(MyDataSelectReq myRprtSelectReq) throws Exception{
+
+		// [[0]]. ========= 반환할 정보들
+		List<MyDataSelectRes> myRprtList = null;
+
+		// [[1]]. ========= validataion check
+		/* 1-1. 기업그룹일련번호 */
+		if( SessionUtil.getLoginEntGrpSn() == null  || SessionUtil.getLoginEntGrpSn() == 0 ){
+			throw new CustomMessageException("필수값 오류_로그인 사용자 기업그룹일련번호");
+		}
+
+		// [[2]]. ========= 리스트 조회
+		myRprtSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());	//기업그룹일련번호
+		myRprtList = myDataMapper.selectMyRprtList(myRprtSelectReq);
+
+		return myRprtList;
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 리스트(Map으로 반환)
+	 * @param myRprtSelectReq
+	 * @return List<Map<String, Object>> [나의 시험인증 정보조회 : 성적서] 리스트(Map으로 반환)
+	 * @throws Exception
+	*****************************************************/
+	public List<Map<String, Object>> getMyRprtListMap(MyDataSelectReq myRprtSelectReq) throws Exception{
+
+		// [[0]]. ========= 반환할 정보들
+		List<Map<String, Object>> myRprtList = null;
+
+		// [[1]]. ========= validataion check
+		/* 1-1. 기업그룹일련번호 */
+		if( SessionUtil.getLoginEntGrpSn() == null  || SessionUtil.getLoginEntGrpSn() == 0 ){
+			throw new CustomMessageException("필수값 오류_로그인 사용자 기업그룹일련번호");
+		}
+
+		// [[2]]. ========= 리스트 조회
+		myRprtSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());	//기업그룹일련번호
+		myRprtList = myDataMapper.selectMyRprtListMap(myRprtSelectReq);
+
+		return myRprtList;
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 상세
+	 * @param myCertSelectReq
+	 * @return MyDataSelectRes [인증데이터 조회]  상세
+	 * @throws Exception
+	*****************************************************/
+	public MyDataSelectRes getMyRprtDetail(MyDataSelectReq myRprtSelectReq) throws Exception {
+
+		// [[0]]. 반환할 정보들
+		MyDataSelectRes myRprtDetail = null;
+
+		// [[1]]. Validation check
+		/* 1-1. TAGET 기관아이디 */
+		if(myRprtSelectReq.getTargetInstId() == null  || "".equals(myRprtSelectReq.getTargetInstId())) {
+			throw new CustomMessageException("result-message.messages.common.message.wrong.appr"); //잘못된 접근입니다.
+		}
+		/* 1-2. TAGET 기관접수번호 */
+		if(myRprtSelectReq.getTargetInstRcptNo() == null  || "".equals(myRprtSelectReq.getTargetInstRcptNo())) {
+			throw new CustomMessageException("result-message.messages.common.message.wrong.appr"); //잘못된 접근입니다.
+		}
+		/* 1-3. TAGET 성적서번호 */
+		if(myRprtSelectReq.getTargetRprtNo() == null  || "".equals(myRprtSelectReq.getTargetRprtNo())) {
+			throw new CustomMessageException("result-message.messages.common.message.wrong.appr"); //잘못된 접근입니다.
+		}
+		/* 1-4. 로그인한 기업그룹일련번호 */
+		if( SessionUtil.getLoginEntGrpSn() == null  || SessionUtil.getLoginEntGrpSn() == 0 ){
+			throw new CustomMessageException("필수값 오류_로그인 사용자 기업그룹일련번호");
+		}
+
+		// [[2]]. 상세 조회
+		myRprtSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());	//기업그룹일련번호
+		myRprtDetail = myDataMapper.selectMyRprtDetail(myRprtSelectReq);
+
+		if(myRprtDetail != null) {
+
+			// [[3]]. [##품목 정보##] List
+			List<MyDataSelectRes> rprtPdctgList = myDataMapper.selectMyRprtPdctgList(myRprtSelectReq);
+			myRprtDetail.setRprtPdctgList(rprtPdctgList);
+
+		} else {
+
+			// 반환값 셋팅
+			throw new CustomMessageException("result-message.messages.common.message.no.data"); //데이터가 없습니다.
+
+		}
+
+		return myRprtDetail;
+
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] [##품목 정보##] 상세 + [##시료 정보##] 리스트
+	 * @param myRprtSelectReq
+	 * @return [##품목 정보##] 상세 + [##시료 정보##] 리스트
+	 * @throws Exception
+	*****************************************************/
+	public MyDataSelectRes getMyRprtPdctData(MyDataSelectReq myRprtSelectReq) throws Exception{
+
+		// ========= [[0]]. 반환할 정보들
+		MyDataSelectRes rprtPdctgDetail = null;
+
+		// ========= [[1]]. Validation check
+		/* 1-1. TAGET 기관아이디 */
+		if(myRprtSelectReq.getTargetInstId() == null  || "".equals(myRprtSelectReq.getTargetInstId())) {
+			throw new CustomMessageException("result-message.messages.common.message.wrong.appr"); //잘못된 접근입니다.
+		}
+		/* 1-2. TAGET 기관접수번호 */
+		if(myRprtSelectReq.getTargetInstRcptNo() == null  || "".equals(myRprtSelectReq.getTargetInstRcptNo())) {
+			throw new CustomMessageException("result-message.messages.common.message.wrong.appr"); //잘못된 접근입니다.
+		}
+		/* 1-3. TAGET 성적서번호 */
+		if(myRprtSelectReq.getTargetRprtNo() == null  || "".equals(myRprtSelectReq.getTargetRprtNo())) {
+			throw new CustomMessageException("result-message.messages.common.message.wrong.appr"); //잘못된 접근입니다.
+		}
+		/* 1-4. TAGET 기관품목코드 */
+		if(myRprtSelectReq.getTargetInstPdctgCd() == null  || "".equals(myRprtSelectReq.getTargetInstPdctgCd())) {
+			throw new CustomMessageException("result-message.messages.common.message.wrong.appr"); //잘못된 접근입니다.
+		}
+
+		// ========= [[2]]. [##품목 정보##] 조회
+		rprtPdctgDetail = myDataMapper.selectMyRprtPdctgDetail(myRprtSelectReq);
+
+		if(rprtPdctgDetail != null) {
+
+			// ========= [[3]]. [##시료 정보##] 리스트 가져오기
+			List<MyDataSelectRes> instSampleList = myDataMapper.selectMyRprtInstSampleList(myRprtSelectReq);
+
+			/** 프론트단에서 쓰기 위해 rowSpan 변수 */
+			int oneSapmleCountRsltCnt = 0 ; /** 하나의 [##시료 정보##] 에 [##시험항목별 시험결과##] 몇개인지 */
+			int oneTestItemCountRsltCnt = 0 ; /** 하나의 [##시료별 시험항목 정보##] 에 [##시험항목별 시험결과##] 몇개인지 */
+
+			if(instSampleList != null && instSampleList.size() != 0) {
+
+				// ========= [[4]]. for문 돌면서 [##시료별 시험항목 정보##] 리스트
+				for(MyDataSelectRes instSample : instSampleList) {
+
+					oneSapmleCountRsltCnt = 0; /** 하나의 [##시료 정보##] 에 [##시험항목별 시험결과##] 몇개인지 */
+
+					/* 4-1. TAGET 기관시료번호 셋팅 */
+					String instSampleNo = instSample.getInstSampleNo();
+					myRprtSelectReq.setTargetInstSampleNo(instSampleNo);
+
+					/* 4-2. 리스트 조회 */
+					List<MyDataSelectRes> instTestItemList = myDataMapper.selectMyRprtInstTestItemList(myRprtSelectReq);
+
+					if(instTestItemList != null && instTestItemList.size() != 0) {
+
+						// ========= [[5]]. for문 돌면서 [##시험항목별 시험결과##] 리스트 조회
+						for(MyDataSelectRes instTestItem : instTestItemList) {
+
+							oneTestItemCountRsltCnt = 0 ; /** 하나의 [##시료별 시험항목 정보##] 에 [##시험항목별 시험결과##] 몇개인지 */
+
+							/* 5-1. TAGET 기관시험항목코드 셋팅 */
+							String instTestItemCd = instTestItem.getInstTestItemCd();
+							myRprtSelectReq.setTargetInstTestItemCd(instTestItemCd);
+
+							/* 5-2. 리스트 조회 */
+							List<MyDataSelectRes> instTestItemRsltList = myDataMapper.selectMyRprtInstTestItemRsltList(myRprtSelectReq);
+
+							/* 5-3. 프론트단에서 쓰기 위해 rowSpan 변수 */
+							/** 하나의 [##시료 정보##] 에 [##시험항목별 시험결과##] 몇개인지 */
+							oneSapmleCountRsltCnt += instTestItemRsltList.size();
+							/** 하나의 [##시료별 시험항목 정보##] 에 [##시험항목별 시험결과##] 몇개인지 */
+							oneTestItemCountRsltCnt += instTestItemRsltList.size();
+
+							/* 5-4. 데이터 셋팅 */
+							instTestItem.setInstTestItemRsltList(instTestItemRsltList); 		// [##시험항목별 시험결과##] 리스트
+							instTestItem.setOneTestItemCountRsltCnt(oneTestItemCountRsltCnt);	// 하나의 [##시료별 시험항목 정보##] 에 [##시험항목별 시험결과##] 몇개인지
+
+						}
+
+					}
+
+					/* 4-3. 데이터 셋팅 */
+					instSample.setInstTestItemList(instTestItemList); // [##시료별 시험항목 정보##] 리스트
+					instSample.setOneSapmleCountRsltCnt(oneSapmleCountRsltCnt); //하나의 [##시료 정보##] 에 [##시험항목별 시험결과##] 몇개인지 count
+				}
+
+			}
+
+			/* 3-2 리스트 셋팅 */
+			rprtPdctgDetail.setInstSampleList(instSampleList); // [##시료 정보##] 리스트
+
+		} else {
+			// 반환값 셋팅
+			throw new CustomMessageException("result-message.messages.common.message.no.data"); //데이터가 없습니다.
+		}
+
+		return rprtPdctgDetail;
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [서비스 신청 POP]  등록
+	 * @param myDataSaveReq 서비스 신청 정보
+	 * @return MyDataSaveRes
+	 * @throws Exception
+	*****************************************************/
+	public MyDataSaveRes insertSvcAppl(MyDataSaveReq myDataSaveReq) throws Exception {
+
+		// ========= [[0]]. 반환할 정보들 & 변수 지정
+		MyDataSaveRes myDataSaveRes = new MyDataSaveRes();
+
+		// ========= [[1]]. validataion check
+		/* 1-1. [내 손안의 시험인증 서비스 이용약관] 번호 */
+		if( myDataSaveReq.getChkMydataTemrsSn() == null  || myDataSaveReq.getChkMydataTemrsSn() == 0 ){
+			throw new CustomMessageException("필수값 오류_[내 손안의 시험인증 서비스 이용약관] 번호");
+		}
+		/* 1-2. [시험인증 데이터 수집·이용 약관] 번호 */
+		if( myDataSaveReq.getChkCertTemrsSn() == null  || myDataSaveReq.getChkCertTemrsSn() == 0 ){
+			throw new CustomMessageException("필수값 오류_[시험인증 데이터 수집·이용 약관] 번호");
+		}
+		/* 1-3. 기업그룹일련번호 */
+		if( SessionUtil.getLoginEntGrpSn() == null  || SessionUtil.getLoginEntGrpSn() == 0 ){
+			throw new CustomMessageException("필수값 오류_로그인 사용자 기업그룹일련번호");
+		}
+		/* 1-4. 저장하는 사용자가 [기업마스터] 인지 체크 */
+		if( ! Const.Code.UserTyCd.ENT_MASTER.equals(SessionUtil.getLoginUserTyCd()) ){
+			throw new CustomMessageException("result-message.messages.login.message.not.auth"); //''해당 아이디에 권한이 부여되어 있지 않습니다. 관리자에게 문의하여 주십시요.'
+		}
+
+		// ========= [[2]]. [기업그룹수집동의이력] 등록 && [기업그룹수집동의약관이력] 등록
+		this.saveChkClctAgreInstList(myDataSaveReq);
+
+		// ========= [[3]]. [기업그룹제출회사공개동의이력] 등록 && [기업그룹제출회사공개약관동의이력] 등록
+		this.saveChkSbmsnCoRlsInstList(myDataSaveReq);
+
+		// ========= [[4]]. 기업그룹수집동의이력 최종값이 Y인 개수 세션에 새로 셋팅
+		this.setSessionentGrpClctAgreYCnt();
+
+		return myDataSaveRes;
+
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [제출처 제공 신청 POP]  등록
+	 * @param myDataSaveReq 서비스 신청 정보
+	 * @return MyDataSaveRes
+	 * @throws Exception
+	*****************************************************/
+	public MyDataSaveRes insertSbmsn(MyDataSaveReq myDataSaveReq) throws Exception {
+
+		// ========= [[0]]. 반환할 정보들 & 변수 지정
+		MyDataSaveRes myDataSaveRes = new MyDataSaveRes();
+
+		// ========= [[1]]. validataion check
+		/* 1-1. 기업그룹일련번호 */
+		if( SessionUtil.getLoginEntGrpSn() == null  || SessionUtil.getLoginEntGrpSn() == 0 ){
+			throw new CustomMessageException("필수값 오류_로그인 사용자 기업그룹일련번호");
+		}
+		/* 1-2. 저장하는 사용자가 [기업마스터] 인지 체크 */
+		if( ! Const.Code.UserTyCd.ENT_MASTER.equals(SessionUtil.getLoginUserTyCd()) ){
+			throw new CustomMessageException("result-message.messages.login.message.not.auth"); //''해당 아이디에 권한이 부여되어 있지 않습니다. 관리자에게 문의하여 주십시요.'
+		}
+
+		// ========= [[2]]. [기업그룹제출회사공개동의이력] 등록 && [기업그룹제출회사공개약관동의이력] 등록
+		this.saveChkSbmsnCoRlsInstList(myDataSaveReq);
+
+		return myDataSaveRes;
+
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [서비스 해지 POP] 등록 (서비스 해지하기)
+	 * @param myDataSaveReq 서비스 신청 정보
+	 * @return MyDataSaveRes
+	 * @throws Exception
+	*****************************************************/
+	public MyDataSaveRes insertTemrmiSvcAppl(MyDataSaveReq myDataSaveReq) throws Exception {
+
+		// ========= [[0]]. 반환할 정보들 & 변수 지정
+		MyDataSaveRes myDataSaveRes = new MyDataSaveRes();
+
+		// ========= [[1]]. validataion check
+		/* 1-1. 기업그룹일련번호 */
+		if( SessionUtil.getLoginEntGrpSn() == null  || SessionUtil.getLoginEntGrpSn() == 0 ){
+			throw new CustomMessageException("필수값 오류_로그인 사용자 기업그룹일련번호");
+		}
+		/* 1-2. 저장하는 사용자가 [기업마스터] 인지 체크 */
+		if( ! Const.Code.UserTyCd.ENT_MASTER.equals(SessionUtil.getLoginUserTyCd()) ){
+			throw new CustomMessageException("result-message.messages.login.message.not.auth"); //''해당 아이디에 권한이 부여되어 있지 않습니다. 관리자에게 문의하여 주십시요.'
+		}
+		/* 1-3. [수집대상 기관] ID && [제공 대상 제출처] ID 체크 */
+		if( myDataSaveReq.getClctAgreSbmsnCoRlsInstId() == null  || "".equals(myDataSaveReq.getClctAgreSbmsnCoRlsInstId()) ){
+			throw new CustomMessageException("필수값 오류_[수집대상 기관] ID && [제공 대상 제출처] ID");
+		}
+
+		// ========= [[2]]. [기업그룹수집동의이력] N으로 등록
+		myDataSaveReq.setClctAgreInstId(myDataSaveReq.getClctAgreSbmsnCoRlsInstId());
+		this.saveTemrmiClctAgreInst(myDataSaveReq);
+
+		// ========= [[3]]. [기업그룹제출회사공개동의이력] N으로 등록
+		myDataSaveReq.setSbmsnCoRlsInstId(myDataSaveReq.getClctAgreSbmsnCoRlsInstId());
+		this.saveTemrmiSbmsnCoRlsInst(myDataSaveReq);
+
+		// ========= [[4]]. 기업그룹수집동의이력 최종값이 Y인 개수 세션에 새로 셋팅
+		this.setSessionentGrpClctAgreYCnt();
+
+		return myDataSaveRes;
+
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [제출처 제공 서비스 해지 POP] 등록 (제츨처 제공 해지하기)
+	 * @param myDataSaveReq 서비스 신청 정보
+	 * @return MyDataSaveRes
+	 * @throws Exception
+	*****************************************************/
+	public MyDataSaveRes insertTemrmiSbmsn(MyDataSaveReq myDataSaveReq) throws Exception {
+
+		// ========= [[0]]. 반환할 정보들 & 변수 지정
+		MyDataSaveRes myDataSaveRes = new MyDataSaveRes();
+
+		// ========= [[1]]. validataion check
+		/* 1-1. 기업그룹일련번호 */
+		if( SessionUtil.getLoginEntGrpSn() == null  || SessionUtil.getLoginEntGrpSn() == 0 ){
+			throw new CustomMessageException("필수값 오류_로그인 사용자 기업그룹일련번호");
+		}
+		/* 1-2. 저장하는 사용자가 [기업마스터] 인지 체크 */
+		if( ! Const.Code.UserTyCd.ENT_MASTER.equals(SessionUtil.getLoginUserTyCd()) ){
+			throw new CustomMessageException("result-message.messages.login.message.not.auth"); //''해당 아이디에 권한이 부여되어 있지 않습니다. 관리자에게 문의하여 주십시요.'
+		}
+		/* 1-3. [제공 대상 제출처] ID가 있는지 체크 */
+		if( myDataSaveReq.getSbmsnCoRlsInstId() == null  || "".equals(myDataSaveReq.getSbmsnCoRlsInstId()) ){
+			throw new CustomMessageException("필수값 오류_[제공 대상 제출처] ID");
+		}
+
+		// ========= [[2]]. [기업그룹제출회사공개동의이력] N으로 등록
+		this.saveTemrmiSbmsnCoRlsInst(myDataSaveReq);
+
+		return myDataSaveRes;
+
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [서비스 신청 POP] 각 이용약관 model에 셋팅
+	 * @param String
+	 * @return 이용약관 정보
+	 * @throws Exception
+	*****************************************************/
+	public void setPopSvcApplTerms(Model model) throws Exception{
+
+		/* 내 손안의 시험인증 서비스 이용약관 */
+		MyDataSelectRes termsMyDataSvc	= this.getMyDataTerms(Const.Code.TemsCode.MY_DATA_SVC);
+		model.addAttribute("termsMyDataSvc"	, termsMyDataSvc);
+		/* 시험인증 데이터 수집이용약관 */
+		MyDataSelectRes termsCertSvc	= this.getMyDataTerms(Const.Code.TemsCode.CERT_DATA_CT);
+		model.addAttribute("termsCertSvc"		, termsCertSvc);
+		/* 시험인증 데이터 제3자(제출처) 제공 약관 */
+		MyDataSelectRes termThirdOffer	= this.getMyDataTerms(Const.Code.TemsCode.THIRD_OFFER);
+		model.addAttribute("termThirdOffer"	, termThirdOffer);
+
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] 각 이용약관 조회
+	 * @param String
+	 * @return 이용약관 정보
+	 * @throws Exception
+	*****************************************************/
+	public MyDataSelectRes getMyDataTerms(String temsCode) throws Exception{
+
+		// [[0]]. 반환할 정보들
+		MyDataSelectRes temsData = null;
+
+		// [[1]]. 이용약관 조회
+		temsData = myDataMapper.selectMyDataTerms(temsCode);
+
+		// [[2]]. 이용약관 UNESCAPE 처리
+		if(temsData != null) {
+			String trmsCn = temsData.getTrmsCn();
+			temsData.setTrmsCnUnescape(XssPreventer.unescape(trmsCn));
+		}
+
+		return temsData;
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] [##인증기관+기업그룹수집동의이력##] 리스트 조회
+	 * @param MyDataSelectReq
+	 * @return List<MyDataSelectRes> [##인증기관+기업그룹수집동의이력##] 리스트 조회
+	 * @throws Exception
+	*****************************************************/
+	public List<MyDataSelectRes> getCoInstEntGrpClctAgreList(MyDataSelectReq myDataSelectReq) throws Exception{
+
+		// [[0]]. 반환할 정보들
+		List<MyDataSelectRes> coInstEntGrpClctAgreList = null;
+
+		// ========= [[1]]. validataion check
+		/* 1-1. 기업그룹일련번호 */
+		if( SessionUtil.getLoginEntGrpSn() == null  || SessionUtil.getLoginEntGrpSn() == 0 ){
+			throw new CustomMessageException("필수값 오류_로그인 사용자 기업그룹일련번호");
+		}
+
+		// [[1]]. 리스트 조회
+		myDataSelectReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn()); //기업그룹일렬번호
+		coInstEntGrpClctAgreList = myDataMapper.selectCoInstEntGrpClctAgreList(myDataSelectReq);
+
+		return coInstEntGrpClctAgreList;
+	}
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] [##인증기관##] 리스트_[pt_co_inst_bas]관련 데이터
+	 * @return List<MyDataSelectRes> [##인증기관##] 리스트
+	 * @throws Exception
+	*****************************************************/
+	public List<MyDataSelectRes> getCoInstList() throws Exception{
+
+		// [[0]]. 반환할 정보들
+		List<MyDataSelectRes> coInstList = null;
+
+		// [[1]]. 리스트 조회
+		coInstList = myDataMapper.selectCoInstList();
+
+		return coInstList;
+	}
+
+	/*****************************************************
+	 * [##통합공통상세코드##] 리스트_[pt_co_intgr_comn_dtl_cd]관련 데이터
+	 * @param grpCd 그룹코드
+	 * @return List<MyDataSelectRes>  [##통합공통상세코드##] 리스트
+	 * @throws Exception
+	*****************************************************/
+	public List<MyDataSelectRes> getPtComnDtlCdList(String grpCd) throws Exception{
+
+		// [[0]]. 반환할 정보들
+		List<MyDataSelectRes> ptComnDtlCdList = null;
+
+		// [[1]]. 리스트 조회
+		ptComnDtlCdList = myDataMapper.selectPtComnDtlCdList(grpCd);
+
+		return ptComnDtlCdList;
+	}
+
+	/*****************************************************
+	 * [##CO_법정제품분류##] 리스트_[pt_co_stty_prdt_clf_cd]관련 데이터
+	 * @return List<MyDataSelectRes>  [##CO_법정제품분류##] 리스트
+	 * @throws Exception
+	*****************************************************/
+	public List<MyDataSelectRes> getPtCoSttyPrdtClfCdList() throws Exception{
+
+		// [[0]]. 반환할 정보들
+		List<MyDataSelectRes> ptCoSttyPrdtClfCdList = null;
+
+		// [[1]]. 리스트 조회
+		ptCoSttyPrdtClfCdList = myDataMapper.selectPtCoSttyPrdtClfCdList();
+
+		return ptCoSttyPrdtClfCdList;
+	}
+
+	/*****************************************************
+	 * [##제품분류_대##] 리스트_[pt_co_indst_std_lgclf_cd]관련 데이터
+	 * @return List<MyDataSelectRes>  [##제품분류_대##] 리스트
+	 * @throws Exception
+	*****************************************************/
+	public List<MyDataSelectRes> getPtCoIndstStdLgclfCdList() throws Exception{
+
+		// [[0]]. 반환할 정보들
+		List<MyDataSelectRes> ptCoIndstStdLgclfCdList = null;
+
+		// [[1]]. 리스트 조회
+		ptCoIndstStdLgclfCdList = myDataMapper.selectPtCoIndstStdLgclfCdList();
+
+		return ptCoIndstStdLgclfCdList;
+	}
+
+	/*****************************************************
+	 * [##제품분류_중##] 리스트_[pt_co_indst_std_mlclf_cd]관련 데이터
+	 * @param upStdLgclfCd 찾을 기준이 되는 표준대분류코드
+	 * @return List<MyDataSelectRes>  [##제품분류_중##] 리스트
+	 * @throws Exception
+	*****************************************************/
+	public List<MyDataSelectRes> getPtCoIndstStdMlclfCdList(String upStdLgclfCd) throws Exception{
+
+		// [[0]]. 반환할 정보들
+		List<MyDataSelectRes> ptCoIndstStdMlclfCdList = null;
+
+		// [[1]]. 리스트 조회
+		ptCoIndstStdMlclfCdList = myDataMapper.selectPtCoIndstStdMlclfCdList(upStdLgclfCd);
+
+		return ptCoIndstStdMlclfCdList;
+	}
+
+	/*****************************************************
+	 * [기업그룹수집동의이력] 등록 && [기업그룹수집동의약관이력] 등록 (LIST)
+	 * @param MyDataSaveReq
+	 * @throws Exception
+	*****************************************************/
+	public void saveChkClctAgreInstList(MyDataSaveReq myDataSaveReq) throws Exception{
+
+		String strSavetErrMsgCode = "result-message.messages.common.message.save.error"; //저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		int saveCount = 0;
+
+		String[] arrChkClctAgreInstId =  myDataSaveReq.getArrChkClctAgreInstId();
+		if( arrChkClctAgreInstId != null && arrChkClctAgreInstId.length > 0 ) {
+
+			/* 파라미터 셋팅 */
+			MyDataSaveReq newMyDataSaveReq = new MyDataSaveReq();
+			newMyDataSaveReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());	//기업그룹일련번호
+			newMyDataSaveReq.setInfoPvsnAgreYn("Y");						//정보제공동의여부
+			newMyDataSaveReq.setCrtrId(SessionUtil.getLoginUserId()); 		//생성자아이디
+
+			/* DB저장 */
+			for(String clctAgreInstId : arrChkClctAgreInstId) {
+
+				/* [기업그룹수집동의이력] 등록 */
+				newMyDataSaveReq.setClctAgreInstId(clctAgreInstId); //[수집대상 기관] ID
+				saveCount = myDataMapper.insertEntGrpClctAgreHist(newMyDataSaveReq);
+				if( !(saveCount > 0 ) || newMyDataSaveReq.getHistSn() == null) {
+					throw new CustomMessageException(strSavetErrMsgCode); //저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+				}
+
+				/* [기업그룹수집동의약관이력] 등록 */
+				newMyDataSaveReq.setTrmsSn(myDataSaveReq.getChkMydataTemrsSn()); //약관 번호 : [내 손안의 시험인증 서비스 이용약관]
+				myDataMapper.insertEntGrpClctAgreTrmsHist(newMyDataSaveReq);
+				newMyDataSaveReq.setTrmsSn(myDataSaveReq.getChkCertTemrsSn());	//약관 번호 : [시험인증 데이터 수집·이용 약관]
+				myDataMapper.insertEntGrpClctAgreTrmsHist(newMyDataSaveReq);
+
+				//////AAAAAAAAAAAASH _ 인터페이스 해야함
+
+			}
+
+		}
+	}
+
+	/*****************************************************
+	 * [기업그룹제출회사공개동의이력] 등록 && [기업그룹제출회사공개약관동의이력] 등록 (LIST)
+	 * @param MyDataSaveReq
+	 * @throws Exception
+	*****************************************************/
+	public void saveChkSbmsnCoRlsInstList(MyDataSaveReq myDataSaveReq) throws Exception{
+
+		String strSavetErrMsgCode = "result-message.messages.common.message.save.error"; //저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		int saveCount = 0;
+
+		String[] arrChkSbmsnCoRlsInstId =  myDataSaveReq.getArrChkSbmsnCoRlsInstId();
+		if( arrChkSbmsnCoRlsInstId != null && arrChkSbmsnCoRlsInstId.length > 0
+				&& myDataSaveReq.getChkOfferTemrsSn() != null && myDataSaveReq.getChkOfferTemrsSn() != 0 ) {
+
+			/* 파라미터 셋팅 */
+			MyDataSaveReq newMyDataSaveReq = new MyDataSaveReq();
+			newMyDataSaveReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());	//기업그룹일련번호
+			newMyDataSaveReq.setSbmsnCoRlsAgreYn("Y");						//제출회사공개동의여부
+			newMyDataSaveReq.setCrtrId(SessionUtil.getLoginUserId()); 		//생성자아이디
+
+			/* DB저장 */
+			for(String sbmsnCoRlsInstId : arrChkSbmsnCoRlsInstId) {
+
+				/* [기업그룹제출회사공개동의이력] 등록 */
+				newMyDataSaveReq.setSbmsnCoRlsInstId(sbmsnCoRlsInstId); //[제공 대상 제출처] ID
+				saveCount = myDataMapper.insertEntGrpSbmsnCoRlsAgreHist(newMyDataSaveReq);
+				if( !(saveCount > 0)  || newMyDataSaveReq.getHistSn() == null) {
+					throw new CustomMessageException(strSavetErrMsgCode); //저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+				}
+
+				/* [기업그룹제출회사공개약관동의이력] 등록 */
+				newMyDataSaveReq.setTrmsSn(myDataSaveReq.getChkOfferTemrsSn()); //약관 번호 : [시험인증 데이터 제3자(제출처) 제공 약관]
+				myDataMapper.insertEntGrpSbmsnCoRlsTrmsAgreHist(newMyDataSaveReq);
+
+			}
+
+		}
+	}
+
+	/*****************************************************
+	 * [기업그룹수집동의이력] N으로 등록
+	 * @param MyDataSaveReq
+	 * @throws Exception
+	*****************************************************/
+	public void saveTemrmiClctAgreInst(MyDataSaveReq myDataSaveReq) throws Exception{
+
+		String strSavetErrMsgCode = "result-message.messages.common.message.save.error"; //저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		int saveCount = 0;
+
+		/* 파라미터 셋팅 */
+		MyDataSaveReq newMyDataSaveReq = new MyDataSaveReq();
+		newMyDataSaveReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());	//기업그룹일련번호
+		newMyDataSaveReq.setInfoPvsnAgreYn("N");						//정보제공동의여부
+		newMyDataSaveReq.setCrtrId(SessionUtil.getLoginUserId()); 		//생성자아이디
+		newMyDataSaveReq.setClctAgreInstId(myDataSaveReq.getClctAgreInstId());  //[수집대상 기관] ID
+
+		/* [기업그룹수집동의이력] N으로 등록 */
+		saveCount = myDataMapper.insertEntGrpClctAgreHist(newMyDataSaveReq);
+		if( !(saveCount > 0 ) || newMyDataSaveReq.getHistSn() == null) {
+			throw new CustomMessageException(strSavetErrMsgCode); //저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		}
+
+		/* [접수기본 : pt_rf_rcpt_bas] 비식별처리 */
+		saveCount = myDataMapper.updatePtRfRcptBasNonIdenti(newMyDataSaveReq);
+
+		//////AAAAAAAAAAAASH _ 인터페이스 해야함
+
+	}
+
+	/*****************************************************
+	 * [기업그룹제출회사공개동의이력] N으로 등록
+	 * @param MyDataSaveReq
+	 * @throws Exception
+	*****************************************************/
+	public void saveTemrmiSbmsnCoRlsInst(MyDataSaveReq myDataSaveReq) throws Exception{
+
+		String strSavetErrMsgCode = "result-message.messages.common.message.save.error"; //저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		int saveCount = 0;
+
+		/* 파라미터 셋팅 */
+		MyDataSaveReq newMyDataSaveReq = new MyDataSaveReq();
+		newMyDataSaveReq.setEntGrpSn(SessionUtil.getLoginEntGrpSn());	//기업그룹일련번호
+		newMyDataSaveReq.setSbmsnCoRlsAgreYn("N");						//제출회사공개동의여부
+		newMyDataSaveReq.setCrtrId(SessionUtil.getLoginUserId()); 		//생성자아이디
+		newMyDataSaveReq.setSbmsnCoRlsInstId(myDataSaveReq.getSbmsnCoRlsInstId()); //[제공 대상 제출처] ID
+
+		/* [기업그룹제출회사공개동의이력] N으로 등록 */
+		saveCount = myDataMapper.insertEntGrpSbmsnCoRlsAgreHist(newMyDataSaveReq);
+		if( !(saveCount > 0)  || newMyDataSaveReq.getHistSn() == null) {
+			throw new CustomMessageException(strSavetErrMsgCode); //저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		}
+
+	}
+
+	/*****************************************************
+	 * 기업그룹수집동의이력 최종값이 Y인 개수 세션에 새로 셋팅
+	 * @throws Exception
+	*****************************************************/
+	public void setSessionentGrpClctAgreYCnt() throws Exception{
+
+		int entGrpClctAgreYCnt = 0;
+		entGrpClctAgreYCnt = loginMapper.selectLoginEntGrpClctAgreYCnt(SessionUtil.getLoginEntGrpSn());
+
+		Map<String, Object> sessionMap = new HashMap<>();
+		sessionMap = SessionUtil.getLoginSession(); //기존 세션값 가져오기
+		sessionMap.put("login_ent_grp_clct_agre_y_cnt"	,  Integer.toString(entGrpClctAgreYCnt)); //[기업마스터, 기업일반] 일 경우 세션에 담을 기업그룹수집동의이력 최종값이 Y인 개수
+		SessionUtil.setLoginSession(sessionMap);
+
+	}
+
+
+}

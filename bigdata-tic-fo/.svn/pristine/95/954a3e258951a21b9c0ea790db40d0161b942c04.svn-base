@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.platformInfo.mapper.PlatformInfoMapper">
+
+	<!-- [플랫폼 소개] 각 페이지에 맞는 데이터 조회-->
+	<select id="selectPlatformInfoData" parameterType="com.katri.web.platformInfo.model.PlatformInfoSelectReq" resultType="com.katri.web.platformInfo.model.PlatformInfoSelectRes">
+		/* PlatformInfoMapper.selectPlatformInfoData ([플랫폼 소개] 각 페이지에 맞는 데이터 조회) */
+
+		SELECT
+			tmcm.menu_cptn_sn
+			, tmcm.menu_cptn_cd
+			, tmcm.menu_cptn_nm
+			, tmcm.menu_cptn_cn
+		FROM tb_menu_cptn_mng tmcm
+		WHERE tmcm.use_yn = 'Y'
+			AND tmcm.menu_cptn_cd = #{searchMenuCptnCd}
+		ORDER BY tmcm.crt_dt DESC
+		LIMIT 1
+	</select>
+
+</mapper>

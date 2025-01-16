@@ -1,0 +1,318 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="c"		uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="cm" 		uri="/WEB-INF/tlds" %>
+<%@ taglib prefix="spring"  uri="http://www.springframework.org/tags" %>
+
+<%@ page import="com.katri.common.Const" %>
+<c:set var="POST_TYPE_CD_NOTICE" value="<%=Const.Code.PostTypeCd.NOTICE%>" />
+<c:set var="ROW_COUNT" value="<%=Const.Paging.ROW_COUNT%>" />
+
+<script type="text/javascript">
+	let isSearch = false; // 검색 구분
+
+	$(function() {
+		// 목록, 페이지 초기화
+		$("#areaData").html("");
+
+		// 공지사항 목록 조회
+		fn_getNoticeList($("#currPage").val());
+
+		// 게시글 더보기
+		fn_moreView();
+
+		// 검색 결과 구분
+		fn_searchResultDiv();
+	});
+
+	/* 뒤로가기 시 스크롤 이동을 위한 게시글 일련번호 초기화 */
+	window.onpageshow = function(event){
+		if(event.persisted || (window.performance && window.performance.navigation.type == 2)){
+			$("#nttSn").val("");
+		}
+	}
+
+	/**
+	 * 게시글 더보기
+	 */
+	function fn_moreView() {
+		/* 더보기 */
+		$(".cont-board .btn-more").on("click", function () {
+			// 페이지 증가
+			const chgPage = parseInt($("#chgPage").val()) + 1;
+			$("#chgPage").val(chgPage);
+
+			const currPage = parseInt($("#currPage").val()) + 1;
+			$("#currPage").val(currPage);
+
+			// 더보기는 10개씩 조회
+			$("#rowCount").val(${ROW_COUNT});
+
+			// 공지사항 조회
+			fn_getNoticeList(chgPage);
+		});
+	}
+
+	/**
+	 * 검색 결과 구분
+	 */
+	function fn_searchResultDiv() {
+		/* 등록글이 없을 때 검색 결과가 없을 때 구분 */
+		$("#searchBtn").on("click", function(e){
+			e.preventDefault();
+
+			// 검색
+			fn_noticeSearch();
+		});
+	}
+
+	/**
+	 * 엔터 검색 공지사항
+	 */
+	function fn_searchEnterNotice() {
+		if (window.event.keyCode == 13) {
+			fn_noticeSearch(); // 검색
+		}
+	}
+
+	/**
+	 * 조건 초기화
+	 */
+	function fn_resetCondition() {
+		// 데이터 초기화 (기본값)
+		$("#areaData").html("");
+		$("#rowCount").val(${ROW_COUNT});
+		$("#currPage").val(1);
+		$("#chgPage").val(1);
+	}
+
+	/**
+	 * 검색
+	 */
+	function fn_noticeSearch() {
+		isSearch = true;
+
+		// 조건 초기화
+		fn_resetCondition();
+
+		// 검색
+		fn_getNoticeList(1);
+	}
+
+	/**
+	 * 공지사항 목록 조회
+	 */
+	function fn_getNoticeList(page) {
+		if(page == ''){
+			page = 1;
+		}
+
+		// 현재 페이지
+		$("#currPage").val(page);
+
+		// 변경 페이지
+		$("#chgPage").val() < 1 ? $("#chgPage").val(1) : "";
+
+		// 검색어가 존재하는 경우 '검색 결과가 없습니다'
+		if ($.trim($("#searchKeyword").val()) !== "") {
+			isSearch = true;
+		}
+
+		// 분류 변경 시 분류 값에 대한 검색을 위한
+		$("#nttClfCd").attr("onchange", "fn_noticeSearch()");
+
+		$.blockUI();
+
+		// 데이터 가져오기
+		$.ajax({
+			  url: "/ctnt/notice/getNoticeList"
+			, type: "GET"
+			, dataType: "json"
+			, async: "true"
+			, data: $("#noticeFrm").serialize()
+			, success : function(jsonData, textStatus, jqXHR) {
+				$.unblockUI();
+
+				let html = "";
+
+				const noData = "<spring:message code='result-message.messages.ctnt.message.notice.no.search'/>"; // 등록된 공지글이 없습니다.
+				const noResult = "<spring:message code='result-message.messages.ctnt.message.common.no.search'/>"; // 검색 결과가 없습니다.
+
+				if (jsonData.resultCode === 200) {
+						// 더보기 버튼 초기화
+						$('.cont-board .btn-more').show();
+
+						const bigdataList = "#board-list .board-tr:not(.active)"; // 위치
+						const bigdataTotalCnt = jsonData.data.totCnt; // 총 길이
+						const bigdataLength = jsonData.data.list.length; // 조회된 길이
+						const rowCount = $("#rowCount").val(); // 행
+
+					if (jsonData.data.list !== null && jsonData.data.list.length > 0) { // 데이터 O
+						// 조회된 개수에 따라 더보기 버튼 숨기기
+						if (Math.ceil(bigdataTotalCnt/${ROW_COUNT}) === parseInt($("#chgPage").val())) {
+							$('.cont-board .btn-more').hide();
+						}
+
+						// 1. 공지사항 게시글 html 제작
+						$.each(jsonData.data.list, function(index, data){
+							html += fn_returnNoticeListHtml(data);
+						});
+
+					} else { // 데이터 X
+						$('.cont-board .btn-more').hide();
+
+						html	=	"<tr>"
+								+ 	"	<td colspan='4' class='no-data pc-block'>"
+								+ 			(isSearch ? noResult : noData)
+								+ 	"	</td>"
+								+ 	"	<td class='no-data mo-block'>"
+								+			(isSearch ? noResult : noData)
+								+ 	"	</td>"
+								+	"</tr>";
+
+						isSearch = false;
+					}
+
+					// 2. 공지사항 게시글 출력
+					$("#areaData").append(html);
+
+					// 스크롤 이동
+					fn_moveScroll($("#nttSn").val());
+				} else {
+					alert(result.resultMessage);
+				}
+			}
+		});
+	}
+
+	/**
+	 * 스크롤 이동
+	 */
+	function fn_moveScroll(nttSn) {
+		if (!fn_emptyCheck(nttSn)) {
+			// 해당 게시글의 rownum
+			let nRowNum = $("#board-tr-" + nttSn).find("td:eq(0)").text();
+
+			// 해당 게시글의 rownum이 현재 페이지에 존재하는지
+			if ( nRowNum !== '' ) {
+				document.getElementById("board-tr-" + nttSn).scrollIntoView({behavior: "smooth", block: "center"});
+				$("#nttSn").val("");
+			} else {
+				// 해당 게시글의 rownum이 없다면 '더보기'
+				$(".btn-more").click();
+			}
+		}
+	}
+
+	/**
+	 * 공지사항 게시글 html 제작
+	 */
+	function fn_returnNoticeListHtml(data){
+		let returnHtml = "";
+
+		returnHtml += "<tr class='board-tr' id='board-tr-" + data.nttSn + "' onclick='fn_goBoardDetail(" + data.nttSn + ")' style='cursor:pointer;'>";
+		returnHtml += "	<td>" + data.rownum + "</td>";
+		returnHtml += "	<td style='text-align:center; padding:0;'>" + data.comnCdNm + "</td>";
+		returnHtml += "	<td><span>" + data.nttSjNm + "</span><span>" + data.crtDt + " </span></td>";
+		returnHtml += "	<td>" + data.crtDt + "</td>";
+		returnHtml += "</tr>";
+
+		return returnHtml;
+	}
+
+	/**
+	 * 공지사항 상세 조회
+	 */
+	function fn_goBoardDetail(nttSn) {
+		$("#nttSn").val(nttSn);
+
+		$("#noticeFrm").attr({
+			  method: "GET"
+			, action: "/ctnt/notice/noticeDetail"
+		}).submit();
+	}
+
+	/**
+	 * FAQ 목록 이동
+	 */
+	function fn_goFaqList() {
+		location.href = "/ctnt/faq/faqList";
+	}
+
+	/**
+	 * 자료실 목록 이동
+	 */
+	function fn_goArchiveList() {
+		location.href = "/ctnt/archive/archiveList";
+	}
+</script>
+
+<!-- ===== header ====== -->
+<header id="header">
+	<div id="sub-mv" class="sub-board">
+		<div class="inner">
+			<h2>이용안내</h2>
+			<div class="sub-obj">오브젝트</div>
+		</div>
+	</div>
+</header>
+<!-- ===== /header ====== -->
+
+<!-- ===== container ====== -->
+<div id="container">
+
+	<!--breadcrumb-wr-->
+	<jsp:include page="/WEB-INF/views/layout/breadcrumbWr.jsp">
+		<jsp:param name="menuTopNo" value="05"/>
+		<jsp:param name="menuSubNo" value="0501"/>
+	</jsp:include>
+	<!-- // breadcrumb-wr-->
+
+	<!--container-->
+	<div id="cont" class="cont-board">
+		<!--  조건 -->
+		<form name="noticeFrm" id="noticeFrm">
+			<input type="hidden" name="nttSn" id="nttSn" value="${noticeSearchData.nttSn}">
+			<input type="hidden" name="nttTyCd" id="nttTyCd" value="${POST_TYPE_CD_NOTICE}" />
+			<input type="hidden" name="currPage" id="currPage" value="${noticeSearchData.currPage}">
+			<input type="hidden" name="chgPage" id="chgPage" value="${noticeSearchData.chgPage}">
+			<input type="hidden" name="rowCount" id="rowCount" value="${noticeSearchData.rowCount}">
+
+			<h2 class="tit">공지사항</h2>
+			<!--board-->
+			<div class="board-sch-wr">
+				<cm:makeTag
+					cls="select"
+					tagType="select"
+					tagId="nttClfCd"
+					name="nttClfCd"
+					code="PD_NOTICE"
+					defaultUseYn="Y"
+					defaultNm="공지사항 분류를 선택하세요"
+					selVal="${noticeSearchData.nttClfCd}"
+				/>
+				<input type="text" name="searchKeyword" id="searchKeyword" placeholder="검색어를 입력하세요." class="inp-sch" value="${noticeSearchData.searchKeyword}" onkeypress="fn_searchEnterNotice()" title="검색">
+				<button type="submit" id="searchBtn" class="btn">검색</button>
+			</div>
+		</form>
+		<div class="board-cont" id="board-list">
+			<table class="notice-lst">
+				<caption>시험인증 빅데이터 플랫폼 공지사항 - 번호, 제목, 등록일</caption>
+				<thead>
+					<tr>
+						<th>번호</th>
+						<th>분류</th>
+						<th>제목</th>
+						<th>등록일</th>
+					</tr>
+				</thead>
+				<tbody id="areaData">
+				</tbody>
+			</table>
+		</div>
+		<div class="btn-wr">
+			<a href="javascript:void(0)" class="btn cancel btn-more">더보기<i></i></a>
+		</div>
+		<!--//board-->
+	</div>
+</div>
+<!-- ===== /container ====== -->

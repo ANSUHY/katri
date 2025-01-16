@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.trms.trms.mapper.TrmsMapper">
+
+	<!-- SQL : trms 리스트 WHERE -->
+	<sql id="sqlWhereTrmsList">
+		/* SQL : trms 리스트 WHERE */
+
+		<trim prefix="WHERE" prefixOverrides="AND">
+			<if test="(searchTrmsTyCd != null) and (searchTrmsTyCd != '')">
+				AND (${alias_trms}trms_ty_cd = #{searchTrmsTyCd}) /* [검색 조건] 약관유형코드 */
+			</if>
+		</trim>
+	</sql>
+
+	<!-- trms 리스트 개수 조회 -->
+	<select id="selectTrmsListCount" parameterType="com.katri.web.trms.trms.model.TrmsSelectReq" resultType="int">
+		/* TrmsMapper.selectTrmsListCount (trms 리스트 개수 조회) */
+
+		SELECT
+			count(ttb.trms_sn) as count
+		FROM tb_trms_bas ttb
+		<include refid='sqlWhereTrmsList'>
+			<property name="alias_trms" value="ttb."/>
+		</include>
+	</select>
+
+	<!-- trms 리스트 조회 -->
+	<select id="selectTrmsList" parameterType="com.katri.web.trms.trms.model.TrmsSelectReq" resultType="com.katri.web.trms.trms.model.TrmsSelectRes">
+		/* TrmsMapper.selectTrmsList (trms 리스트 조회) */
+
+		SELECT
+			m_ttb.*
+			, coalesce(null, tcc.comn_cd_nm, '') AS trms_ty_nm
+		FROM (SELECT
+				(row_number() over(order by ttb.trms_sn ASC)) as rownum
+				, ttb.trms_sn
+				, ttb.trms_ty_cd
+				, ttb.use_yn
+				, ttb.crt_dt
+			FROM tb_trms_bas ttb
+			<include refid='sqlWhereTrmsList'>
+				<property name="alias_trms" value="ttb."/>
+			</include>
+			) m_ttb
+		/* 공통코드 : TTC : 약관유형코드 */
+		LEFT OUTER JOIN tb_comn_cd tcc
+			ON (tcc.comn_cd = m_ttb.trms_ty_cd AND tcc.comn_grp_cd='TTC' AND tcc.use_yn ='Y')
+		ORDER BY rownum desc
+	</select>
+
+	<!-- trms 상세 조회 -->
+	<select id="selectTrmsDetail" resultType="com.katri.web.trms.trms.model.TrmsSelectRes">
+		/* TrmsMapper.selectTrmsDetail (trms 상세 조회) */
+
+		SELECT
+			ttb.trms_sn
+			, ttb.trms_ty_cd
+			, coalesce(null, tcc.comn_cd_nm, '') AS trms_ty_nm
+			, ttb.trms_cn
+			, ttb.use_yn
+			, ttb.crt_dt
+		FROM tb_trms_bas ttb
+		/* 공통코드 : TTC : 약관유형코드 */
+		LEFT OUTER JOIN tb_comn_cd tcc
+			ON (tcc.comn_cd = ttb.trms_ty_cd AND tcc.comn_grp_cd='TTC' AND tcc.use_yn ='Y')
+		WHERE ttb.trms_sn = #{trmsSn}
+	</select>
+
+	<!-- trms USE_YN = '넘어온타입' 로 수정 -->
+	<update id="updateChgTrmsUseYN" parameterType="com.katri.web.trms.trms.model.TrmsSaveReq">
+		/* TrmsMapper.updateChgTrmsUseYN (trms USE_YN = '넘어온타입' 로 수정) */
+
+		UPDATE tb_trms_bas
+		SET
+			use_yn 		= #{chgUseYn}
+			, mdfr_id	= #{mdfrId}
+			, mdfcn_dt	= now()
+		<trim prefix="WHERE" prefixOverrides="AND">
+			<if test="(chgUseYTrmsSn != null) and (! chgUseYTrmsSn.equals(''))">
+				AND trms_sn = #{chgUseYTrmsSn}
+			</if>
+			<if test="(chgUseYTrmsType != null) and (chgUseYTrmsType != '')">
+				AND trms_ty_cd = #{chgUseYTrmsType}
+			</if>
+		</trim>
+	</update>
+
+	<!-- trms 등록 -->
+	<insert id="insertTrms" parameterType="com.katri.web.trms.trms.model.TrmsSaveReq" useGeneratedKeys="true" keyProperty="trmsSn">
+		/* TrmsMapper.insertTrms (trms 등록) */
+
+		INSERT INTO tb_trms_bas (
+			trms_cn
+			, trms_ty_cd
+			, use_yn
+			, crtr_id
+			, crt_dt
+		) VALUES (
+			#{trmsCn}
+			, #{trmsTyCd}
+			, 'N'
+			, #{crtrId}
+			, now()
+		)
+	</insert>
+
+	<!-- trms 수정 -->
+	<update id="updateTrms" parameterType="com.katri.web.trms.trms.model.TrmsSaveReq">
+		/* TrmsMapper.updateTrms (trms 수정) */
+
+		UPDATE tb_trms_bas
+		SET
+			trms_cn 	= #{trmsCn}
+			, mdfr_id	= #{mdfrId}
+			, mdfcn_dt	= now()
+		WHERE trms_sn 	= #{trmsSn}
+			AND trms_ty_cd = #{trmsTyCd}
+	</update>
+
+</mapper>

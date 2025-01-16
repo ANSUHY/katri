@@ -1,0 +1,318 @@
+package com.katri.web.mypage.infoMng.model;
+
+import java.util.List;
+
+import com.katri.common.model.Common;
+import com.katri.web.comm.model.FileDto;
+
+import io.swagger.annotations.ApiModel;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@Data
+@EqualsAndHashCode(callSuper=false)
+@ApiModel(description = "회원 정보 관리 조회 Response")
+public class InfoMngSelectRes extends Common {
+
+	/** ====================================================================== */
+	/** ====================== TB_USER_BAS [[사용자 기본]] ====================== */
+	/** 사용자아이디 */
+	private String userId;
+
+	/** 사용자아이디_마스킹처리 */
+	private String maskingUserId;
+
+	/** 사용자명 */
+	private String userNm;
+
+	/** 사용자유형코드 */
+	private String userTyCd;
+
+	/* 사용자유형코드값 */
+	private String userTyNm;
+
+	/** 사용자비밀번호 */
+	private String userPwd;
+
+	/** 사용자기존비밀번호 */
+	private String userLgcyPwd;
+
+	/** 사용자연계정보값 */
+	private String userLinkInfoVal;
+
+	/** 암호화휴대전화번호값 */
+	private String encptMblTelnoVal;
+
+	/** 암호화이메일주소값 */
+	private String encptEmlAddrVal;
+
+	/** 이메일인증번호값 */
+	private String emlCertNoVal;
+
+	/** 사용자상태코드 */
+	private String userSttCd;
+
+	/* 사용자상태코드값 */
+	private String userSttNm;
+
+	/** 권한그룹일련번호 */
+	private Integer authrtGrpSn;
+
+	/** 가입신청요청일시 */
+	private String joinAplyDmndDt;
+
+	/** 가입신청처리일시 */
+	private String joinAplyPrcsDt;
+
+	/** 가입신청처리자아이디 */
+	private String joinAplyPrcrId;
+
+	/** 가입일자 */
+	private String joinYmd;
+
+	/** 탈퇴신청요청일시 */
+	private String whdwlAplyDmndDt;
+
+	/** 탈퇴신청처리일시 */
+	private String whdwlAplyPrcsDt;
+
+	/** 탈퇴신청처리자아이디 */
+	private String whdwlAplyPrcrId;
+
+	/** 탈퇴일자 */
+	private String whdwlYmd;
+
+	/** 탈퇴사유내용 */
+	private String whdwlResnCn;
+
+	/** 최종로그인일시 */
+	private String lastLgnDt;
+
+	/** 최종로그인ip주소 */
+	private String lastLgnIpAddr;
+
+	/** 로그인실패수 */
+	private Integer lgnFirCnt;
+
+	/** 최종로그인실패일시 */
+	private String lastLgnFirDt;
+
+	/** 최종비밀번호변경일시 */
+	private String lastPwdChgDt;
+
+	/** 휴면일자 */
+	private String drmncyYmd;
+
+	/** 최종휴면일시 */
+	private String lastDrmncyDt;
+
+	/** 최종휴면해제일시 */
+	private String lastDrmncyRmvDt;
+
+//	/** 생성일시 */
+//	private String crtDt;
+//
+//	/** 생성자아이디 */
+//	private String crtrId;
+//
+//	/** 수정일시 */
+//	private String mdfcnDt;
+//
+//	/** 수정자아이디 */
+//	private String mdfrId;
+
+	/** 분석환경사용자아이디 */
+	private String anlsEnvUserId;
+	/** ====================== //TB_USER_BAS [[사용자 기본]] ====================== */
+	/** ======================================================================== */
+
+
+	/** ==================================================================== */
+	/** ====================== TB_ENT_BAS [[기업 기본]] ====================== */
+	/** 사업자등록번호 */
+	private String brno;
+
+	/** 기업명 */
+	private String entNm;
+
+	/** 대표자명 */
+	private String rprsvNm;
+
+	/** 개업일자 */
+	private String opbizYmd;
+
+//	/** 사용여부 */
+//	private String useYn;
+
+//	/** 생성일시 */
+//	private String crtDt;
+//
+//	/** 생성자아이디 */
+//	private String crtrId;
+//
+//	/** 수정일시 */
+//	private String mdfcnDt;
+//
+//	/** 수정자아이디 */
+//	private String mdfrId;
+	/** ====================== //TB_ENT_BAS [[기업 기본]] ====================== */
+	/** ====================================================================== */
+
+
+	/** =========================================================================== */
+	/** ====================== TB_ENT_GRP_BAS [[기업 그룹 기본]] ====================== */
+	/** 기업그룹일련번호 */
+	private Integer entGrpSn;
+
+//	/** 사업자등록번호 */
+//	private String brno;
+
+	/** 기업그룹관리번호 */
+	private String entGrpMngNo;
+
+	/** 기업그룹명 */
+	private String entGrpNm;
+
+	/** 기업그룹우편번호 */
+	private String entGrpZip;
+
+	/** 기업그룹기본주소 */
+	private String entGrpBasAddr;
+
+	/** 기업그룹상세주소 */
+	private String entGrpDaddr;
+
+//	/** 사용여부 */
+//	private String useYn;
+
+//	/** 생성일시 */
+//	private String crtDt;
+//
+//	/** 생성자아이디 */
+//	private String crtrId;
+//
+//	/** 수정일시 */
+//	private String mdfcnDt;
+//
+//	/** 수정자아이디 */
+//	private String mdfrId;
+	/** ====================== //TB_ENT_GRP_BAS [[기업 그룹 기본]] ====================== */
+	/** =============================================================================== */
+
+
+	/** ====================================================================================== */
+	/** ====================== TB_ENT_GRP_USER_MNG [[기업 그룹 사용자 관리]] ====================== */
+	/** 기업그룹사용자일련번호 */
+//	private Integer entGrpUserSn;
+//
+//	/** 기업그룹일련번호 */
+//	private String entGrpSn;
+//
+//	/** 사용자아이디 */
+//	private String userId;
+//
+//	/** 사용자부서명 */
+//	private String userDeptNm;
+
+	/** 사용자직급명 */
+	private String userJbgdNm;
+
+//	/** 직장전화번호 */
+//	private String wrcTelno;
+
+	/** 직장우편번호 */
+	private String wrcZip;
+
+	/** 직장기본주소 */
+	private String wrcBasAddr;
+
+	/** 직장상세주소 */
+	private String wrcDaddr;
+//
+//	/** 사용여부 */
+//	private String useYn;
+
+//	/** 생성일시 */
+//	private String crtDt;
+//
+//	/** 생성자아이디 */
+//	private String crtrId;
+//
+//	/** 수정일시 */
+//	private String mdfcnDt;
+//
+//	/** 수정자아이디 */
+//	private String mdfrId;
+	/** ====================== //TB_ENT_GRP_USER_MNG [[기업 그룹 사용자 관리]] ===================== */
+	/** ====================================================================================== */
+
+
+	/** =============================================================================== */
+	/** ====================== TB_INST_USER_MNG [[기관 사용자 관리]] ====================== */
+	/** 기관사용자일련번호 */
+	private Integer instUserSn;
+
+	/** 기관아이디 */
+	private String instId;
+
+	/** 기관명 */
+	private String instNm;
+
+//	/** 사용자아이디 */
+//	private String userId;
+
+	/** 사용자부서명 */
+	private String userDeptNm;
+
+	/** 직장전화번호 */
+	private String wrcTelno;
+
+//	/** 사용여부 */
+//	private String useYn;
+
+//	/** 생성일시 */
+//	private String crtDt;
+//
+//	/** 생성자아이디 */
+//	private String crtrId;
+//
+//	/** 수정일시 */
+//	private String mdfcnDt;
+//
+//	/** 수정자아이디 */
+//	private String mdfrId;
+	/** ====================== //TB_INST_USER_MNG [[기관 사용자 관리]] ====================== */
+	/** ================================================================================ */
+
+	/** ====================================================================== */
+	/** ====================== TB_FILE_MNG [[파일 관리]] ====================== */
+
+	/** 재직증명서 정보_file */
+	private List<FileDto> lstGnrlCertFile;
+
+	/** 사업자 등록증 정보_file */
+	private List<FileDto> lstBzmnRegFile;
+
+	/** 계정발급 신청서 정보_file */
+	private List<FileDto> lstAcntIssuAplyFile;
+
+	/** ====================== //TB_FILE_MNG [[파일 관리]] ====================== */
+	/** ======================================================================== */
+
+	/** ====================================================================== */
+	/** ====================== TB_USER_PRDT_CLF_CHC_MNG [[사용자제품분류선택관리]] ====================== */
+
+	/** 관심 키워드 정보 목록 */
+	private List<InfoMngPrdtSelectRes> lstUserPrdt;
+
+	/** 관심 키워드 대분류1 */
+	private String stdLgclfCd1;
+
+	/** 관심 키워드 대분류2 */
+	private String stdLgclfCd2;
+
+	/** ====================== // TB_USER_PRDT_CLF_CHC_MNG[[사용자제품분류선택관리]] ====================== */
+	/** ======================================================================== */
+
+
+}

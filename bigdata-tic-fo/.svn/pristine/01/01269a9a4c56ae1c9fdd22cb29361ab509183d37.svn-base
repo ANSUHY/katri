@@ -1,0 +1,659 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="cm" uri="/WEB-INF/tlds" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+
+<style>
+	/* PC인 경우 경고 팝업 display: none */
+	@media screen and (min-width:1440px){
+		.rounge-mobile-err-md { display: none; }
+	}
+</style>
+
+<script type="text/javascript" src="<c:url value='/asset/js/chart/dist/chart.min.js'/>"></script>
+<script type="text/javascript">
+	/* 각 기관별 로고 이미지 -> key 값으로 value 추출해서 사용 */
+	const LOGO_IMG = {
+		"T001" : "data-logo-01.png", // KATRI:	한국의류시험연구원
+		"T002" : "data-logo-06.png", // KCL:	한국건설생활환경시험연구원
+		"T003" : "data-logo-02.png", // FITI:	FITI시험연구원
+		"T004" : "data-logo-07.png", // KTC:	한국기계전기전자시험연구원
+		"T005" : "data-logo-03.png", // KOTITI:	KOTITI시험연구원
+		"T006" : "data-logo-04.png", // KTL:	한국산업기술시험원
+		"T007" : "data-logo-05.png"  // KTR:	한국화학융합시험연구원
+	};
+
+	$(function() {
+		// 기관코드 조회
+		fn_getInstId();
+
+		/* 차트X: fn_getCollectData(호출 URL, 콜백함수) -> 콜백함수(데이터) -> HTML 제작 */
+		/* 차트O: fn_getCollectData(호출 URL, 콜백함수) -> 콜백함수(데이터) -> 차트 데이터 설정 -> 차트 제작 */
+
+		// 기관별 데이터 수집건수
+		fn_getCollectData("/particiLounge/getAgencySpecificData", fn_getAgencySpecificDataCallBack);
+
+		// 수집건수 추이
+		fn_getCollectData("/particiLounge/getChgNumberOfCollection", fn_getChgNumberOfCollectionCallBack);
+
+		// 접수데이터 수집결과 추이
+		fn_getCollectData("/particiLounge/getRcptCollectionResult", fn_getRcptCollectionResultCallBack);
+
+		// 시험데이터 수집결과 추이
+		fn_getCollectData("/particiLounge/getTestItemCollectionResult", fn_getTestItemCollectionResultCallBack);
+
+		// 성적데이터 수집결과 추이
+		fn_getCollectData("/particiLounge/getRprtCollectionResult", fn_getRprtCollectionResultCallBack);
+
+		// 인증데이터 수집결과 추이
+		fn_getCollectData("/particiLounge/getCertCollectionResult", fn_getCertCollectionResultCallBack);
+
+		// 인증이미지 수집결과 추이
+		fn_getCollectData("/particiLounge/getCertImgCollectionResult", fn_getCertImgCollectionResultCallBack);
+	});
+
+	/**
+	 * 객체 key 값으로 value 추출
+	 *
+	 * 각 기관별 로고 이미지 출력시 사용
+	 */
+	function fn_getValueByKey(obj, key) {
+		return Object.values(obj).find((value) => obj[key] === value);
+	}
+
+	// === 기관코드 관련 ===
+	/**
+	 * 기관코드 조회
+	 */
+	function fn_getInstId() {
+		$.ajax({
+			url: "/particiLounge/getInstId",
+			type: "get",
+			dataType: "json",
+			success: function (jsonData) {
+				if (jsonData.resultCode === 200) {
+					let selectHtml = "<option value=''>전체</option>";
+
+					$.each(jsonData.data, function (index, data) {
+						selectHtml += fn_returnInstIdHtml(data);
+					});
+
+					// 기관코드 select box HTML과 onchange 부여
+					$(".select.select-mysvcoffice")
+						.html(selectHtml)
+						.attr("onchange", "fn_chgInstId(this)");
+				} else {
+					alert(jsonData.resultMessage);
+				}
+			},
+		});
+	}
+
+	/**
+	 * 기관코드 select box 제작
+	 */
+	function fn_returnInstIdHtml(data) {
+		let returnInstCdHtml = "";
+
+		returnInstCdHtml = "<option value='" + data.instId + "'>" + data.instEngNm + "</option>";
+
+		return returnInstCdHtml;
+	}
+
+	/**
+	 * 기관코드에 따라 데이터 조회
+	 */
+	function fn_chgInstId(e) {
+		// 같은 select box가 여러 개 존재하기 때문에 각 차트 데이터마다 분리 처리를 하기 위함
+		const selectId = $(e).attr("id");
+		const selectedValue = $("#" + selectId + " option:selected").val();
+
+		// 기관코드 설정
+		$("#instId").val(selectedValue);
+
+		// 수집건수 추이
+		if (selectId === "selChgNumberOfCollection") {
+			fn_getCollectData("/particiLounge/getChgNumberOfCollection", fn_getChgNumberOfCollectionCallBack);
+		}
+		// 접수데이터 수집결과 추이
+		else if (selectId === "selRcptCntCollectionResult") {
+			fn_getCollectData("/particiLounge/getRcptCollectionResult", fn_getRcptCollectionResultCallBack);
+		}
+		// 시험데이터 수집결과 추이
+		else if (selectId === "selTestItemCollectionResult") {
+			fn_getCollectData("/particiLounge/getTestItemCollectionResult", fn_getTestItemCollectionResultCallBack);
+		}
+		// 성적데이터 수집결과 추이
+		else if (selectId === "selRprtCntCollectionResult") {
+			fn_getCollectData("/particiLounge/getRprtCollectionResult", fn_getRprtCollectionResultCallBack);
+		}
+		// 인증데이터 수집결과 추이
+		else if (selectId === "selCertCollectionResult") {
+			fn_getCollectData("/particiLounge/getCertCollectionResult", fn_getCertCollectionResultCallBack);
+		}
+		// 인증이미지 수집결과 추이
+		else if (selectId === "selCertImgCollectionResult"){
+			fn_getCollectData("/particiLounge/getCertImgCollectionResult", fn_getCertImgCollectionResultCallBack);
+		}
+	}
+
+	// === 데이터 관련 ===
+	/**
+	 * API 데이터 가져오기
+	 *
+	 * 기관별 데이터 수집건수
+	 * 수집건수 추이
+	 * (접수, 시험, 성적, 인증, 인증이미지) 수집결과 추이
+	 */
+	function fn_getCollectData(url, callback) {
+		$.blockUI();
+
+		const jData = $("#gatherStatusFrm").serialize();
+
+		// 기관별 데이터 수집건수
+		fn_submitAjax($("#gatherStatusFrm"), jData, callback, "json", url);
+
+		// 기관코드 값 초기화
+		$("#instId").val("");
+	}
+
+	/**
+	 * API 콜백: 기관별 데이터 수집건수
+	 */
+	function fn_getAgencySpecificDataCallBack(result) {
+		$.unblockUI();
+
+		const agencySpecificData = result.data; // 기관별 데이터 수집 현황
+
+		// 기관별 데이터 수집건수
+		if (agencySpecificData != null) {
+			fn_agencySpecificDataHtml(agencySpecificData);
+			fn_roungeErrMd(); // DOM 생성 후 비정상 처리상태에 대한 모달창 설정
+		}
+	}
+
+	/**
+	 * API 콜백: 수집건수 추이
+	 */
+	function fn_getChgNumberOfCollectionCallBack(result) {
+		$.unblockUI();
+
+		const numberOfCollection = result.data; // 수집건수 추이
+
+		// 수집건수 추이
+		if (numberOfCollection != null) {
+			fn_numberOfCollectionChartHtml(numberOfCollection, "numberOfCollectionChart", "numberOfCollectionCanvas");
+		}
+	}
+
+	/**
+	 * API 콜백: 접수데이터 수집결과 추이
+	 */
+	function fn_getRcptCollectionResultCallBack(result) {
+		$.unblockUI();
+
+		const rcptCollectionResult = result.data; // 접수데이터 수집결과 추이
+
+		// 접수데이터 수집결과 추이
+		if (rcptCollectionResult != null) {
+			fn_dataCollectionResultChartHtml(rcptCollectionResult, "rcptCollectionResultChart", "rcptCollectionResultCanvas");
+		}
+	}
+
+	/**
+	 * API 콜백: 시험데이터 수집결과 추이
+	 */
+	function fn_getTestItemCollectionResultCallBack(result) {
+		$.unblockUI();
+
+		const testItemCollectionResult = result.data; // 시험데이터 수집결과 추이
+
+		// 시험데이터 수집결과 추이
+		if (testItemCollectionResult != null) {
+			fn_dataCollectionResultChartHtml(testItemCollectionResult, "testItemCollectionResultChart", "testItemCollectionResultCanvas");
+		}
+	}
+
+	/**
+	 * API 콜백: 성적데이터 수집결과 추이
+	 */
+	function fn_getRprtCollectionResultCallBack(result) {
+		$.unblockUI();
+
+		const rprtCollectionResult = result.data; // 성적데이터 수집결과 추이
+
+		// 성적데이터 수집결과 추이
+		if (rprtCollectionResult != null) {
+			fn_dataCollectionResultChartHtml(rprtCollectionResult, "rprtCollectionResultChart", "rprtCollectionResultCanvas");
+		}
+	}
+
+	/**
+	 * API 콜백: 인증데이터 수집결과 추이
+	 */
+	function fn_getCertCollectionResultCallBack(result) {
+		$.unblockUI();
+
+		const certCollectionResult = result.data; // 인증데이터 수집결과 추이
+
+		// 인증데이터 수집결과 추이
+		if (certCollectionResult != null) {
+			fn_dataCollectionResultChartHtml(certCollectionResult, "certCollectionResultChart", "certCollectionResultCanvas");
+		}
+	}
+
+	/**
+	 * API 콜백: 인증이미지 수집결과 추이
+	 */
+	function fn_getCertImgCollectionResultCallBack(result) {
+		$.unblockUI();
+
+		const certImgCollectionResult = result.data; // 인증이미지 수집결과 추이
+
+		// 인증데이터 수집결과 추이
+		if (certImgCollectionResult != null) {
+			fn_dataCollectionResultChartHtml(certImgCollectionResult, "certImgCollectionResultChart", "certImgCollectionResultCanvas");
+		}
+	}
+
+	// === HTML 차트 제작 관련 ===
+	/**
+	 * 기관별 데이터 HTML 제작
+	 */
+	function fn_agencySpecificDataHtml(list) {
+		$("#agencySpecificData").html("");
+
+		for (var i = 0; i < list.length; i++) {
+			let item = list[i];
+
+			// 처리상태 [정상/비정상] 처리
+			let errMsg = "";
+			if (!item.errCn) { // 정상인 경우
+				errMsg = "<div class='state type-b'>" // b: 정상
+					+	 "	<span class='ltxt'>처리상태</span>"
+					+	 "	<span class='rtxt'>정상</span>"
+					+	 "</div>";
+			} else { // 비정상인 경우
+				errMsg = "<div class='state type-r'>" // r: 비정상
+					+	 "	<span class='ltxt'>처리상태</span>"
+					+	 "	<span class='rtxt' onclick='fn_rtxtErr(\"" + item.instId + "\")'>비정상</span>"
+					+	 "</div>";
+
+				// 비정상 모달창 제작
+				fn_roungeErrHtml(item);
+			}
+
+			let html =
+					"<div class='itm'>"
+				+	"	<div class='hd'><img src='../asset/images/" + fn_getValueByKey(LOGO_IMG, item.instId) + "' alt='" + item.instNm + "' /></div>"
+				+		errMsg // 처리상태 [정상/비정상]
+				+	"	<ul class='data-inr'>"
+				+	"		<li>"
+				+	"			<div class='th'>접수데이터</div>"
+				+	"			<div class='td'>" + fn_addComma(item.rcptCnt, 0) + "</div>"
+				+	"		</li>"
+				+	"		<li>"
+				+	"			<div class='th'>시험데이터</div>"
+				+	"			<div class='td'>" + fn_addComma(item.testItemCnt, 0) + "</div>"
+				+	"		</li>"
+				+	"		<li>"
+				+	"			<div class='th'>성적데이터</div>"
+				+	"			<div class='td'>" + fn_addComma(item.rprtCnt, 0) + "</div>"
+				+	"		</li>"
+				+	"		<li>"
+				+	"			<div class='th'>인증데이터</div>"
+				+	"			<div class='td'>" + fn_addComma(item.certCnt, 0) + "</div>"
+				+	"		</li>"
+				+	"		<li>"
+				+	"			<div class='th'>인증이미지</div>"
+				+	"			<div class='td'>" + fn_addComma(item.certImgCnt, 0) + "</div>"
+				+	"		</li>"
+				+	"	</ul>"
+				+	"</div>"
+
+			$("#agencySpecificData").append(html);
+		}
+	}
+
+	/**
+	 * 수집건수 추이 차트 제작
+	 * @param list			차트 데이터
+	 * @param chartArea		차트 추가 영역
+	 * @param canvasArea	차트 캔버스 ID
+	 */
+	function fn_numberOfCollectionChartHtml(list, chartArea, canvasArea) {
+		// 1. 차트 영역 설정
+		$("#" + chartArea).html("<canvas id='" + canvasArea + "'></canvas>");
+
+		// 2. 차트 데이터 초기화
+		let labels = []; 	// x축 (날짜)
+		let datasets = []; 	// 데이터 라벨, 데이터, 차트 컬러, ... 등 데이터 설정 변수
+
+		// 3. 차트 컬러 설정
+		let arrColors = [
+			  "rgba(112, 173, 71, 1)"
+			, "rgba(91, 155, 213, 1)"
+			, "rgba(255, 192, 0, 1)"
+			, "rgba(67, 104, 43, 1)"
+			, "rgba(37, 94, 145, 1)"
+		];
+
+		// 4. datasets에 담기 위한 객체 생성 및 초기화
+		// 접수, 시험, 성적, 인증, 인증이미지
+		const [rcptData, testItemData, rprtData, certData, certImgData] =
+			[
+				{ label: "접수데이터", data: [] },
+				{ label: "시험데이터", data: [] },
+				{ label: "성적데이터", data: [] },
+				{ label: "인증데이터", data: [] },
+				{ label: "인증이미지", data: [] },
+			];
+
+		const chartData = [rcptData, testItemData, rprtData, certData, certImgData];
+
+		// 5. 데이터 설정
+		for (let i = 0; i < list.length; i++) {
+			// labels 날짜 담기
+			labels.push(list[i].gatherDt);
+
+			// 각 데이터 담기
+			rcptData.data.push(list[i].rcptCnt);
+			testItemData.data.push(list[i].testItemCnt);
+			rprtData.data.push(list[i].rprtCnt);
+			certData.data.push(list[i].certCnt);
+			certImgData.data.push(list[i].certImgCnt);
+		}
+
+		chartData.forEach((data, idx) => {
+			// 6. 차트 색상 설정
+			fn_chartColorSetting(data, arrColors[idx], arrColors[idx]);
+			// 7. datasets 데이터 담기
+			datasets.push(data);
+		});
+
+		// 8. 차트 데이터 obj 셋팅
+		const obj = {
+			id: canvasArea,		// canvas id
+			type: "line",		// chart type
+			datasets,			// 차트 데이터
+			labels,				// 차트 라벨
+			yDisplay: true,
+			position: "bottom",
+		};
+
+		// 9. 차트 그리기
+		fn_chartAction(obj);
+	}
+
+	/**
+	 * 데이터 수집결과 추이 차트 제작
+	 * @param list			차트 데이터
+	 * @param chartArea		차트 추가 영역
+	 * @param canvasArea	차트 캔버스 ID
+	 *
+	 * (접수, 시험, 성적, 인증, 인증이미지) 수집결과 추이 차트 제작
+	 */
+	function fn_dataCollectionResultChartHtml(list, chartArea, canvasArea) {
+		// 1. 차트 영역 설정
+		$("#" + chartArea).html("<canvas id='" + canvasArea + "'></canvas>");
+
+		// 2. 차트 데이터 초기화
+		let labels = []; 	// x축 (날짜)
+		let datasets = []; 	// 데이터 라벨, 데이터, 차트 컬러, ... 등 데이터 설정 변수
+
+		// 3. 차트 컬러 설정
+		let arrColors = [
+			  "rgba(68, 114, 196, 1)"
+			, "rgba(237, 125, 49, 1)"
+		];
+
+		// 4. datasets에 담기 위한 객체 생성 및 초기화
+		const [normalData, abnormalData] =
+			[
+				{ label: "정상", data: [] }, // 정상
+				{ label: "비정상", data: [] } // 비정상
+			];
+
+		const chartData = [normalData, abnormalData];
+
+		// 5. 데이터 설정
+		for (let i = 0; i < list.length; i++) {
+			// labels 날짜 담기
+			labels.push(list[i].gatherDt);
+
+			// 각 데이터 담기
+			normalData.data.push(list[i].normalData);
+			abnormalData.data.push(list[i].abnormalData);
+		}
+
+		chartData.forEach((data, idx) => {
+			// 6. 차트 색상 설정
+			fn_chartColorSetting(data, 	arrColors[idx], arrColors[idx]);
+			// 7. datasets 데이터 담기
+			datasets.push(data);
+		});
+
+		// 8. 차트 데이터 obj 셋팅
+		const obj = {
+			id: canvasArea, 	// canvas id
+			type: "bar", 		// chart type
+			datasets, 			// 차트 데이터
+			labels, 			// 차트 라벨
+			yDisplay: true,
+			position: "bottom",
+		};
+
+		// 9. 차트 그리기
+		fn_chartAction(obj);
+	}
+
+	/**
+	 * 차트 색상 설정
+	 * @param chartData 	해당 차트 데이터
+	 * @param bgColor 		차트 그래프 배경 색
+	 * @param borderColor 	차트 그래프 선 색
+	 */
+	function fn_chartColorSetting(chartData, bgColor, borderColor) {
+		chartData.backgroundColor = bgColor;
+		chartData.borderColor = borderColor;
+	}
+
+	/**
+	 * 차트 제작
+	 */
+	function fn_chartAction(obj) {
+		// 0. 차트 데이터 가져오기
+		const id = obj.id;
+		const type = obj.type;
+		const labels = obj.labels;
+		const datasets = obj.datasets;
+		const yDisplay = obj.yDisplay;
+		const position = obj.position;
+
+		// 1. 차트 영역
+		const ctx = document.getElementById(id);
+
+		// 2. 차트 추가
+		const myChart = new Chart(ctx, {
+			type, // 차트 형태
+			data: {
+				// 차트 셋팅 데이터
+				labels: labels, // x축 데이타
+				datasets: datasets, // 차트 데이터
+			},
+			options: {
+				responsive: true,
+				scales: {
+					y: {
+						min: 0, // y축 최소값
+						ticks: {
+							// y축 숨기기 ( true, false )
+							display: yDisplay
+						}
+					}
+				},
+				interaction: {
+					intersect: false,
+					mode: "index",
+				},
+				plugins: {
+					legend: {
+						position: position // 범례 위치 ( 'top', 'bottom', 'left', 'rigth' )
+					}
+				}
+			}
+		});
+	}
+
+	// === 비정상 모달창 ===
+	/**
+	 * 처리상태 비정상 클릭 시 모달창
+	 */
+	function fn_roungeErrMd() {
+		$('.rounge-err-md .md-rect > .btn-close, .rounge-err-md .btn').click(function(){
+			$('.rounge-err-md').removeClass('active');
+		});
+
+		$('.rounge-mobile-err-md .md-rect > .btn-close').click(function(){
+			$('.rounge-mobile-err-md').removeClass('active');
+		});
+	}
+
+	/**
+	 * 비정상 모달창 제작
+	 */
+	function fn_roungeErrHtml(item) {
+		// 비정상 modal
+		let html =	"<div class='rounge-err-md' id='roungeErr" + item.instId + "'>"
+				+	"	<div class='md-rect'>"
+				+	"		<a href='javascript:void(0)' class='btn-close'>닫기</a>"
+				+	"		<h3 class='md-tit'>오류 메시지</h3>"
+				+	"		<div class='end-wr'>"
+				+	"			<p>" + (item.errCn).replaceAll(/(?:\r\n|\r|\n)/g, "<br />"); + "</p>"
+				+	"		</div>"
+				+	"		<div class='btn-wr'><a href='javascript:void(0)' class='btn md01'>확인</a></div>"
+				+	"	</div>"
+				+	"</div>";
+
+		$("#cont").after(html);
+	}
+
+	/**
+	 * 기관별 오류메시지 모달창
+	 */
+	function fn_rtxtErr(instId) {
+		$("#roungeErr" + instId).addClass("active");
+	}
+</script>
+
+<!-- ===== header ====== -->
+<header id="header">
+	<div id="sub-mv" class="sub-rounge">
+		<div class="inner">
+			<h2>참여기관 라운지</h2>
+			<div class="sub-obj">오브젝트</div>
+		</div>
+	</div>
+</header>
+<!-- ===== /header ====== -->
+
+<!-- ===== container ====== -->
+<div id="container">
+	<!--breadcrumb-wr-->
+	<jsp:include page="/WEB-INF/views/layout/breadcrumbWr.jsp">
+		<jsp:param name="menuTopNo" value="03"/>
+		<jsp:param name="menuSubNo" value="0301"/>
+	</jsp:include>
+	<!-- // breadcrumb-wr-->
+
+	<!--container-->
+	<div id="cont" class="cont-rounge">
+		<!-- 데이터 조회 FORM -->
+		<form id="gatherStatusFrm" name="gatherStatusFrm" method="get">
+			<!-- 기관코드 -->
+			<input type="hidden" name="instId" id="instId" />
+			<!-- 최근 수집 일자 -->
+			<input type="hidden" name="lastGatherDt" id="lastGatherDt" value="${lastGatherDt}"/>
+		</form>
+
+		<!--tit-->
+		<div class="cont-platform-tit">
+			<h2 class="tit">데이터 수집현황</h2>
+		</div>
+
+		<!--데이터 list-->
+		<div class="data-lst" id="agencySpecificData">
+		</div>
+
+		<!--그래프 list-->
+		<div class="sass-lst">
+			<div class="itm">
+				<div class="hd">
+					<h5 class="stit">수집결과 추이(전체)</h5>
+					<select class="select select-mysvcoffice" id="selChgNumberOfCollection">
+					</select>
+				</div>
+				<div class="bd" id="numberOfCollectionChart"></div>
+			</div>
+
+			<div class="itm">
+				<div class="hd">
+					<h5 class="stit">접수데이터 수집결과 추이(전체)</h5>
+					<select class="select select-mysvcoffice" id="selRcptCntCollectionResult">
+					</select>
+				</div>
+				<div class="bd" id="rcptCollectionResultChart"></div>
+			</div>
+
+			<div class="itm">
+				<div class="hd">
+					<h5 class="stit">시험데이터 수집결과 추이(전체)</h5>
+					<select class="select select-mysvcoffice" id="selTestItemCollectionResult">
+					</select>
+				</div>
+				<div class="bd" id="testItemCollectionResultChart"></div>
+			</div>
+
+			<div class="itm">
+				<div class="hd">
+					<h5 class="stit">성적데이터 수집결과 추이(전체)</h5>
+					<select class="select select-mysvcoffice" id="selRprtCntCollectionResult">
+					</select>
+				</div>
+				<div class="bd" id="rprtCollectionResultChart"></div>
+			</div>
+
+			<div class="itm">
+				<div class="hd">
+					<h5 class="stit">인증데이터 수집결과 추이(전체)</h5>
+					<select class="select select-mysvcoffice" id="selCertCollectionResult">
+					</select>
+				</div>
+				<div class="bd" id="certCollectionResultChart"></div>
+			</div>
+
+			<div class="itm">
+				<div class="hd">
+					<h5 class="stit">인증이미지 수집결과 추이(전체)</h5>
+					<select class="select select-mysvcoffice" id="selCertImgCollectionResult">
+					</select>
+				</div>
+				<div class="bd" id="certImgCollectionResultChart"></div>
+			</div>
+		</div>
+	</div>
+
+	<!-- ===== 모바일접근금지 modal ====== -->
+	<div class="rounge-mobile-err-md active">
+		<div class="md-rect">
+			<!--a href="javascript:" class="btn-close">닫기</a-->
+			<h3 class="md-tit">안내</h3>
+			<div class="end-wr">
+				<div class="img"><img src="../asset/images/ic-error-m.svg" /></div>
+				<p>해당 메뉴는 콘텐츠 특성 상<br />모바일 버전을 제공하지 않습니다.<br />PC에서 접속해 주세요.</p>
+			</div>
+		</div>
+	</div>
+
+</div>
+<!-- ===== /container ====== -->

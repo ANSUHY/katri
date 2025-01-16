@@ -1,0 +1,687 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.user.user.mapper.UserMapper">
+
+	<!-- user 회원 현황 목록 조회 sql -->
+	<sql id="sqlUserBas">
+
+		SELECT	  tub.user_id
+				, tub.user_nm
+				, tub.user_pwd
+				, tub.user_lgcy_pwd
+
+				, tub.user_ty_cd
+				, tcc1.comn_cd_nm as user_ty_nm
+				, tub.user_stt_cd
+				, tcc2.comn_cd_nm as user_stt_nm
+
+				, tub.user_link_info_val
+				, tub.encpt_mbl_telno_val
+				, tub.encpt_eml_addr_val
+				, tub.eml_cert_no_val
+				, tub.authrt_grp_sn
+
+				, tub.join_aply_dmnd_dt
+				, tub.join_aply_prcs_dt
+				, tub.join_aply_prcr_id
+				, tub.join_ymd
+
+				, tub.whdwl_aply_dmnd_dt
+				, tub.whdwl_aply_prcs_dt
+				, tub.whdwl_aply_prcr_id
+				, tub.whdwl_ymd
+				, tub.whdwl_resn_cn
+
+				, tub.last_lgn_dt
+				, tub.last_lgn_ip_addr
+				, tub.lgn_fir_cnt
+				, tub.last_lgn_fir_dt
+				, tub.last_pwd_chg_dt
+
+				, tub.drmncy_ymd
+				, tub.last_drmncy_dt
+				, tub.last_drmncy_rmv_dt
+
+				, tub.crt_dt
+				, tub.crtr_id
+				, tub.mdfcn_dt
+				, tub.mdfr_id
+				, tub.anls_env_user_id
+
+		FROM	tb_user_bas tub
+		/* 사용자 유형 코드 */
+		LEFT OUTER JOIN tb_comn_cd tcc1 ON ( tub.user_ty_cd  = tcc1.comn_cd and tcc1.comn_grp_cd = 'MTC' and tcc1.use_yn = 'Y' )
+		/* 사용자 상태 코드 */
+		LEFT OUTER JOIN tb_comn_cd tcc2 ON ( tub.user_stt_cd = tcc2.comn_cd and tcc2.comn_grp_cd = 'USC' and tcc2.use_yn = 'Y' )
+
+	</sql>
+
+	<!-- user 회원 현황 목록 조회 조건 sql -->
+	<sql id="sqlWhereUserBas">
+
+		<where>
+
+			<!-- 검색 사용자상태코드 -->
+			<if test="searchUserSttCd != null and searchUserSttCd != ''">
+				AND tub.user_stt_cd = #{searchUserSttCd}
+			</if>
+
+			<!-- 검색 사용자아이디 -->
+			<if test="searchUserId != null and searchUserId != ''">
+				AND ( tub.user_id LIKE '%' || #{searchUserId} || '%' )
+			</if>
+
+		</where>
+
+	</sql>
+
+	<!-- user 회원 현황 목록 개수 조회 -->
+	<select id="selectUserBasCnt" parameterType="com.katri.web.user.user.model.UserSelectReq" resultType="int">
+		/* UserMapper.selectUserBasCnt ( 회원 현황 목록 개수 조회 ) */
+
+		SELECT	COUNT(tub.user_id) AS CNT
+
+		FROM	tb_user_bas tub
+
+		<include refid="sqlWhereUserBas"/>
+
+	</select>
+
+	<!-- user 회원 현황 목록 조회 -->
+	<select id="selectUserBasList" parameterType="com.katri.web.user.user.model.UserSelectReq" resultType="com.katri.web.user.user.model.UserSelectRes">
+		/* UserMapper.selectUserBasList ( 회원 현황 목록 조회 ) */
+
+		SELECT
+				<choose>
+					<when test='searchKeyword == "USC030"'>
+						(row_number() over(order by ul.drmncy_ymd asc)) as rnum
+					</when>
+					<when test='searchKeyword == "USC040"'>
+						(row_number() over(order by ul.whdwl_ymd asc)) as rnum
+					</when>
+					<otherwise>
+						(row_number() over(order by ul.join_ymd asc)) as rnum
+					</otherwise>
+				</choose>
+
+				, ul.user_id
+				, ul.user_ty_cd
+				, ul.user_stt_cd
+				, COALESCE( ul.user_ty_nm, '-' ) 	as user_ty_nm
+				, COALESCE( ul.user_stt_nm, '-' ) 	as user_stt_nm
+				, COALESCE( TO_CHAR( ul.join_ymd::date , 'YYYY-MM-DD' ), '-' ) 	as join_ymd
+				, COALESCE( TO_CHAR( ul.whdwl_ymd::date, 'YYYY-MM-DD' ), '-' ) 	as whdwl_ymd
+				, COALESCE( TO_CHAR( ul.drmncy_ymd::date, 'YYYY-MM-DD' ), '-' ) as drmncy_ymd
+				, TO_CHAR( ul.last_lgn_dt , 'YYYY-MM-DD' ) 		as last_lgn_dt
+
+		FROM (
+				<include refid="sqlUserBas" />
+				<include refid="sqlWhereUserBas"/>
+			) ul
+
+		ORDER BY rnum desc
+
+		OFFSET #{startRow} LIMIT #{endRow};
+
+	</select>
+
+	<!-- user 기관 회원 상세 조회 -->
+	<select id="selectInstUserBasDetail" parameterType="com.katri.web.user.user.model.UserSelectReq" resultType="com.katri.web.user.user.model.UserSelectRes">
+		/* UserMapper.selectInstUserBasDetail ( 기관 회원 상세 조회 ) */
+
+		SELECT 	<!-- 사용자 정보 -->
+				  ud.user_id
+				, ud.user_ty_cd
+				, ud.user_stt_cd
+				, COALESCE( ud.user_ty_nm, '-' ) 	as user_ty_nm
+				, COALESCE( ud.user_stt_nm, '-' ) 	as user_stt_nm
+				, COALESCE( TO_CHAR( ud.join_ymd::date, 'YYYY-MM-DD' ), '-' ) as join_ymd
+				, COALESCE( TO_CHAR( ud.whdwl_ymd::date, 'YYYY-MM-DD' ), '-' ) 	as whdwl_ymd
+				, COALESCE( TO_CHAR( ud.drmncy_ymd::date, 'YYYY-MM-DD' ), '-' ) as drmncy_ymd
+				, ud.user_nm
+				, ud.encpt_mbl_telno_val
+				, ud.encpt_eml_addr_val
+
+				<!-- 기관 사용자 정보 -->
+				, tium.inst_user_sn
+				, tium.inst_id
+				, pcib.inst_eng_nm || ' (' || pcib.inst_nm || ')' as inst_nm
+				, tium.user_dept_nm
+				, tium.wrc_telno
+
+		FROM (
+
+			<include refid="sqlUserBas"/>
+			WHERE tub.user_id = #{targetUserId}
+
+		) ud
+
+		LEFT OUTER JOIN tb_inst_user_mng tium ON ( ud.user_id = tium.user_id )
+		/* 기관 코드 */
+		LEFT OUTER JOIN pt_co_inst_bas pcib ON ( tium.inst_id = pcib.inst_id AND pcib.use_yn = 'Y' )
+
+	</select>
+
+	<!-- user 기업 회원 상세 조회 -->
+	<select id="selectEntUserBasDetail" parameterType="com.katri.web.user.user.model.UserSelectReq" resultType="com.katri.web.user.user.model.UserSelectRes">
+		/* UserMapper.selectEntUserBasDetail ( 기업 회원 상세 조회 ) */
+
+		SELECT	<!-- 사용자 정보 -->
+				  ud.user_id
+				, ud.user_ty_cd
+				, ud.user_stt_cd
+				, COALESCE( ud.user_ty_nm, '-' ) 	as user_ty_nm
+				, COALESCE( ud.user_stt_nm, '-' ) 	as user_stt_nm
+				, COALESCE( TO_CHAR( ud.join_ymd::date, 'YYYY-MM-DD' ), '-' ) as join_ymd
+				, COALESCE( TO_CHAR( ud.whdwl_ymd::date, 'YYYY-MM-DD' ), '-' ) 	as whdwl_ymd
+				, COALESCE( TO_CHAR( ud.drmncy_ymd::date, 'YYYY-MM-DD' ), '-' ) as drmncy_ymd
+				, ud.user_nm
+				, ud.encpt_mbl_telno_val
+				, ud.encpt_eml_addr_val
+
+				<!-- 기업 그룹 사용자 정보  -->
+				, tegum.ent_grp_user_sn
+				, tegum.ent_grp_sn
+				, tegum.user_dept_nm
+				, tegum.user_jbgd_nm
+				, tegum.wrc_telno
+				, tegum.wrc_zip
+				, tegum.wrc_bas_addr
+				, tegum.wrc_daddr
+
+				<!-- 기업 그룹 정보 -->
+				, substring( teb.brno::varchar, 1, 3 ) || '-' || substring( teb.brno::varchar, 4, 2 ) || '-' || substring( teb.brno::varchar, 6,5 ) as brno
+				, tegb.ent_grp_mng_no
+				, tegb.ent_grp_nm
+				, tegb.ent_grp_zip
+				, tegb.ent_grp_bas_addr
+				, tegb.ent_grp_daddr
+
+				<!-- 기업 정보  -->
+				, teb.ent_nm
+				, teb.rprsv_nm
+				, TO_CHAR( teb.opbiz_ymd::date, 'YYYY-MM-DD' ) as opbiz_ymd
+		FROM (
+
+			<include refid="sqlUserBas"/>
+			WHERE tub.user_id = #{targetUserId}
+
+		) ud
+
+		LEFT OUTER JOIN tb_ent_grp_user_mng tegum 	ON ( ud.user_id = tegum.user_id )
+		LEFT OUTER JOIN tb_ent_grp_bas tegb 		ON ( tegum.ent_grp_sn = tegb.ent_grp_sn )
+		LEFT OUTER JOIN tb_ent_bas teb 				ON ( teb.brno = tegb.brno )
+
+	</select>
+
+	<!-- user 일반 회원 상세 조회 -->
+	<select id="selectGnrlUserBasDetail" parameterType="com.katri.web.user.user.model.UserSelectReq" resultType="com.katri.web.user.user.model.UserSelectRes">
+		/* UserMapper.selectGnrlUserBasDetail ( 일반 회원 상세 조회 ) */
+
+		SELECT	<!-- 사용자 정보 -->
+				  ud.user_id
+				, ud.user_ty_cd
+				, ud.user_stt_cd
+				, COALESCE( ud.user_ty_nm, '-' ) 	as user_ty_nm
+				, COALESCE( ud.user_stt_nm, '-' ) 	as user_stt_nm
+				, COALESCE( TO_CHAR( ud.join_ymd::date, 'YYYY-MM-DD' ), '-' ) as join_ymd
+				, COALESCE( TO_CHAR( ud.whdwl_ymd::date, 'YYYY-MM-DD' ), '-' ) 	as whdwl_ymd
+				, COALESCE( TO_CHAR( ud.drmncy_ymd::date, 'YYYY-MM-DD' ), '-' ) as drmncy_ymd
+				, ud.user_nm
+				, ud.encpt_mbl_telno_val
+				, ud.encpt_eml_addr_val
+
+		FROM (
+
+			<include refid="sqlUserBas"/>
+			WHERE tub.user_id = #{targetUserId}
+
+		) ud
+
+	</select>
+
+	<!-- user 회원 접속 로그 목록 개수 조회 -->
+	<select id="selectUserLogHistCnt" parameterType="com.katri.web.user.user.model.UserSelectReq" resultType="int">
+		/* UserMapper.selectUserLogHistCnt ( 회원 접속 로그 목록 개수 조회 ) */
+
+		SELECT	COUNT(tlh.hist_sn) as cnt
+
+		FROM 	tb_lgn_hist tlh
+
+		WHERE	tlh.crtr_id 	= #{targetUserId}
+		AND		tlh.site_ty_cd 	= 'front'
+	</select>
+
+	<!-- user 회원 접속 로그 목록 조회 -->
+	<select id="selectUserLogHistList" parameterType="com.katri.web.user.user.model.UserSelectReq" resultType="com.katri.web.user.user.model.UserSelectRes">
+		/* UserMapper.selectUserLogHistList ( 회원 접속 로그 목록 조회 ) */
+
+		SELECT	(row_number() over(order by tlh.crt_dt asc)) as rnum
+				, tlh.user_ip_addr 	as user_ip_addr
+				, tlh.crtr_id 		as lgn_hist_crtr_id
+				, TO_CHAR(tlh.crt_dt, 'YYYY-MM-DD HH24:MI:SS') as lgn_hist_crt_dt
+
+		FROM 	tb_lgn_hist tlh
+
+		WHERE	tlh.crtr_id 	= #{targetUserId}
+		AND		tlh.site_ty_cd 	= 'front'
+
+		ORDER BY rnum desc
+
+		OFFSET 	#{startRow} LIMIT #{endRow};
+
+	</select>
+
+	<!-- user 회원 약관 동의 이력 목록 개수 조회 > [회원가입 약관] -->
+	<select id="selectUserTrmsAgreHistCnt" parameterType="com.katri.web.user.user.model.UserSelectReq" resultType="int">
+		/* UserMapper.selectUserTrmsAgreHistCnt ( 회원 약관 동의 이력 목록 개수 조회 > [회원가입 약관] ) */
+
+		SELECT	COUNT(ttah.hist_sn) as cnt
+
+		FROM 	tb_trms_agre_hist ttah
+		LEFT OUTER JOIN tb_trms_bas ttb ON ( ttah.trms_sn = ttb.trms_sn )
+		LEFT OUTER JOIN tb_comn_cd	tcc ON ( ttb.trms_ty_cd = tcc.comn_cd and tcc.comn_grp_cd = 'TTC' and tcc.use_yn = 'Y' )
+
+		WHERE	ttah.user_id 	= #{targetUserId}
+		AND		tcc.comn_cd_val = #{searchTrmsCdVal}
+
+	</select>
+
+	<!-- user 회원 약관 동의 이력 목록 조회 > [회원가입 약관] -->
+	<select id="selectUserTrmsAgreHistList" parameterType="com.katri.web.user.user.model.UserSelectReq" resultType="com.katri.web.user.user.model.UserSelectRes">
+		/* UserMapper.selectUserTrmsAgreHistList ( 회원 약관 동의 이력 목록 조회 > [회원가입 약관] ) */
+
+		SELECT	  ttah.trms_sn
+				, TO_CHAR( ttah.crt_dt, 'YYYY-MM-DD' ) as trms_agre_hist_crt_dt
+				, ttb.trms_ty_cd
+				, tcc.comn_cd_nm as trms_nm
+
+		FROM 	tb_trms_agre_hist ttah
+		LEFT OUTER JOIN tb_trms_bas ttb ON ( ttah.trms_sn = ttb.trms_sn )
+		LEFT OUTER JOIN tb_comn_cd	tcc ON ( ttb.trms_ty_cd = tcc.comn_cd and tcc.comn_grp_cd = 'TTC' and tcc.use_yn = 'Y' )
+
+		WHERE	ttah.user_id 	= #{targetUserId}
+		AND		tcc.comn_cd_val = #{searchTrmsCdVal}
+
+	</select>
+
+	<!-- user 회원 약관 동의 이력 목록 개수 조회 > [내손안의 시험인증 약관] -->
+	<select id="selectEntGrpAgreTrmsCnt" parameterType="com.katri.web.user.user.model.UserSelectReq" resultType="int">
+		/* UserMapper.selectEntGrpAgreTrmsCnt ( 회원 약관 동의 이력 목록 개수 조회 > [내손안의 시험인증 약관] ) */
+
+		SELECT	COUNT(bas.hist_sn) as cnt
+
+		FROM
+			(
+				select	  t1.trms_sn
+						, t2.hist_sn
+						, t2.crt_dt
+						, t2.crtr_id
+						, t2.inst_id
+						, t2.info_pvsn_agre_yn as agre_yn
+						, '데이터 수집' as trms_ty_nm
+				from	tb_ent_grp_clct_agre_hist t2
+				left outer join tb_ent_grp_clct_agre_trms_hist t1 on ( t1.hist_sn = t2.hist_sn )
+				union all
+				select	  t3.trms_sn
+						, t4.hist_sn
+						, t4.crt_dt
+						, t4.crtr_id
+						, t4.inst_id
+						, t4.sbmsn_co_rls_agre_yn as agre_yn
+						, '제출처에 데이터' as trms_ty_nm
+				from	tb_ent_grp_sbmsn_co_rls_agre_hist t4
+				left outer join tb_ent_grp_sbmsn_co_rls_trms_agre_hist t3 on ( t3.hist_sn = t4.hist_sn )
+			) bas
+
+		INNER JOIN 		pt_co_inst_bas pcib ON ( bas.inst_id = pcib.inst_id AND pcib.use_yn = 'Y' )
+		LEFT OUTER JOIN tb_trms_bas ttb 	ON ( ttb.trms_sn = bas.trms_sn )
+		LEFT OUTER JOIN tb_comn_cd tcc 		ON ( tcc.comn_grp_cd = 'TTC' AND tcc.comn_cd = ttb.trms_ty_cd AND tcc.use_yn = 'Y' AND tcc.comn_cd_val = #{searchTrmsCdVal} )
+
+		WHERE 			bas.crtr_id = #{targetUserId}
+
+	</select>
+
+	<!-- user 회원 약관 동의 이력 목록 조회 > [내손안의 시험인증 약관] -->
+	<select id="selectEntGrpAgreTrmsList" parameterType="com.katri.web.user.user.model.UserSelectReq" resultType="com.katri.web.user.user.model.UserSelectRes">
+		/* UserMapper.selectEntGrpAgreTrmsList ( 회원 약관 동의 이력 목록 조회 > [내손안의 시험인증 약관] ) */
+
+		SELECT	  bas.hist_sn
+				, bas.trms_sn
+				, bas.crtr_id
+				, TO_CHAR( bas.crt_dt, 'YYYY-MM-DD' ) as trms_agre_hist_crt_dt
+				, bas.trms_ty_nm
+				, tcc.comn_cd_nm as trms_nm
+				, bas.agre_yn
+				, pcib.inst_eng_nm as inst_nm
+		FROM
+			(
+				select	  t1.trms_sn
+						, t2.hist_sn
+						, t2.crt_dt
+						, t2.crtr_id
+						, t2.inst_id
+						, t2.info_pvsn_agre_yn as agre_yn
+						, '데이터 수집' as trms_ty_nm
+				from	tb_ent_grp_clct_agre_hist t2
+				left outer join tb_ent_grp_clct_agre_trms_hist t1 on ( t1.hist_sn = t2.hist_sn )
+				union all
+				select	  t3.trms_sn
+						, t4.hist_sn
+						, t4.crt_dt
+						, t4.crtr_id
+						, t4.inst_id
+						, t4.sbmsn_co_rls_agre_yn as agre_yn
+						, '제출처에 데이터 공개' as trms_ty_nm
+				from	tb_ent_grp_sbmsn_co_rls_agre_hist t4
+				left outer join tb_ent_grp_sbmsn_co_rls_trms_agre_hist t3 on ( t3.hist_sn = t4.hist_sn )
+			) bas
+
+		INNER JOIN 		pt_co_inst_bas pcib ON ( bas.inst_id = pcib.inst_id AND pcib.use_yn = 'Y' )
+		LEFT OUTER JOIN tb_trms_bas ttb 	ON ( ttb.trms_sn = bas.trms_sn )
+		LEFT OUTER JOIN tb_comn_cd tcc 		ON ( tcc.comn_grp_cd = 'TTC' AND tcc.comn_cd = ttb.trms_ty_cd AND tcc.use_yn = 'Y' AND tcc.comn_cd_val = #{searchTrmsCdVal} )
+
+		WHERE 			bas.crtr_id = #{targetUserId}
+
+		ORDER BY 		bas.inst_id, bas.crt_dt desc
+
+	</select>
+
+	<!-- user 현재 비밀번호 상세 조회 -->
+	<select id="selectUserPwdInfo" parameterType="com.katri.web.user.user.model.UserSelectReq" resultType="com.katri.web.user.user.model.UserSelectRes">
+		/* UserMapper.selectUserPwd ( 현재 비밀번호 상세 조회 ) */
+
+		SELECT	<!-- 사용자 패스워드 -->
+				  ud.user_pwd
+				<!-- 데이터 분석 api 요청 데이터 관련 -->
+				, ud.user_id
+				, ud.encpt_eml_addr_val
+				, ud.user_ty_cd
+				, ud.anls_env_user_id
+		FROM (
+
+			<include refid="sqlUserBas"/>
+			WHERE tub.user_id = #{targetUserId}
+
+		) ud
+
+	</select>
+
+	<!-- user 회원 비밀번호 초기화 -->
+	<update id="updateUserPwd" parameterType="com.katri.web.user.user.model.UserSaveReq">
+		/* UserMapper.updateUserPwd ( 회원 비밀번호 초기화 ) */
+
+		UPDATE	tb_user_bas
+
+		SET		  user_pwd			= #{chgUserPwd}
+				, mdfcn_dt			= now()
+				, mdfr_id			= #{mdfrId}
+				, last_pwd_chg_dt	= now()
+				, lgn_fir_cnt		= 0
+
+		WHERE	user_id 		= #{targetUserId}
+
+	</update>
+
+	<!-- user 사용자 기본 정보 수정 -->
+	<update id="updateUserInfo" parameterType="com.katri.web.user.user.model.UserSaveReq">
+		/* UserMapper.updateUserInfo ( 사용자 기본 정보 수정 ) */
+
+		UPDATE	tb_user_bas
+
+		SET		  user_nm				= #{userNm}
+				, encpt_mbl_telno_val	= #{encptMblTelnoVal}
+				, encpt_eml_addr_val	= #{encptEmlAddrVal}
+				, mdfcn_dt				= now()
+				, mdfr_id				= #{mdfrId}
+
+		WHERE	user_id = #{targetUserId}
+
+	</update>
+
+	<!-- user 기관 회원 정보 수정 -->
+	<update id="updateInstUserInfo" parameterType="com.katri.web.user.user.model.UserSaveReq">
+		/* UserMapper.updateInstUserInfo ( 기관 회원 정보 수정 ) */
+
+		UPDATE	tb_inst_user_mng
+
+		SET		user_dept_nm	= #{userDeptNm}
+				, wrc_telno		= #{wrcTelno}
+				, mdfcn_dt		= now()
+				, mdfr_id		= #{mdfrId}
+
+		WHERE	user_id 		= #{targetUserId}
+
+	</update>
+
+	<!-- user 기업 회원 정보 수정 -->
+	<update id="updateEntGrpUserInfo" parameterType="com.katri.web.user.user.model.UserSaveReq">
+		/* UserMapper.updateEntGrpUserInfo ( 기업 회원 정보 수정 ) */
+
+		UPDATE	tb_ent_grp_user_mng
+
+		SET		user_dept_nm	= #{userDeptNm}
+				, user_jbgd_nm	= #{userJbgdNm}
+				, wrc_telno		= #{wrcTelno}
+				, wrc_zip		= #{wrcZip}
+				, wrc_bas_addr	= #{wrcBasAddr}
+				, wrc_daddr		= #{wrcDaddr}
+				, mdfcn_dt		= now()
+				, mdfr_id		= #{mdfrId}
+
+		WHERE	user_id 		= #{targetUserId}
+
+	</update>
+
+	<!-- user 사용자 상태 코드 수정 -->
+	<update id="updateUserSttCd" parameterType="com.katri.web.user.user.model.UserSaveReq">
+		/* UserMapper.updateUserSttCd ( 사용자 상태 코드 수정 ) */
+
+		UPDATE 	tb_user_bas
+
+		SET		  user_stt_cd	= #{targetUserSttCd}
+				, mdfcn_dt		= now()
+				, mdfr_id		= #{mdfrId}
+
+		WHERE	user_id = #{targetUserId}
+
+	</update>
+
+	<!-- user 가입 완료 > 사용자 정보 수정 -->
+	<update id="updateJoinUserBas" parameterType="com.katri.web.user.user.model.UserSaveReq">
+		/* UserMapper.updateJoinUserBas ( 가입 완료 > 사용자 정보 수정 ) */
+
+		UPDATE 	tb_user_bas
+
+		SET		  join_aply_prcs_dt	= now()
+				, join_aply_prcr_id	= #{joinAplyPrcrId}
+				, join_ymd			= TO_CHAR(now(), 'YYYYMMDD')
+				, mdfcn_dt			= now()
+				, mdfr_id			= #{mdfrId}
+
+		WHERE	user_id = #{targetUserId}
+
+	</update>
+
+	<!-- user 회원 > 탈퇴(USC040)를 제외한 상태의 하위 기업 그룹 목록 개수 조회 -->
+	<select id="selectDownEntGrpBasListCnt" parameterType="com.katri.web.user.user.model.UserSelectReq" resultType="int">
+		/* UserMapper.selectDownEntGrpBasListCnt ( 회원 > 탈퇴(USC040)를 제외한 상태의 하위 기업 그룹 목록 개수 조회 ) */
+
+		SELECT 	COUNT(tub.user_id) as cnt
+
+		FROM 	tb_ent_grp_bas tegb
+		LEFT OUTER JOIN
+				tb_ent_grp_user_mng tegum 	ON ( tegb.ent_grp_sn = tegum.ent_grp_sn )
+		LEFT OUTER JOIN
+				tb_user_bas tub 			ON ( tegum.user_id = tub.user_id )
+
+		WHERE 	tegb.brno 			= #{targetBrno}
+		AND 	tegb.ent_grp_sn 	= #{entGrpSn}
+		AND 	tegb.ent_grp_mng_no = #{entGrpMngNo}
+		AND 	tub.user_id 		NOT IN (#{targetUserId})
+		AND 	tub.user_stt_cd 	NOT IN ( 'USC040' )
+
+	</select>
+
+	<!-- user 회원 > 논리 파일 삭제 -->
+	<update id="updateDeleteFile" parameterType="com.katri.web.comm.model.FileDto">
+		/* UserMapper.updateDeleteFile ( 회원 > 논리 파일 삭제 ) */
+
+		UPDATE 	tb_file_mng
+
+		SET 	del_yn = 'Y'
+				, mdfcn_dt = now()
+				, mdfr_id = #{mdfrId}
+
+		WHERE 	ref_div_val = #{refDivVal}
+		AND		file_div_nm = #{fileDivNm}
+
+	</update>
+
+	<!-- user 가입 반려 > 사용자 정보 삭제 -->
+	<delete id="deleteUserBas" parameterType="com.katri.web.user.user.model.UserSaveReq">
+		/* UserMapper.deleteUserBas ( 가입 반려 > 사용자 정보 삭제 ) */
+
+		DELETE
+		FROM	tb_user_bas
+		WHERE	user_id = #{targetUserId}
+
+	</delete>
+
+	<!-- user 가입 반려 > 기업 그룹 사용자 관리 정보 삭제 -->
+	<delete id="deleteUserEntGrpUserMng" parameterType="com.katri.web.user.user.model.UserSaveReq">
+		/* UserMapper.deleteUserEntGrpUserMng ( 가입 반려 > 기업 그룹 사용자 관리 정보 삭제 ) */
+
+		DELETE
+		FROM	tb_ent_grp_user_mng
+		WHERE	user_id 	= #{targetUserId}
+		AND		ent_grp_sn 	= #{entGrpSn}
+
+	</delete>
+
+	<!-- user 가입 반려 > 기업 그룹 기본 정보 삭제 -->
+	<delete id="deleteEntGrpBas" parameterType="com.katri.web.user.user.model.UserSaveReq">
+		/* UserMapper.deleteEntGrpBas ( 가입 반려 > 기업 그룹 기본 정보 삭제 ) */
+
+		DELETE
+		FROM	tb_ent_grp_bas
+		WHERE	ent_grp_sn 		= #{entGrpSn}
+		AND 	ent_grp_mng_no 	= #{entGrpMngNo}
+
+	</delete>
+
+	<!-- user 탈퇴 완료 > 사용자 정보 수정 -->
+	<update id="updateWhdwlUserBas" parameterType="com.katri.web.user.user.model.UserSaveReq">
+		/* UserMapper.updateWhdwlUserBas ( 탈퇴 완료 > 사용자 정보 수정 ) */
+
+		UPDATE 	tb_user_bas
+
+		SET		  whdwl_aply_prcs_dt	= now()
+				, whdwl_aply_prcr_id	= #{whdwlAplyPrcrId}
+				, whdwl_ymd				= TO_CHAR(now(), 'YYYYMMDD')
+				, mdfcn_dt				= now()
+				, mdfr_id				= #{mdfrId}
+
+				/* 사용자 개인정보 'x' 값 처리 */
+				, user_nm				= 'x'
+				, user_pwd				= 'x'
+				, user_lgcy_pwd			= 'x'
+				, user_link_info_val	= 'x'
+				, encpt_mbl_telno_val	= 'x'
+				, encpt_eml_addr_val	= 'x'
+				, eml_cert_no_val		= 'x'
+
+		WHERE	user_id 	= #{targetUserId}
+
+	</update>
+
+	<!-- user 탈퇴 완료 > 기업 그룹 사용자 관리 정보 수정 -->
+	<update id="updateUserEntGrpUserMng" parameterType="com.katri.web.user.user.model.UserSaveReq">
+		/* UserMapper.updateUserEntGrpUserMng ( 탈퇴 완료 > 기업 그룹 사용자 관리 정보 수정 ) */
+
+		UPDATE 	tb_ent_grp_user_mng
+
+		SET		  use_yn		= 'N'
+				, mdfcn_dt		= now()
+				, mdfr_id		= #{mdfrId}
+
+				/* 기업그룹 사용자 개인정보 'x'값 처리 */
+				, user_dept_nm	= 'x'
+				, user_jbgd_nm	= 'x'
+				, wrc_telno		= 'x'
+				, wrc_zip		= 'x'
+				, wrc_bas_addr	= 'x'
+				, wrc_daddr		= 'x'
+
+		WHERE	ent_grp_sn 	= #{entGrpSn}
+		AND		user_id		= #{targetUserId}
+
+	</update>
+
+	<!-- user 탈퇴 완료 > 기업 그룹 기본 정보 수정 -->
+	<update id="updateEntGrpBas" parameterType="com.katri.web.user.user.model.UserSaveReq">
+		/* UserMapper.updateEntGrpBas ( 탈퇴 완료 > 기업 그룹 기본 정보 수정 ) */
+
+		UPDATE 	tb_ent_grp_bas
+
+		SET		  use_yn			= 'N'
+				, mdfcn_dt			= now()
+				, mdfr_id			= #{mdfrId}
+
+				/* 기업그룹 기본 정보 'x'값 처리 */
+				, ent_grp_mng_no	= 'x'
+				, ent_grp_nm		= 'x'
+				, ent_grp_zip		= 'x'
+				, ent_grp_bas_addr	= 'x'
+				, ent_grp_daddr		= 'x'
+
+		WHERE	ent_grp_sn 		= #{entGrpSn}
+		AND 	ent_grp_mng_no 	= #{entGrpMngNo}
+
+	</update>
+
+	<!-- user 탈퇴 완료 > 탈퇴 회원 등록한 게시글 전부 삭제 처리 -->
+	<update id="updateNttMngDelete" parameterType="com.katri.web.user.user.model.UserSaveReq">
+		/* UserMapper.updateNttMngDelete ( 탈퇴 완료 > 탈퇴 회원 등록한 게시글 전부 삭제 처리 ) */
+
+		UPDATE 	tb_ntt_mng
+
+		SET		  del_yn			= 'Y'
+				, mdfcn_dt			= now()
+				, mdfr_id			= #{mdfrId}
+
+		WHERE	crtr_id		= #{targetUserId}
+
+	</update>
+
+	<!-- user 회원 관심 키워드 목록 조회 -->
+	<select id="selectUserPrdtClfChcMngList" parameterType="com.katri.web.user.user.model.UserSelectReq" resultType="com.katri.web.user.user.model.UserPrdtSelectRes">
+		/* UserMapper.selectUserPrdtClfChcMngList ( 회원 관심 키워드 목록 조회 ) */
+
+		SELECT	tupccm.std_lgclf_cd
+				, tcc1.std_lgclf_nm
+				, tupccm.std_mlclf_cd
+				, tcc2.std_mlclf_nm
+				, tupccm.srt_seq
+
+		FROM 	tb_user_prdt_clf_chc_mng tupccm
+
+		LEFT OUTER JOIN pt_co_indst_std_lgclf_cd tcc1 on ( tupccm.std_lgclf_cd = tcc1.std_lgclf_cd and tcc1.use_yn = 'Y' )
+		LEFT OUTER JOIN pt_co_indst_std_mlclf_cd tcc2 on ( tupccm.std_mlclf_cd = tcc2.std_mlclf_cd and tcc2.use_yn = 'Y' )
+
+		WHERE 		tupccm.user_id = #{targetUserId}
+		ORDER BY 	tupccm.std_lgclf_cd, tupccm.srt_seq
+
+	</select>
+
+	<!-- user 회원 관심 키워드 삭제 -->
+	<delete id="deleteUserPrdtClfChcMng" parameterType="com.katri.web.user.user.model.UserSaveReq">
+		/* UserMapper.deleteUserPrdtClfChcMng ( 회원 관심 키워드 삭제 ) */
+
+		DELETE
+		FROM	tb_user_prdt_clf_chc_mng
+		WHERE	user_id = #{targetUserId}
+
+	</delete>
+
+</mapper>

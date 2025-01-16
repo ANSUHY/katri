@@ -1,0 +1,391 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>시험인증 빅데이터 포탈 관리자</title>
+
+<link href="../css/style.css" rel="stylesheet">
+<script src="../js/jquery.min.js"></script>
+<script src="../js/jquery-ui.js"></script>
+<script src="../js/custom.js"></script>
+</head>
+
+<body>
+
+<div id="wrap">
+
+    <div id="header">
+		<h1 class="h1Tit" style="font-size:16px; line-height:15px; padding-top:2px;"><a href="#">시험인증 빅데이터<br />포탈 관리자</a></h1>
+		<div id="gnb-wrap">
+			<ul id="gnb">
+				<li class="gnb1"><a href="javascript:void(0);" class="d1">시스템 관리</a>
+					<div class="deth2">
+						<ul>
+							<li><a href="#">코드 관리</a></li>
+							<li><a href="#">메뉴 관리</a></li>
+							<li><a href="#">접속권한 관리</a></li>
+							<li><a href="#">관리자 관리</a></li>
+						</ul>
+					</div>
+				</li>
+				<li class="gnb2"><a href="#" class="d1">회원 관리</a>
+					<div class="deth2">
+						<ul>
+							<li><a href="#">코드그룹 조회</a></li>
+							<li><a href="#">코드그룹 등록</a></li>
+							<li><a href="#">코드그룹 수정</a></li>
+							<li><a href="#">공통코드 조회</a></li>
+							<li><a href="#">공통코드 등록</a></li>
+							<li><a href="#">공통코드 수정</a></li>
+						</ul>
+					</div>
+				</li>
+				<li class="gnb3"><a href="#" class="d1">약관 관리</a>
+					<div class="deth2">
+						<ul>
+							<li><a href="#">회원정보조회 (PSK 직원)</a></li>
+							<li><a href="#">회원정보조회 (협력사)</a></li>
+						</ul>
+					</div>
+				</li>
+				<li class="gnb4"><a href="#" class="d1">콘텐츠 관리</a>
+					<div class="deth2">
+						<ul>
+							<li><a href="#">관리자 정보 등록</a></li>
+							<li><a href="#">관리자 정보 수정</a></li>
+						</ul>
+					</div>
+				</li>
+				<li class="gnb5"><a href="#" class="d1">메인화면 관리</a></li>
+				<li class="gnb6"><a href="#" class="d1">검색 관리</a></li>
+			</ul>
+		</div>
+		<div class="utill">
+			<a href="#" class="btn btn-white"><i class="fa fa-sign-out"></i> 로그아웃</a>
+		</div>
+	</div><!-- /header -->
+
+	<div id="container">
+
+		<div class="titArea">
+			<div class="location">
+				<span class="ic-home"><i></i></span><span>시스템 관리</span><em>코드 관리</em>
+			</div>
+		</div>
+
+		<div class="btn-box bot r">
+			<div class="left">
+				<h2 class="pop-tit2" style="margin-top: 0px;">코드 정보</h2>
+			</div>
+			<a href="#" class="btn btn-default">신규입력</a>
+			<a href="#" class="btn btn-blue">저장</a>
+		</div>
+
+		<div class="rows">
+			<div class="rows-col5" style="padding: 10px;">
+				<div class="row-tbl">
+					<table>
+						<colgroup>
+							<col style="width:100px">
+							<col style="width:100px">
+							<col style="width:100px">
+							<col style="width:100px">
+						</colgroup>
+					<thead>
+						<tr>
+							<th>
+								<span class="blt_req">*</span>&nbsp;대표코드
+							</th>
+							<th>
+								<span class="blt_req">*</span>&nbsp;대표코드명
+							</th>
+							<th>
+								설명
+							</th>
+							<th>
+								<span class="blt_req">*</span>&nbsp;사용여부
+							</th>
+						</tr>
+					</thead>
+						<tbody>
+							<tr>
+								<td>
+									<input type="text" class="input block" style="padding: 10px;">
+								</td>
+								<td>
+									<input type="text" class="input block">
+								</td>
+								<td>
+									<input type="text" class="input block">
+								</td>
+								<td>
+									<label><input type="radio">Y</label>
+									<label><input type="radio">N</label>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<div class="btn-box bot r">
+			<div class="left">
+				<h2 class="pop-tit2 left">코드 목록</h2>
+			</div>
+		</div>
+
+		<div class="rows">
+
+			<div class="rows-col5" style="padding: 10px;">
+
+				<div style="min-height: 30px;">
+					<div style="float: left;">
+						<h4>#대표코드</h4>
+					</div>
+					<div style="float: right; margin-top: 5px;">
+						<label><input type="checkbox">&nbsp;사용중인 코드만 보기</label>
+					</div>
+				</div>
+
+				<div class="row-tbl scroll" style="height:200px; margin-top: 10px;">
+					<table>
+						<colgroup>
+							<col>
+							<col>
+							<col>
+							<col>
+						</colgroup>
+						<thead>
+							<tr>
+								<th>대표코드</th>
+								<th>대표코드명</th>
+								<th>설명</th>
+								<th>사용여부</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td colspan="4">No Data.</td>
+							</tr>
+						<!--
+							<tr>
+								<td>1</td>
+								<td>2</td>
+								<td>3</td>
+								<td>Y</td>
+							</tr>
+							<tr>
+								<td>1</td>
+								<td>2</td>
+								<td>3</td>
+								<td>Y</td>
+							</tr>
+							<tr>
+								<td>1</td>
+								<td>2</td>
+								<td>3</td>
+								<td>Y</td>
+							</tr>
+							<tr>
+								<td>1</td>
+								<td>2</td>
+								<td>3</td>
+								<td>Y</td>
+							</tr>
+							<tr>
+								<td>1</td>
+								<td>2</td>
+								<td>3</td>
+								<td>Y</td>
+							</tr>
+							<tr>
+								<td>1</td>
+								<td>2</td>
+								<td>3</td>
+								<td>Y</td>
+							</tr>
+							<tr>
+								<td>1</td>
+								<td>2</td>
+								<td>3</td>
+								<td>Y</td>
+							</tr>
+							<tr>
+								<td>1</td>
+								<td>2</td>
+								<td>3</td>
+								<td>Y</td>
+							</tr>
+						 -->
+						</tbody>
+					</table>
+				</div>
+			</div><!-- /row-col5 -->
+
+			<div class="rows-col5" style="padding: 10px;">
+
+				<div style="min-height: 30px;">
+					<div style="float: left;">
+						<h4>#공통코드</h4>
+					</div>
+					<div style="float: right;">
+						<label><input type="checkbox">&nbsp;사용중인 코드만 보기</label>
+						<a href="#" class="btn btn-blue">추가</a>
+					</div>
+				</div>
+
+				<div class="row-tbl scroll" style="height:200px; margin-top: 10px;">
+					<table>
+						<colgroup>
+							<col style="width:100px;">
+							<col>
+							<col>
+							<col>
+							<col>
+							<col>
+							<col>
+						</colgroup>
+						<thead>
+							<tr>
+								<th>대표코드</th>
+								<th>공통코드</th>
+								<th>코드명</th>
+								<th>???</th>
+								<th>순서</th>
+								<th>사용여부</th>
+								<th>정렬</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>1</td>
+								<td>Y</td>
+								<td>
+									<button>▲</button>
+									<button>▼</button>
+								</td>
+							</tr>
+							<tr>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>1</td>
+								<td>Y</td>
+								<td>
+									<button>▲</button>
+									<button>▼</button>
+								</td>
+							</tr>
+							<tr>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>1</td>
+								<td>Y</td>
+								<td>
+									<button>▲</button>
+									<button>▼</button>
+								</td>
+							</tr>
+							<tr>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>1</td>
+								<td>Y</td>
+								<td>
+									<button>▲</button>
+									<button>▼</button>
+								</td>
+							</tr>
+							<tr>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>1</td>
+								<td>Y</td>
+								<td>
+									<button>▲</button>
+									<button>▼</button>
+								</td>
+							</tr>
+							<tr>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>1</td>
+								<td>Y</td>
+								<td>
+									<button>▲</button>
+									<button>▼</button>
+								</td>
+							</tr>
+							<tr>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>1</td>
+								<td>Y</td>
+								<td>
+									<button>▲</button>
+									<button>▼</button>
+								</td>
+							</tr>
+							<tr>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>1</td>
+								<td>Y</td>
+								<td>
+									<button>▲</button>
+									<button>▼</button>
+								</td>
+							</tr>
+							<tr>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>가나다</td>
+								<td>1</td>
+								<td>Y</td>
+								<td>
+									<button>▲</button>
+									<button>▼</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div><!-- /row-col5 -->
+
+		</div>
+
+	</div><!-- /container -->
+
+	<div id="footer">
+		Copyright © KATRi Inc. 2022.
+	</div><!-- /footer -->
+
+</div><!-- /wrap -->
+
+<script>
+	gnb('1','1');
+</script>
+
+</body>
+</html>

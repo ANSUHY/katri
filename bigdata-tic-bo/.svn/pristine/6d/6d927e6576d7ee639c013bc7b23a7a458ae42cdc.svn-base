@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<title>시험인증 빅데이터 플랫폼</title>
+</head>
+<body>
+
+<!-- ===== wrap ====== -->
+<div style="width:100%;max-width:800px;">
+    <table border="0" cellpadding="0" cellspacing="0" style="max-width:800px; border:1px solid #02030f;border-spacing:0;border-collapse:collapse;margin:0px 0px 0px 0px;">
+        <thead>
+            <tr style="width:100%; height:140px; background-image: url('{d_domainWebFo}/asset/images/mail/bg.png'); background-position:center; background-size:cover; background-repeat:no-repeat; vertical-align: middle;">
+              <th style="padding:0 60px;text-align:left">
+                    <span style="height:21px"><img src="{d_domainWebFo}/asset/images/mail/logo.png" style="max-width:189px; max-height:21px"></span>
+                    <p style="font-size:28px; color:#f1f1f1; font-weight:bold; margin:1px 0 0 0">휴면 계정 전환 안내</p>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="padding:60px">
+                    <table border="0" cellpadding="0" cellspacing="0" style="width:100%; border-spacing:0;border-collapse:collapse;margin:0px 0px 0px 0px;">
+                        <tr>
+                            <td style="color:#000; font-size:16px; font-weight:normal; line-height:1.88; word-break: keep-all;">시험인증 빅데이터 플랫폼 서비스는 ‘정보통신망 이용촉진 및 정보보호’ 등에 관한 법률에 따라 회원
+                              개인정보보호를 보호하기 위해 회원님의 개인정보가 휴면계정으로 전환하여 개인정보를 분리하여
+                              저장할 예정입니다.
+                              현재 메일을 수신하신 회원님께서는 휴면계정 전환 대상으로 아래 전환일까지 서비스를 다시 이용하실
+                              경우 휴면 상태로 전환되지 않으니 휴면 상태로 전환과 개인정보의 별도 분리 저장을 원치 않으신다면
+                              홈페이지에 로그인을 해주시기 바랍니다.</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:30px 0">
+                            <table border="1" cellpadding="0" cellspacing="0" style="width:100%; border-spacing:0;border-collapse:collapse;margin:0px 0px 0px 0px; border:1px solid #e6e6e6">
+                              <colgroup>
+                                <col style="width:25%">
+                                <col style="">
+                              </colgroup>
+                              <tbody>
+                                <tr>
+                                  <th scope="row" style="text-align:left;min-height:50px;font-size:16px; line-height:1.63;font-weight:bold;color:#000;padding:13px 0 13px 20px;background:#f7f7f9">아이디</th>
+                                  <td scope="row" style="text-align:left;padding:13px 20px;color:#000;font-weight:normal;line-height:1.88">{maskingUserId}</td>
+                                </tr>
+                                <tr>
+                                  <th scope="row" style="text-align:left;min-height:50px;font-size:16px; line-height:1.63;font-weight:bold;color:#000;padding:13px 0 13px 20px;background:#f7f7f9">휴면전환 예정일</th>
+                                  <td scope="row" style="text-align:left;padding:13px 20px;color:#000;font-weight:normal;line-height:1.88">{eDrmncyDay}</td>
+                                </tr>
+                                <tr>
+                                  <th scope="row" style="text-align:left;min-height:50px;font-size:16px; line-height:1.63;font-weight:bold;color:#000;padding:13px 0 13px 20px;background:#f7f7f9">분리 보관 정보</th>
+                                  <td scope="row" style="text-align:left;padding:13px 20px;color:#000;font-weight:normal;line-height:1.88">회원정보 내 기재된 모든 개인 정보 (계정 활성화에 필요한 인증정보 제외)</td>
+                                </tr>
+                                <tr>
+                                  <th scope="row" style="text-align:left;min-height:50px;font-size:16px; line-height:1.63;font-weight:bold;color:#000;padding:13px 0 13px 20px;background:#f7f7f9">관련 법령</th>
+                                  <td scope="row" style="text-align:left;padding:13px 20px;color:#000;font-weight:normal;line-height:1.88">정보통신망 이용촉진 및 정보보호 등에 관한 법률 제 39조의 6
+                                    (개인정보의 파기) 2항</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                        <tr>
+                            <td style="color:#000; font-size:16px; font-weight:normal; line-height:1.88; word-break: keep-all; padding-bottom:40px">마지막 접속일 기준으로 1년간 접속하지 않은 계정은 휴면 상태로 전환됩니다.<br>
+                              휴면 상태로 전환된 경우 홈페이지 로그인 후 복구신청을 하시면 휴면 상태가 해제되어 계정을 계속 이용하실 수 있습니다.</td>
+                        </tr>
+                        <tr>
+                          <td style="vertical-align: top; padding-bottom:60px"><a href="{d_domainWebFo}" style="background:#333333;color:#fff; font-size:18px; font-weight:bold; letter-spacing:-.72px; padding:13px 25px 12px 25px; display:inline-block;text-decoration: none;">시험인증 빅데이터 플랫폼 바로가기</a></td>
+                        </tr>
+                        <tr>
+                            <td style="border-top:1px solid #000; font-size:14px; color:#000; font-weight:normal; padding:30px 0 20px 0">본 메일은 회신되지 않는 발신전용 메일입니다. 문의사항에 대해서는 고객센터(02-3668-3000)를 통해<br>
+                            문의해 주시기 바랍니다.</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:0 0 0 0;font-size:14px;color:#000; line-height:1.86;"><strong style="font-weight:bold;">주소 :</strong> 서울특별시 동대문구 왕산로 51(용두동)&nbsp;<strong style="font-weight:bold;">사업자등록번호 :</strong> 204-82-01330<br>
+                            TEL : 02-3668-3000  FAX : 02-3668-2900~1<br>COPYRIGHT ⓒKATRI. ALL RIGHTS RESERVED.</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+
+</div>
+<!-- ===== /wrap ====== -->
+
+
+</body>
+</html>

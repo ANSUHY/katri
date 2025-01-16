@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.test.mapper.TestMapper">
+
+	<!-- 임시임시 DB업데이트 -->
+	<update id="updateTempUpdate" parameterType="String">
+		/* MainMapper.updateTempUpdate (임시임시 DB업데이트) */
+
+		UPDATE tb_comn_cd
+		SET
+			mdfcn_dt = NOW()
+			, comn_cd_lvl_val = comn_cd_lvl_val+1
+		WHERE comn_grp_cd = 'EMT'
+			AND comn_cd = #{comnCd}
+	</update>
+
+
+</mapper>

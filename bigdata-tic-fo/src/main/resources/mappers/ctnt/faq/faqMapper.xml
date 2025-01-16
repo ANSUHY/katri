@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.ctnt.faq.mapper.FaqMapper">
+
+	<!-- 검색 -->
+	<sql id="searchFaqList">
+		WHERE ${alias}ntt_ty_cd = #{nttTyCd} AND ${alias}del_yn = 'N'
+		<if test='nttClfCd != null and nttClfCd != ""'>
+			AND ${alias}ntt_clf_cd = #{nttClfCd}
+		</if>
+		<if test='searchKeyword != null and searchKeyword != ""'>
+			/* 검색 (제목 + 내용) */
+			AND (${alias}ntt_sj_nm LIKE '%' || #{searchKeyword} || '%' OR ${alias}ntt_cn LIKE '%' || #{searchKeyword} || '%')
+		</if>
+	</sql>
+
+	<!--  FAQ 목록 개수 조회 -->
+	<select id="selectFaqCnt" parameterType="com.katri.web.ctnt.faq.model.FaqSelectReq" resultType="Integer">
+		/* faqMapper.selectFaqCnt (FAQ 목록 개수 조회) */
+
+		SELECT
+			COUNT(tnm.ntt_sn)
+		FROM
+			tb_ntt_mng tnm
+		<include refid="searchFaqList">
+			<property name="alias" value="tnm."/>
+		</include>
+	</select>
+
+	<!-- FAQ 목록 조회 -->
+	<select id="selectFaqList" parameterType="com.katri.web.ctnt.faq.model.FaqSelectReq" resultType="com.katri.web.ctnt.faq.model.FaqSelectRes">
+		/* faqMapper.selectFaqList (FAQ 목록 조회) */
+
+		SELECT
+			ROW_NUMBER() OVER(ORDER BY tnm.ntt_sn ASC) AS rownum
+			, tnm.ntt_sn 									-- 게시물 일련 번호
+			, tnm.ntt_sj_nm 								-- 게시물 제목명
+			, tcc.comn_cd_nm 								-- 게시물 분류 이름
+			, TO_CHAR(tnm.crt_dt, 'YYYY-MM-DD') AS crtDt	-- 생성 일시
+		FROM
+			tb_ntt_mng tnm
+		LEFT OUTER JOIN tb_comn_cd tcc
+			ON (tcc.comn_grp_cd = 'PD_FAQ' AND tcc.use_yn = 'Y' AND tnm.ntt_clf_cd = tcc.comn_cd)
+		<include refid="searchFaqList">
+			<property name="alias" value="tnm."/>
+		</include>
+		ORDER BY
+			rownum DESC
+		OFFSET #{startRow} LIMIT #{endRow}
+	</select>
+
+	<!-- FAQ 게시글 내용 조회 -->
+	<select id="selectFaqCn" parameterType="com.katri.web.ctnt.faq.model.FaqSelectReq" resultType="com.katri.web.ctnt.faq.model.FaqSelectRes">
+		/* faqMapper.selectFaqCn (FAQ 게시글 내용 조회) */
+
+		SELECT
+			tnm.ntt_cn
+		FROM
+			tb_ntt_mng tnm
+		WHERE
+			tnm.ntt_sn = #{nttSn}
+	</select>
+
+	<!-- FAQ 조회수 증가 -->
+	<update id="hitFaq" parameterType="com.katri.web.ctnt.faq.model.FaqSaveReq">
+		/* faqMapper.hitFaq (FAQ 조회수 증가) */
+
+		UPDATE
+			tb_ntt_mng
+		SET
+			ntt_inq_cnt = COALESCE(ntt_inq_cnt, 0) + 1
+		WHERE
+			ntt_sn = #{nttSn} AND ntt_ty_cd = #{nttTyCd}
+	</update>
+
+</mapper>

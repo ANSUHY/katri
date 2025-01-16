@@ -1,0 +1,70 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags"%>
+
+<script>
+	/**
+	 * 추천 검색어 HTML 제작
+	 */
+	function fn_returnSchmRecKeywordHtml(data) {
+		let returnSchmRecKeywordHtml = "";
+
+		returnSchmRecKeywordHtml =
+				"<dd>"
+			+	"	<a href='javascript:void(0)' data-key='" + data + "' onclick='fn_schmRecKeywordSearch(this)'>#" + data + "</a>"
+			+	"</dd>";
+
+		return returnSchmRecKeywordHtml;
+	}
+
+	/**
+	 * 추천 검색어 검색
+	 */
+	function fn_schmRecKeywordSearch(e) {
+		const schmRecKeyword = $(e).attr("data-key");
+
+		// 검색어 입력
+		$("#schmUnifiedSearchKeyword").val(schmRecKeyword);
+
+		// 검색 처리
+		fn_schmGoUnifiedSearch();
+	}
+
+	/**
+	 * 엔터 시 검색
+	 */
+	function fn_schmUnifiedSearchEnter() {
+		if (window.event.keyCode == 13) {
+			fn_schmGoUnifiedSearch();
+		};
+	}
+
+	/**
+	 * 검색 처리
+	 */
+	function fn_schmGoUnifiedSearch() {
+		if ($.trim($("#schmUnifiedSearchKeyword").val()) === "") { // 검색어 빈 값 체크
+			alert("<spring:message code='result-message.messages.search.message.required.checked'/>"); // 검색어를 입력해주세요.
+		} else {
+			$("#schmLayoutSearchFrm").attr({
+				  onsubmit: "return true"
+				, method: "GET"
+				, action: "/search/searchList"
+			}).submit();
+		}
+	}
+</script>
+
+<form name="schmLayoutSearchFrm" id="schmLayoutSearchFrm" onsubmit="return false;">
+	<div class="hd-wr">
+		<button type="button" class="btn-prev">뒤로</button>
+		<!-- 검색 -->
+		<input type="text" id="schmUnifiedSearchKeyword" name="unifiedSearchKeyword" onkeypress="fn_schmUnifiedSearchEnter()" placeholder="검색어를 입력해 주세요" class="inp-sch">
+		<input type="button" onclick="fn_schmGoUnifiedSearch()" class="btn-input-sch">
+	</div>
+</form>
+<div class="inner">
+	<dl>
+		<dt id="schmRecKeyword">추천키워드</dt>
+	</dl>
+</div>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.cert.mapper.CertMapper">
+
+	<sql id="certWhereSql" >
+		<if test="instId != null">
+		 AND upper(inst_id) = #{instId}
+		</if>
+		<if test="intgrRcptNo != certNo">
+		 AND cert_no like '%' || #{certNo} || '%'
+		</if>
+		<if test="mkrNm != null">
+		 AND mnftr_custco_nm like '%' || #{mkrNm} || '%'
+		</if>
+		<if test="prdtNm != null">
+		 AND prdt_nm like '%' || #{prdtNm} || '%'
+		</if>
+		<if test="mdlNm != null">
+		 AND mdl_nm like '%' || #{mdlNm} || '%'
+		</if>
+		<if test="iptrNm != null">
+		 AND incm_custco_nm like '%' || #{iptrNm} || '%'
+		</if>
+	</sql>
+
+	<select id="selectListCount" parameterType="HashMap" resultType="int">
+		/* CertMapper.selectListCount (총 카운트) */
+		select count(intgr_rcpt_no) as save_count
+		  from stty_cert_issu_txn
+		 where 1 = 1
+		 <include refid="certWhereSql" />
+
+	</select>
+
+	<select id="selectList" parameterType="HashMap" resultType="com.katri.web.cert.model.CertRes">
+		/* CertMapper.selectList (인증정보 리스트) */
+		select (row_number() over(order by cert_ymd, clct_file_ymd DESC)) as rownum
+		     , upper(inst_id) as inst_id --인증기관
+		     , fn_cd_nm('INST03',upper(inst_id), '1') cert_inst_nm --인증기관
+		     , mdl_nm -- 모델명
+		     , prdt_nm --제품명
+		     , cert_stt_cd --인증상태 코드
+		     , fn_cd_nm('CERT02',upper(cert_stt_cd), '1') cert_stt_nm --인증상태 명
+		     , cert_no --인증번호
+		     , intgr_rcpt_no --통합접수번호
+		  from stty_cert_issu_txn
+		 WHERE 1 = 1
+		<include refid="certWhereSql" />
+		 order by rownum desc
+		offset #{s_c} limit #{e_c};
+	</select>
+
+	<select id="selectInfo" parameterType="HashMap" resultType="com.katri.web.cert.model.CertRes">
+		/* CertMapper.selectInfo (인증정보 상세) */
+		select upper(inst_id) as inst_id --인증기관
+		     , fn_cd_nm('INST03',upper(inst_id), '1') cert_inst_nm --인증기관
+		     , intgr_rcpt_no --통합접수번호
+		     , cert_no --인증번호
+		     , cert_div_cd --인증구분코드(cert01)
+		     , fn_cd_nm('CERT01',upper(cert_div_cd), '1') cert_div_nm --인증구분명(CERT01)
+		     <!-- , to_char( to_date(cert_ymd,'yyyymmdd') ,'yyyy.mm.dd' ) as cert_ymd -->
+		     <!-- , case when char_length(cert_ymd) = 8 then to_char( to_date(cert_ymd,'yyyymmdd') ,'yyyy.mm.dd' ) else '' end as cert_ymd -->
+		     , cert_ymd
+		     , fn_cd_nm('CERT02',upper(cert_stt_cd), '1') cert_stt_nm --인증상태 명
+		     , frst_cert_no --최초인증번호
+		     <!-- , case when cert_last_chg_ymd != '_' then to_char( to_date(cert_last_chg_ymd,'yyyymmdd') ,'yyyy.mm.dd' ) else '' end as cert_last_chg_ymd  -->
+		     <!-- , case when char_length(cert_last_chg_ymd) = 8 then to_char( to_date(cert_last_chg_ymd,'yyyymmdd') ,'yyyy.mm.dd' ) else '' end as cert_last_chg_ymd --> 
+		     , cert_last_chg_ymd --인증최종변경일자
+		     , cert_chg_resn_cn --인증변경사유내용
+		     , prdt_nm --제품명
+		     , brd_nm --브랜드명
+		     , mdl_nm --모델명
+		     , stnd_nm as stnd_val --규격
+		     , upper(stty_prdt_clf_cd) as stty_prdt_clf_cd --제품분류 코드(ctg01)
+		     , fn_cd_nm('CTG01',upper(stty_prdt_clf_cd), '1') stty_prdt_clf_nm --제품분류 코드 명(CTG01)
+		     , stty_prdt_dtclf_nm --제품세분류명
+		     , drvn_mdl_nm --파생모델명
+		     , rmk_cn --비고내용
+
+		     , mnftr_custco_nm as mkr_nm--제조사
+		     , mnftr_custco_brno as mkr_brno --제조사사업자번호
+		     , mnftr_custco_ntn_nm as mkr_ntn_nm --제조사국가명
+		     , mnftr_custco_rprsv_nm as mkr_rprsv_nm --제조사대표자명
+		     , mnftr_custco_addr as mkr_addr --제조사주소
+		     , mnftr_custco_telno as mkr_telno --제조사전화번호
+
+		     , incm_custco_nm as iptr_nm --수입사명
+		     , incm_custco_brno as iptr_brno --수입사사업자번호
+		     , incm_custco_telno as iptr_telno --수입사전화번호
+		     , incm_custco_rprsv_nm as iptr_rprsv_nm --수입사대표자명
+		     , incm_custco_addr as iptr_addr --수입사주소
+
+		  from stty_cert_issu_txn
+		 where intgr_rcpt_no = #{intgrRcptNo} and cert_no = #{certNo2}
+	</select>
+
+</mapper>

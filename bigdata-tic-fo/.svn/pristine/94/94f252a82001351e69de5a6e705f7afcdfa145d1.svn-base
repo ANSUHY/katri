@@ -1,0 +1,969 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="cm" uri="/WEB-INF/tlds"%>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags"%>
+<%@ page import="com.katri.common.Const"%>
+<c:set var="POST_TYPE_CD_NOTICE" value="<%=Const.Code.PostTypeCd.NOTICE%>" />
+<c:set var="POST_TYPE_CD_FAQ" 	  value="<%=Const.Code.PostTypeCd.FAQ%>" />
+<c:set var="POST_TYPE_CD_ARCHIVE" value="<%=Const.Code.PostTypeCd.ARCHIVE%>" />
+<c:set var="ROW_COUNT" value="<%=Const.Paging.ROW_COUNT%>" />
+<c:set var="MAIN_VISUAL" value="<%=Const.Code.HmpgCptnTypeCd.MAIN_VISUAL%>" />
+<c:set var="POPUP_ZONE" value="<%=Const.Code.HmpgCptnTypeCd.POPUP_ZONE%>" />
+
+<script type="text/javascript" src="<c:url value='/asset/js/chart/dist/chart.min.js'/>"></script>
+<script type="text/javascript" src="<c:url value='/asset/js/chart/custom.color.js'/>"></script>
+
+<script type="text/javascript">
+
+	$(document).ready(function() {
+
+		// =========== 더보기 버튼 숨기기
+		$(".btn-wr .btn").hide();
+
+		// =========== 공지 모달창 닫기
+		$(document).on("click", ".pop-modal .btn-md-btn", function(){
+			let clickId = $(this).parent().attr('id');
+			$("#" + clickId).hide();
+		});
+
+		// =========== frm 초기 셋팅
+		$("#contentsArea").html('');
+		$("#nttTyCd").val('${POST_TYPE_CD_NOTICE}');
+		$("#nttSn").val('');
+
+		fn_getMainCommunityList();		//커뮤니티 게시글 조회
+		fn_getNoticeMainVisualList();	//공지(모달팝업)조회
+
+		// =========== Chart
+		/* List가져오기 : [메인_월별 인증현황_chart] TOP10 법정인증 품목 */
+		fn_getMainChartTopPrdtClfList();
+		/* List가져오기 : [메인_월별 인증현황_chart] TOP10 법정인증 제품 */
+		fn_getMainChartTopPdctgList();
+		/* List가져오기 : [메인_월별 인증현황_chart] TOP10 법정인증 제조국 */
+		fn_getMainChartTopMnftrCustcoNtnList()
+
+		// ===========  커뮤니티 탭 클릭시
+		$(".board-tabs > li").on('click', function(event){
+			$('.board-inr').addClass('active');
+
+			//클릭된 li의 인덱스
+			let index = $(this).index();
+			//클릭된 li 의 value
+			let sortCode = $('.board-tabs > li').eq(index).attr('value');
+
+			//분기 처리
+			if(sortCode == '${POST_TYPE_CD_NOTICE}'){
+				$("#nttTyCd").val(sortCode);
+				fn_getMainCommunityList();
+
+			} else if(sortCode == '${POST_TYPE_CD_FAQ}'){
+				$("#nttTyCd").val(sortCode);
+				fn_getMainCommunityList();
+
+			} else if(sortCode == "${POST_TYPE_CD_ARCHIVE}"){
+				$("#nttTyCd").val(sortCode);
+				fn_getMainCommunityList();
+			}
+
+		})
+
+	});
+
+	/*
+	 * 함수명 : fn_getMainCommunityList()
+	 * 설   명 : [메인] 커뮤니티 게시글 4개
+	 */
+	function fn_getMainCommunityList() {
+
+		 $.ajax({
+			url			: "/main/getMainCommunityList"
+			, type		: "POST"
+			, data		: {"nttTyCd" : $("#nttTyCd").val() }
+			, dataType	: "json"
+			, success		: function(jsonData, textStatus, jqXHR) {
+
+				let html = '';
+
+				if(jsonData.resultCode === 200) {
+
+					if(jsonData.data != null && jsonData.data.length != 0) {
+						//1. html 만드는 함수 호출
+						$.each(jsonData.data, function(index,data){
+							html += fn_makeMainCommunityHtml(data);
+						});
+					} else {
+						   //데이터 없는 경우
+						 	html += "<div style='margin:0 auto'>";
+						 	html += "<h3> 데이터가 없습니다. </h3>";
+						 	html += "</div>";
+					}
+				} else {
+					//오류
+					alert(jsonData.resultMessage);
+				}
+
+				//2. html 뿌리기
+				$("#contentsArea").html(html);
+			}
+		});
+	}
+
+	/*
+	 * 함수명 : fn_getMainNoticeDetail(e)
+	 * 설   명 : [커뮤니티] 게시글 클릭 -> 상세 이동
+	*/
+	function fn_getMainNoticeDetail(e) {
+
+		$("#nttSn").val($(e).val());
+		let sortVal = $("#nttTyCd").val();
+
+		if(sortVal == '${POST_TYPE_CD_NOTICE}'){
+			$("#frm_mainCommunity").attr({
+				method : "GET"
+				, action : "/ctnt/notice/noticeDetail"
+			}).submit();
+
+		} else if(sortVal == '${POST_TYPE_CD_FAQ}'){
+			$("#frm_mainCommunity").attr({
+				method	: "GET"
+				, action  : "/ctnt/faq/faqList"
+			}).submit();
+
+		} else if(sortVal == '${POST_TYPE_CD_ARCHIVE}') {
+			$("#frm_mainCommunity").attr({
+				method: "GET"
+				, action: "/ctnt/archive/archiveDetail"
+			}).submit();
+		}
+	}
+
+	/*
+	 * 함수명 : fn_makeMainCommunityHtml(data)
+	 * 설   명 : [커뮤니티] html 만들기
+	*/
+	function fn_makeMainCommunityHtml(data) {
+
+		let returnHtml = '';
+		let title	   = '';
+
+		if($("#nttTyCd").val() == '${POST_TYPE_CD_NOTICE}') {
+			title = '공지사항';
+		} else if($("#nttTyCd").val() == '${POST_TYPE_CD_FAQ}') {
+			title = 'FAQ';
+		} else if($("#nttTyCd").val() == '${POST_TYPE_CD_ARCHIVE}') {
+			title = '자료실';
+		}
+
+		returnHtml +=	'<li class="mainCommunityContent" onclick="fn_getMainNoticeDetail(this);" value="'+ data.nttSn +'" id="main-' + data.nttSn + '">';
+		returnHtml +=	'<a href="javascript:void(0)">';
+		returnHtml += 	'<span class="b-cate">' + title +  '</span>';
+		returnHtml +=	'<span class="b-type">'+ data.crtDt +'</span>';
+		returnHtml +=	'<h3 class="b-tit">'+ data.nttSjNm +'</h3>';
+		returnHtml +=	'<p class="b-txt">'+ fn_convertXss(data.nttCn).replace(/(<([^>]+)>)/ig,"") +'</p>';
+		returnHtml += 	'</a>';
+		returnHtml +=	'</li>';
+
+		return returnHtml;
+	}
+
+	/*
+	 * 함수명 : fn_getNoticeMainVisualList()
+	 * 설   명 : [공지] 메인 비주얼 조회
+	*/
+	function fn_getNoticeMainVisualList(){
+		let noticeHtml = '';
+
+		$.ajax({
+			url			: '/main/getNoticeMainVisualList'
+		  , type		: 'POST'
+		  , data		: {'nttTyCd' : '${POST_TYPE_CD_NOTICE}' }
+		  , dataType	: 'json'
+		  , success		: function(jsonData, textStatus, jqXHR) {
+
+			  if(jsonData.resultCode == 200) {
+					if(jsonData.data != null || jsonData.data.length != 0) {
+						noticeHtml += fn_makeNoticeMainVisualHtml(jsonData.data);
+						$('#main-notice-area').html(noticeHtml);
+
+						 var pop_swiper = new Swiper(".pop-swiper", {
+						      direction: "vertical",
+						      pagination: {
+						        el: ".pop-page",
+						        clickable: true,
+						      },
+						    });
+
+						 //페이징 버튼 지우기
+						 jsonData.data.length == 0 ? $('#notice-pagination').hide() : $('#notice-pagination').show();
+					} else {
+						//데이터 X
+						$('#main-notice-area').html('');
+						$('#notice-pagination').hide();
+					}
+				} else {
+					//오류
+
+				}
+		  }
+		});
+	}
+
+	/*
+	 * 함수명 : fn_makeNoticeMainVisualHtml(data)
+	 * 설   명 : [공지] html 만들기
+	*/
+	function fn_makeNoticeMainVisualHtml(data) {
+		let returnNoticeHtml = '<div class="swiper-slide" >';
+
+		for(let i = 0; i < data.length; i++) {
+			i == 2 ? returnNoticeHtml += '<div class="swiper-slide" style="height: 233px;" id="second-swiper-slide">' : '';
+			returnNoticeHtml += '<div id="main-notice' + i  + '"'  + 'class="pop-modal">';
+			returnNoticeHtml += '<button type="button" class="btn-md-btn">닫기</button>';
+			returnNoticeHtml += '<h3 class="m-tit">' + data[i].nttSjNm + '</h3>';
+			returnNoticeHtml += '<p class="m-txt">' + fn_convertXss(data[i].nttCn).replace(/(<([^>]+)>)/ig,"") + '</p>';
+			returnNoticeHtml += '<a href="javascript:void(0)" class="pop-md-more" onclick="fn_goMainNoticeDetail(this);" data-key="' + data[i].nttSn +'">MORE</a>';
+			returnNoticeHtml += '</div>';
+			i == 1 ? returnNoticeHtml += '</div>' : '';
+		}
+
+		return returnNoticeHtml;
+	}
+
+	/*
+	 * 함수명 : fn_goMainNoticeDetail(data)
+	 * 설   명 : [공지] 모달팝업 상세 가기
+	*/
+	function fn_goMainNoticeDetail(e) {
+		//data-key 값 가져오기
+		let value = $(e).attr("data-key");
+		//frm에 값 셋팅
+		$("#nttSn").val(value);
+		$("#nttTyCd").val('${POST_TYPE_CD_NOTICE}');
+
+		//상세 조회
+		$("#frm_mainCommunity").attr({
+			method : "GET"
+		  , action : "/ctnt/notice/noticeDetail"
+		}).submit();
+	}
+
+	/*
+	 * 함수명 : fn_goMainServiceInfo(value)
+	 * 설   명 : [서비스]탭 6개 -> 안내 페이지 이동
+	*/
+	function fn_goMainServiceInfo(value) {
+
+		if(value === 'QR') {
+			$(location).attr('href', '/platformSvc/qrSvc/qrSvcGuide');
+		} else if(value === 'platform'){
+			$(location).attr('href', '/platformInfo/testCertBicDataInfo');
+		} else if(value == 'INST') {
+			$(location).attr('href', '/platformInfo/instiParticiInfo');
+		} else if(value == 'IND') {
+			$(location).attr('href', '/platformInfo/testCertIndustryInfo');
+		} else if(value == 'CERT') {
+			$(location).attr('href', '/dataUsageGuide/certDataList');
+		}
+
+	}
+
+	/*
+	 * 함수명 : fn_getMainChartTopPrdtClfList(value)
+	 * 설   명 : List가져오기 : [메인_월별 인증현황_chart] TOP10 법정인증 품목
+	*/
+	function fn_getMainChartTopPrdtClfList() {
+		$.ajax({
+			url			: '/main/getMainChartTopPrdtClfList'
+			, type		: 'POST'
+			, dataType	: 'json'
+			, success		: function(jsonData) {
+
+				if(jsonData.resultCode == 200){
+					if(jsonData.data != null && jsonData.data.length != 0) {
+
+						//chart만들기
+						fn_setMainChartPrdtClf(jsonData.data, 'areaMainChartPrdtClf', 'canvasMainChartPrdtClf');
+					}
+				}
+			}
+		});
+	}
+
+	/*
+	 * 함수명 : fn_setMainChartPrdtClf()
+	 * 설   명 : Chart Data 셋팅 : [메인_월별 인증현황_chart] TOP10 법정인증 품목
+	*/
+	function fn_setMainChartPrdtClf(data, areaChart, idCanvas) {
+
+		//1. 차트 영역 설정
+		$("#" + areaChart).html("<canvas id='" + idCanvas + "' width='350px' height='400px' style='margin:0 auto'></canvas>");
+
+		//2. 차트 데이터
+		let labels		= [];
+		let datasets	= [];
+		let padding		= 7; //라벨 정렬
+
+		//3. 차트 컬러 설정
+		let arrColor = [
+				CUSTOM_COLOR_RED
+				, CUSTOM_COLOR_YELLOW_3
+				, CUSTOM_COLOR_NAVY
+				, CUSTOM_COLOR_BLUE
+				, CUSTOM_COLOR_GREEN
+				, CUSTOM_COLOR_YELLOW
+				, CUSTOM_COLOR_ORANGE
+				, CUSTOM_COLOR_PURPLE
+				, CUSTOM_COLOR_ORANGE_2
+				, CUSTOM_COLOR_GREEN_2
+		];
+
+		//4. 데이터 설정
+		for(let i = 0; i < data.length; i++){
+			labels.push(fn_convertXss(data[i].prdtClfNm));
+			datasets.push(data[i].cnt);
+		}
+
+		//5. 차트 색상 설정
+
+		//6. obj 셋팅
+		const obj = {
+				"id"			: idCanvas
+				, "type" 		: "pie"
+				, "datasets"	: datasets
+				, "labels" 		: labels
+				, "arrColor"	: arrColor
+				, "legend" 		: {
+									position: 'bottom'
+										, align: 'center'
+										, labels: {
+												padding: padding
+										}
+									}
+		}
+
+		//7. 차트 그리기
+		fn_makeMainChartJs(obj);
+	}
+
+	/*
+	 * 함수명 : fn_getMainChartTopPdctgList()
+	 * 설   명 : List가져오기 : [메인_월별 인증현황_chart] TOP10 법정인증 제품
+	*/
+	function fn_getMainChartTopPdctgList() {
+		$.ajax({
+			url			: '/main/getMainChartTopPdctgList'
+			, type		: 'POST'
+			, dataType	: 'json'
+			, success		: function(jsonData) {
+
+				if(jsonData.resultCode == 200){
+					if(jsonData.data != null && jsonData.data.length != 0) {
+
+						//chart만들기
+						fn_setMainChartPdctg(jsonData.data, 'areaMainChartPdctg', 'canvasMainChartPdctg');
+					}
+				}
+			}
+		});
+	}
+
+	/*
+	/*
+	 * 함수명 : fn_setMainChartPdctg()
+	 * 설   명 : Chart Data 셋팅 : [메인_월별 인증현황_chart] TOP10 법정인증 제품
+	*/
+	function fn_setMainChartPdctg(data, areaChart, idCanvas) {
+
+		//1. 차트 영역 설정
+		$("#" + areaChart).html("<canvas id='" + idCanvas + "' width='350px' height='400px' style='margin:0 auto'></canvas>");
+
+		//2. 차트 데이터
+		let labels		= [];
+		let datasets	= [];
+		let padding		= 7; //라벨 정렬
+
+		//3. 차트 컬러 설정
+		let arrColor = [
+				CUSTOM_COLOR_RED
+				, CUSTOM_COLOR_YELLOW_3
+				, CUSTOM_COLOR_NAVY
+				, CUSTOM_COLOR_BLUE
+				, CUSTOM_COLOR_GREEN
+				, CUSTOM_COLOR_YELLOW
+				, CUSTOM_COLOR_ORANGE
+				, CUSTOM_COLOR_PURPLE
+				, CUSTOM_COLOR_ORANGE_2
+				, CUSTOM_COLOR_GREEN_2
+		]
+
+		//4. 데이터 설정
+		for(let i = 0; i < data.length; i++){
+			labels.push(fn_convertXss(data[i].pdctgNm));
+			datasets.push(data[i].cnt);
+		}
+
+		//5. 차트 색상 설정
+
+		//6. obj 셋팅
+		const obj = {
+				"id"			: idCanvas
+				, "type" 		: "doughnut"
+				, "datasets"	: datasets
+				, "labels" 		: labels
+				, "arrColor"	: arrColor
+				, "legend" 		: {
+									position: 'bottom'
+										, align: 'center'
+										, labels: {
+												padding: padding
+										}
+									}
+		}
+
+		//7. 차트 그리기
+		fn_makeMainChartJs(obj);
+	}
+
+	/*
+	 * 함수명 : fn_getMainChartTopMnftrCustcoNtnList()
+	 * 설   명 : List가져오기 : [메인_월별 인증현황_chart] TOP10 법정인증 제조국
+	*/
+	function fn_getMainChartTopMnftrCustcoNtnList() {
+		$.ajax({
+			url			: '/main/getMainChartTopMnftrCustcoNtnList'
+			, type		: 'POST'
+			, dataType	: 'json'
+			, success		: function(jsonData) {
+
+				if(jsonData.resultCode == 200){
+					if(jsonData.data != null && jsonData.data.length != 0) {
+
+						//chart만들기
+						fn_setMainChartMnftrCustcoNtn(jsonData.data, 'areaMainChartMnftrCustcoNtn', 'canvasMainChartMnftrCustcoNtn');
+					}
+				}
+			}
+		});
+	}
+
+	/*
+	 * 함수명 : fn_setMainChartMnftrCustcoNtn()
+	 * 설   명 : Chart Data 셋팅 : [메인_월별 인증현황_chart] TOP10 법정인증 제조국
+	*/
+	function fn_setMainChartMnftrCustcoNtn(data, areaChart, idCanvas) {
+
+		//1. 차트 영역 설정
+		$("#" + areaChart).html("<canvas id='" + idCanvas + "' width='350px' height='400px' style='margin:0 auto'></canvas>");
+
+		//2. 차트 데이터
+		let labels		= [];
+		let datasets	= [];
+		let padding		= 7; //라벨 정렬
+
+		//3. 차트 컬러 설정
+		let arrColor = [
+				CUSTOM_COLOR_RED
+				, CUSTOM_COLOR_YELLOW_3
+				, CUSTOM_COLOR_NAVY
+				, CUSTOM_COLOR_BLUE
+				, CUSTOM_COLOR_GREEN
+				, CUSTOM_COLOR_YELLOW
+				, CUSTOM_COLOR_ORANGE
+				, CUSTOM_COLOR_PURPLE
+				, CUSTOM_COLOR_ORANGE_2
+				, CUSTOM_COLOR_GREEN_2
+		]
+
+		//4. 데이터 설정
+		for(let i = 0; i < data.length; i++){
+			labels.push(fn_convertXss(data[i].mnftrCustcoNtnNm));
+			datasets.push(data[i].cnt);
+		}
+
+		//5. 차트 색상 설정
+
+		//6. obj 셋팅
+		const obj = {
+				"id"			: idCanvas
+				, "type" 		: "bar"
+				, "datasets"	: datasets
+				, "labels" 		: labels
+				, "arrColor"	: arrColor
+				, "legend" 		: false
+				, "indexAxis" 	: "y"
+		}
+
+		//7. 차트 그리기
+		fn_makeMainChartJs(obj);
+	}
+
+	/*
+	 * 함수명 : fn_makeMainChartJs()
+	 * 설   명 : 차트 그리기
+	*/
+	function fn_makeMainChartJs(obj) {
+
+		//0. 차트 데이터 가져오기
+		const id 		= obj.id;
+		const type 		= obj.type;
+		const labels 	= obj.labels;
+		const chartDatas = obj.datasets;
+		const colors 	= obj.arrColor;
+		const padding 	= obj.padding;
+		const indexAxis = obj.indexAxis;
+		const legend 	= obj.legend
+
+		//1. 차트 영역
+		const ctx = document.getElementById(id);
+
+		//2. 차트생성
+		const myChart = new Chart(ctx, {
+			type: type
+			, data: {
+				labels: labels
+				, datasets: [{
+						 data: chartDatas
+						, backgroundColor: colors
+						, borderColor: colors
+						, borderWidth: 1
+				}],
+			}//end of data
+			, options: {
+				responsive: false
+				, plugins:{
+						legend: legend
+						, scales: {
+								ticks: {
+									display: false
+								}
+						}
+				}//end of plugins
+				, indexAxis : indexAxis
+			}//end of options
+		});//end of myChart
+	}
+
+</script>
+
+<form id="frm_mainCommunity" name="frm_mainCommunity">
+	<input type="hidden" id="nttTyCd" name="nttTyCd" value="" /> <input
+		type="hidden" id="nttSn" name="nttSn" value="" /> <input type="hidden"
+		id="currPage" name="currPage" value="1" /> <input type="hidden"
+		id="rowCount" name="rowCount" value="${ROW_COUNT}" />
+</form>
+
+
+<!-- ===== header ====== -->
+<header id="header">
+
+	<!--pop-->
+	<div id="pop-slide">
+		<div class="pop-swiper swiper">
+			<div class="swiper-wrapper" id="main-notice-area">
+				<%-- 공지사항 pop    --%>
+				<%-- --%>
+			</div>
+			<div class="pop-page swiper-pagination" id="notice-pagination"></div>
+		</div>
+	</div>
+
+
+	<div id="main-mv">
+		<div class="main-swiper-hdn">
+			<div class="swiper-button-next"></div>
+			<div class="swiper-button-prev"></div>
+			<div class="m-s-page swiper-pagination"></div>
+			<div class="m-s-page2 swiper-pagination2"></div>
+			<div class="btn-pause"></div>
+		</div>
+		<div class="main-swiper swiper">
+			<div class="swiper-wrapper">
+				<%-- 메인 비주얼 --%>
+				<c:forEach var="mainVisualList" items="${mainVisualList}">
+					<div class="swiper-slide">
+						<div class="inr">
+							<h2>${mainVisualList.laLblCn}</h2>
+							<p>${mainVisualList.smLblCn}</p>
+						</div>
+						<c:choose>
+							<c:when test="${mainVisualList.linkTyCd eq 'new' && mainVisualList.linkUrlAddr ne ''}">
+								<img src="${mainVisualList.pcImgStrgFileFullPathAddr}" class="pc-block" onerror="this.src='/asset/images/main-mv-default.png'" onclick="javascript:newin=window.open('about:blank');newin.location.href='${mainVisualList.linkUrlAddr}'" style="cursor:pointer;">
+								<img src="${mainVisualList.mobileImgStrgFileFullPathAddr}" class="mo-block" onerror="this.src='/asset/images/main-mv-m-default.png'" onclick="javascript:newin=window.open('about:blank');newin.location.href='${mainVisualList.linkUrlAddr}'" style="cursor:pointer;">
+							</c:when>
+							<c:when test="${mainVisualList.linkTyCd eq 'self' && mainVisualList.linkUrlAddr ne ''}">
+									<img src="${mainVisualList.pcImgStrgFileFullPathAddr}" class="pc-block" onerror="this.src='/asset/images/main-mv-default.png'" onclick="javascript:location.href='${mainVisualList.linkUrlAddr}'" style="cursor:pointer;">
+									<img src="${mainVisualList.mobileImgStrgFileFullPathAddr}" class="mo-block" onerror="this.src='/asset/images/main-mv-m-default.png'" onclick="javascript:location.href='${mainVisualList.linkUrlAddr}'"style="cursor:pointer;">
+							</c:when>
+							<c:otherwise>
+								<img src="${mainVisualList.pcImgStrgFileFullPathAddr}" class="pc-block" onerror="this.src='/asset/images/main-mv-default.png'"><img src="${mainVisualList.mobileImgStrgFileFullPathAddr}" class="mo-block" onerror="this.src='/asset/images/main-mv-m-default.png'">
+							</c:otherwise>
+						</c:choose>
+					</div>
+				</c:forEach>
+				<c:if test="${empty mainVisualList}">
+					<div class="swiper-slide">
+						<div class="inr">
+								<h2></h2>
+								<p></p>
+						</div>
+						<img src="/asset/images/main-mv-default.png" class="pc-block"><img src="/asset/images/main-mv-m-default.png" class="mo-block">
+					</div>
+				</c:if>q
+				<%---------- --%>
+
+			</div>
+		</div>
+	</div>
+</header>
+<!-- ===== /header ====== -->
+
+
+<!-- ===== container ====== -->
+<div id="container">
+	<!--container-->
+	<div id="cont" class="main-c">
+		<div class="report-wr">
+			<h3 class="tit">
+				<span>${ mainData.month }월 인증현황</span>
+			</h3>
+			<h4 class="tit">
+				시험인증 빅데이터 플랫폼에서 제공하는<br class="mo-block"> 월별 인증현황입니다.
+			</h4>
+			<div class="report-inr">
+				<div class="grid">
+					<h5 class="stit">TOP10 법정인증 품목(분류체계 중분류)</h5>
+					<!--chart area--> <!--최대길이 414px-->
+					<div class="chart-wr" id="areaMainChartPrdtClf" style="text-align: center;">
+						데이터가 없습니다.
+					</div>
+				</div>
+				<div class="grid">
+					<h5 class="stit">TOP10 법정인증 제품</h5>
+					<!--chart area--> <!--최대길이 520px-->
+					<div class="chart-wr" id="areaMainChartPdctg" style="text-align: center;">
+						데이터가 없습니다.
+					</div>
+				</div>
+				<div class="grid">
+					<h5 class="stit">TOP10 법정인증 제조국</h5>
+					<!--table area--> <!--최대길이 470px-->
+					<div class="chart-wr" id="areaMainChartMnftrCustcoNtn" style="text-align: center;">
+						데이터가 없습니다.
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="banner-wr">
+			<div class="banner-cont">
+				<div class="itms">
+					<a href="javascript:void(0)">
+						<div class="img">이미지</div>
+						<p class="tit">
+							인증 데이터<br>조회
+						</p> <em class="btn-more" onclick="fn_goMainServiceInfo('CERT')">MORE</em>
+					</a>
+				</div>
+				<div class="itms">
+					<a href="javascript:void(0)" onclick="fn_goMainServiceInfo('QR');">
+						<div class="img">이미지</div>
+						<p class="tit">
+							시험인증 통합 QR<br>서비스 안내
+						</p> <em class="btn-more">MORE</em>
+					</a>
+				</div>
+				<div class="itms">
+					<!-- [플랫폼 서비스] > [내 손안의 시험인증] URL 로그인한 사용자의 상태에 따라 달라짐 -->
+					<c:set var="urlIntroSvc" value="/platformSvc/myData/introSvc"/>
+					<c:if test="${sessionScope.SS_KATRI_FO.login_ent_grp_clct_agre_y_cnt != null && sessionScope.SS_KATRI_FO.login_ent_grp_clct_agre_y_cnt > 0}">
+						<c:set var="urlIntroSvc" value="/platformSvc/myData/myInfoCert/myCertList"/>
+					</c:if>
+					<a href="${urlIntroSvc}" >
+						<div class="img">이미지</div>
+						<p class="tit">
+							내 손안의 시험인증<br>서비스
+						</p> <em class="btn-more">MORE</em>
+					</a>
+				</div>
+				<div class="itms">
+					<a href="javascript:void(0)" onclick="fn_goMainServiceInfo('platform')">
+						<div class="img">이미지</div>
+						<p class="tit">
+							시험인증 빅데이터<br>플랫폼 소개
+						</p> <em class="btn-more">MORE</em>
+					</a>
+				</div>
+				<div class="itms">
+					<a href="javascript:void(0)" onclick="fn_goMainServiceInfo('INST')">
+						<div class="img">이미지</div>
+						<p class="tit">
+							참여기관 안내
+						</p> <em class="btn-more">MORE</em>
+					</a>
+				</div>
+				<div class="itms">
+					<a href="javascript:void(0)" onclick="fn_goMainServiceInfo('IND')">
+						<div class="img">이미지</div>
+						<p class="tit">
+							시험인증<br>산업 소개
+						</p> <em class="btn-more">MORE</em>
+					</a>
+				</div>
+			</div>
+			<div class="banner-cont">
+				<div class="banner-swiper-hdn">
+					<div class="m-b-page swiper-pagination"></div>
+					<div class="m-b-page2 swiper-pagination2"></div>
+				</div>
+
+				<div class="banner-swiper swiper">
+					<div class="swiper-wrapper">
+
+					<%-- 팝업존 --%>
+					<c:forEach var="popUpZoneList" items="${popUpZoneList}">
+						<div class="swiper-slide">
+							<c:choose>
+								<c:when test="${popUpZoneList.linkTyCd eq 'new' && popUpZoneList.linkUrlAddr ne ''}">
+									<a href="${popUpZoneList.linkUrlAddr}" target="_blank">
+										<img src="${popUpZoneList.pcImgStrgFileFullPathAddr}" class="pc-block" onerror="this.src='/asset/images/main-banner-default.png'">
+										<img src="${popUpZoneList.mobileImgStrgFileFullPathAddr}" class="mo-block" onerror="this.src='/asset/images/main-banner-m-default.png'">
+									</a>
+								</c:when>
+								<c:when test="${popUpZoneList.linkTyCd eq 'self' && popUpZoneList.linkUrlAddr ne ''}">
+									<a href="${popUpZoneList.linkUrlAddr}">
+										<img src="${popUpZoneList.pcImgStrgFileFullPathAddr}" class="pc-block" onerror="this.src='/asset/images/main-banner-default.png'">
+										<img src="${popUpZoneList.mobileImgStrgFileFullPathAddr}" class="mo-block" onerror="this.src='/asset/images/main-banner-m-default.png'">
+									</a>
+								</c:when>
+								<c:otherwise>
+									<img src="${popUpZoneList.pcImgStrgFileFullPathAddr}" class="pc-block" onerror="this.src='/asset/images/main-banner-default.png'">
+									<img src="${popUpZoneList.mobileImgStrgFileFullPathAddr}" class="mo-block" onerror="this.src='/asset/images/main-banner-m-default.png'">
+								</c:otherwise>
+							</c:choose>
+						</div>
+					</c:forEach>
+					<c:if test="${empty popUpZoneList}">
+						<div class="swiper-slide">
+					 		<img src="/asset/images/main-banner-default.png" class="pc-block"><img src="/asset/images/main-banner-m-default.png" class="mo-block">
+						</div>
+					</c:if>
+				<%-- --%>
+
+					</div>
+					<div class="banner-page swiper-pagination"></div>
+				</div>
+			</div>
+		</div>
+		<div class="community-wr">
+
+			<h3 class="tit">
+				<span>커뮤니티</span>
+			</h3>
+			<h4 class="tit">
+				시험인증 데이터로 꿈꾸는 새로운 가치, <br class="mo-block">시험인증 빅데이터 플랫폼이
+				만들어갑니다.
+			</h4>
+
+
+			<ul class="board-tabs">
+				<li class="active" data-tab="board01"
+					value="${POST_TYPE_CD_NOTICE }"><span>공지사항</span></li>
+				<li data-tab="board02" value="${POST_TYPE_CD_FAQ}"><span>FAQ</span></li>
+				<li data-tab="board03" value="${POST_TYPE_CD_ARCHIVE}"><span>자료실</span></li>
+			</ul>
+
+			<div class="board-inr active" id="board01">
+				<%--커뮤니티 컨텐츠 영역 --%>
+				<ul id="contentsArea"></ul>
+
+			</div>
+			<div class="btn-wr">
+				<a href="" class="btn">MORE</a>
+			</div>
+		</div>
+
+	</div>
+</div>
+<!-- ===== /container ====== -->
+
+<!--script-->
+<script>
+	/* 메인슬라이드 - 배너*/
+	$(document).ready(function(){
+
+		responsiveSwiper();
+
+	});
+
+
+	function responsiveSwiper() {
+		console.log("함수호출합니다.");
+		ww = window.innerWidth;
+		if (ww > 1440) {
+			//b_swiper.destroy();
+			//console.log("PC버전입니다." + ww);
+			//b_swiper.destroy();
+
+			typeASwiper();
+
+		} else if (ww <= 1440) {
+			//console.log("MO버전입니다." + ww);
+			//b_swiper.destroy();
+			typeBSwiper();
+
+		}
+	}
+
+	function typeASwiper() {
+		//console.log("PC함수를 불렀어요" + ww);
+
+		bb_swiper = new Swiper(".banner-swiper", {
+			pagination: {
+				el: '.m-b-page',
+				type: "bullets",
+				clickable:true,
+				renderBullet: function (index, className) {
+					console.log('여기임');
+					return '<div class="' + className + '"><span>' + (parseInt(parseInt(index)+1)).toString().padStart(2, '0') + '</span></div>';
+				},
+			},
+		});
+
+		let pagingBSwiper = new Swiper(".banner-swiper", {
+			pagination: {
+				el: ".m-b-page2",
+				type: "progressbar",
+			},
+		});
+
+		bb_swiper.controller.control = pagingBSwiper;
+	}
+
+	function typeBSwiper(){
+		//console.log("MO함수를 불렀어요" + ww);
+
+		b_swiper = new Swiper(".banner-swiper", {
+			pagination: {
+				el: ".m-b-page",
+				type: "fraction",
+				renderFraction: function (currentClass, totalClass) {
+					return '<span class="' + currentClass + '"></span>' +
+					'<span class="line">/</span>' +
+					'<span class="' + totalClass + '"></span>';
+				},
+			},
+		});
+
+		let pagingBSwiper01 = new Swiper(".banner-swiper", {
+			pagination: {
+				el: ".m-b-page2",
+				type: "progressbar",
+			},
+		});
+
+		 b_swiper.controller.control = pagingBSwiper01;
+	}
+
+	$(window).resize(function() {
+		//console.log("리사이즈함수입니다.");
+		responsiveSwiper();
+	});
+
+
+	$(function(){
+		/*var b_bullet = ['01', '02'];
+		var b_swiper = new Swiper('.banner-swiper', {
+
+			autoplay: {
+				delay: 5000,
+				disableOnInteraction: false,
+			},
+
+
+			pagination: {
+				el: '.banner-page',
+				clickable:true,
+				renderBullet: function (index, className) {
+					return '<div class="' + className + '"><span>' + (b_bullet[index]) + '</span></div>';
+				}
+			},
+		});
+		*/
+
+		/*var b_bullet = ['01', '02'];
+		var b_swiper = new Swiper(".banner-swiper", {
+			autoplay: {
+				delay: 5000,
+				disableOnInteraction: false,
+			},
+			pagination: {
+				el: '.m-b-page',
+				clickable:true,
+				renderBullet: function (index, className) {
+					return '<div class="' + className + '"><span>' + (b_bullet[index]) + '</span></div>';
+				}
+			},
+		});
+
+		 var pagingBSwiper = new Swiper(".banner-swiper", {
+			pagination: {
+				el: ".m-b-page2",
+				type: "progressbar",
+			},
+		});
+
+		 b_swiper.controller.control = pagingBSwiper;
+		*/
+	});
+
+	/* 메인상단  */
+	$(function(){
+		var mainSwiper = new Swiper(".main-swiper", {
+			autoplay: {
+				delay: 5000,
+				disableOnInteraction: false,
+			},
+			/*loop:true,*/
+			pagination: {
+				el: ".m-s-page",
+				type: "fraction",
+				formatFractionCurrent: function (number) {
+					return ('0' + number).slice(-2);
+				},
+				formatFractionTotal: function (number) {
+					return ('0' + number).slice(-2);
+				},
+				renderFraction: function (currentClass, totalClass) {
+					return '<span class="' + currentClass + '"></span>' +
+					'<span class="line">/</span>' +
+					'<span class="' + totalClass + '"></span>';
+				},
+			},
+			navigation: {
+				nextEl: ".swiper-button-next",
+				prevEl: ".swiper-button-prev",
+			},
+		});
+
+		var sw = 0;
+			$('.btn-pause').click(function(){
+			if(sw==0){
+				$('.btn-pause').addClass('on');
+				mainSwiper.autoplay.stop();
+				sw = 1;
+			}else{
+				$('.btn-pause').removeClass('on');
+				mainSwiper.autoplay.start();
+				sw = 0;
+			}
+		});
+
+		var pagingSwiper = new Swiper(".main-swiper", {
+			pagination: {
+				el: ".m-s-page2",
+				type: "progressbar",
+			},
+		});
+
+		mainSwiper.controller.control = pagingSwiper;
+	});
+</script>

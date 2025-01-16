@@ -1,0 +1,218 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>시험인증 빅데이터 포탈 관리자</title>
+
+<link href="../css/style.css" rel="stylesheet">
+<script src="../js/jquery.min.js"></script>
+<script src="../js/jquery-ui.js"></script>
+<script src="../js/custom.js"></script>
+
+</head>
+
+<body>
+
+<div id="wrap">
+
+    <div id="header">
+		<h1 class="h1Tit" style="font-size:16px; line-height:15px; padding-top:2px;"><a href="#">시험인증 빅데이터<br />포탈 관리자</a></h1>
+		<div id="gnb-wrap">
+			<ul id="gnb">
+				<li class="gnb1"><a href="javascript:void(0);" class="d1">시스템 관리</a>
+					<div class="deth2">
+						<ul>
+							<li><a href="#">코드 관리</a></li>
+							<li><a href="#">메뉴 관리</a></li>
+							<li><a href="#">접속권한 관리</a></li>
+							<li><a href="#">관리자 관리</a></li>
+						</ul>
+					</div>
+				</li>
+				<li class="gnb2"><a href="#" class="d1">회원 관리</a>
+					<div class="deth2">
+						<ul>
+							<li><a href="#">코드그룹 조회</a></li>
+							<li><a href="#">코드그룹 등록</a></li>
+							<li><a href="#">코드그룹 수정</a></li>
+							<li><a href="#">공통코드 조회</a></li>
+							<li><a href="#">공통코드 등록</a></li>
+							<li><a href="#">공통코드 수정</a></li>
+						</ul>
+					</div>
+				</li>
+				<li class="gnb3"><a href="#" class="d1">약관 관리</a>
+					<div class="deth2">
+						<ul>
+							<li><a href="#">회원정보조회 (PSK 직원)</a></li>
+							<li><a href="#">회원정보조회 (협력사)</a></li>
+						</ul>
+					</div>
+				</li>
+				<li class="gnb4"><a href="#" class="d1">콘텐츠 관리</a>
+					<div class="deth2">
+						<ul>
+							<li><a href="#">관리자 정보 등록</a></li>
+							<li><a href="#">관리자 정보 수정</a></li>
+						</ul>
+					</div>
+				</li>
+				<li class="gnb5"><a href="#" class="d1">메인화면 관리</a></li>
+				<li class="gnb6"><a href="#" class="d1">검색 관리</a></li>
+			</ul>
+		</div>
+		<div class="utill">
+			<a href="#" class="btn btn-white"><i class="fa fa-sign-out"></i> 로그아웃</a>
+		</div>
+	</div><!-- /header -->
+
+	<div id="container">
+		<div class="titArea">
+			<div class="location">
+				<span class="ic-home"><i></i></span><span>시스템 관리</span><em>관리자 관리</em>
+			</div>
+		</div>
+
+		<div class="div-tab">
+			<ul>
+				<li class="on"><a href="#">Frontend</a></li>
+				<li><a href="#">Backoffice</a></li>
+			</ul>
+		</div>
+
+		<h2 class="pop-tit2">관리자 관리</h2>
+
+		<div class="btn-box bot r">
+			<div class="left">
+				검색&nbsp;
+				<select class="select">
+					<option selected>제목</option>
+				</select>
+				<input type="text" class="input" style="width:200px;">
+				<a href="#" class="btn btn-white btn-sm">검색</a>
+				<!--<label><input type="checkbox"> 관리자만 검색</label>-->
+			</div>
+		</div>
+
+		<div class="row-tbl">
+			<table>
+			<thead>
+			<tr>
+				<th style="width:60px">번호</th>
+				<th style="width:200px">아이디</th>
+				<th>사원명</th>
+				<th style="width:150px">부서</th>
+				<th style="width:150px">직위</th>
+				<th style="width:150px">분류</th>
+				<th style="width:150px">관리자여부</th>
+			</tr>
+			</thead>
+			<tbody>
+			<tr>
+				<td>10</td>
+				<td>fsdfsdf</td>
+				<td>홍길동</td>
+				<td>경영지원</td>
+				<td>사원</td>
+				<td>RFC</td>
+				<td>
+					<select class="select">
+						<option>관리자</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td>10</td>
+				<td>fsdfsdf</td>
+				<td>홍길동</td>
+				<td>경영지원</td>
+				<td>사원</td>
+				<td>RFC</td>
+				<td>
+					<a href="#" class="btn btn-white btn-sm">수정</a>
+					<a href="#" class="btn btn-white btn-sm">삭제</a>
+				</td>
+			</tr>
+			<tr>
+				<td>10</td>
+				<td>fsdfsdf</td>
+				<td>홍길동</td>
+				<td>경영지원</td>
+				<td>사원</td>
+				<td>RFC</td>
+				<td>
+					<a href="#" class="btn btn-white btn-sm">수정</a>
+					<a href="#" class="btn btn-white btn-sm">삭제</a>
+				</td>
+			</tr>
+			<tr>
+				<td>10</td>
+				<td>fsdfsdf</td>
+				<td>홍길동</td>
+				<td>경영지원</td>
+				<td>사원</td>
+				<td>RFC</td>
+				<td>
+					<a href="#" class="btn btn-white btn-sm">수정</a>
+					<a href="#" class="btn btn-white btn-sm">삭제</a>
+				</td>
+			</tr>
+			<tr>
+				<td>10</td>
+				<td>fsdfsdf</td>
+				<td>홍길동</td>
+				<td>경영지원</td>
+				<td>사원</td>
+				<td>RFC</td>
+				<td>
+					<a href="#" class="btn btn-white btn-sm">수정</a>
+					<a href="#" class="btn btn-white btn-sm">삭제</a>
+				</td>
+			</tr>
+			</tbody>
+			</table>
+		</div>
+
+		<div class="btn-box r">
+			<a href="#" class="btn btn-blue"><i class="fa fa-check"></i> 등록</a>
+		</div>
+
+		<div class="paginate_complex">
+			<a href="#" class="direction prev"><span></span><span></span> 처음</a>
+			<a href="#" class="direction prev"><span></span> 이전</a>
+			<a href="#">1</a>
+			<a href="#">2</a>
+			<a href="#">3</a>
+			<a href="#">4</a>
+			<strong>5</strong>
+			<a href="#">6</a>
+			<a href="#">7</a>
+			<a href="#">8</a>
+			<a href="#">9</a>
+			<a href="#" class="direction next">다음 <span></span></a>
+			<a href="#" class="direction next">끝 <span></span><span></span></a>
+			<div class="right">
+				<select class="select">
+					<option>100</option>
+					<option>500</option>
+					<option>1,000</option>
+				</select>
+			</div>
+		</div>
+
+	</div><!-- /container -->
+
+	<div id="footer">
+		Copyright © KATRi Inc. 2022.
+	</div><!-- /footer -->
+
+</div><!-- /wrap -->
+
+<script>
+	gnb('1','1');
+</script>
+
+</body>
+</html>

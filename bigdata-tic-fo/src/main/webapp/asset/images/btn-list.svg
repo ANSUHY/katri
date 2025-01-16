@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="14" viewBox="0 0 20 14">
+    <path data-name="사각형 1" style="fill:#fff" d="M0 0h20v2H0z"/>
+    <path data-name="사각형 2" transform="translate(0 6)" style="fill:#fff" d="M0 0h20v2H0z"/>
+    <path data-name="사각형 3" transform="translate(0 12)" style="fill:#fff" d="M0 0h20v2H0z"/>
+</svg>

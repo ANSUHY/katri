@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://www.navercorp.com/lucy-xss-servlet">
+	<defenders>
+		<!-- XssPreventer 등록 -->
+		<defender>
+			<name>xssPreventerDefender</name>
+			<class>com.navercorp.lucy.security.xss.servletfilter.defender.XssPreventerDefender</class>
+		</defender>
+	</defenders>
+
+	<!-- default defender 선언, 별다른 defender 선언이 없으면 default defender를 사용해 필터링 한다. -->
+	<default>
+		<defender>xssPreventerDefender</defender>
+	</default>
+	
+	<!-- 
+		globla 파라미터로 설정하면 해당 파라미터는 xss 필터링 되지 않는다.
+		ex) smarteditor와 같은 경우에 editor 자체에서 xss 처리를 하기 때문에 따로 필터링 할 필요 없음.
+	 -->
+	<global>
+		<params>
+			<param name="cont"			useDefender="false" /> 					<!-- "cont" 파라미터 xss 필터링 x -->
+			<param name="excld_xss_"	useDefender="false" usePrefix="true"/>	<!-- "excld_xss_"로 시작하는 파라미터 xss 필터링 x -->
+		</params>
+	</global>
+	
+	<!-- url 별 필터링 룰 선언 -->
+	<url-rule-set>
+		<!-- url disable이 true이면 지정한 url 내의 모든 파라메터는 필터링 되지 않는다. -->
+		<url-rule>
+			<url disable="true">/</url>
+		</url-rule>
+		
+		<!-- 설정된 param은 필터링에서 제외된다. -->
+		<!-- <url-rule>
+			<url>/</url>
+			<params>
+				<param name="cont"	useDefender="false" />
+			</params>
+		</url-rule> -->
+		
+	</url-rule-set>
+</config>

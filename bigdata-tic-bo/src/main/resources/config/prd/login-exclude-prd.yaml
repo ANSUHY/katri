@@ -1,0 +1,16 @@
+login-exclude:
+  common:
+    - '/'
+    - '/error'
+    - '/swagger-ui.html'
+
+    #- '/board/boardList'
+
+    #- '/favicon.ico'
+  front:
+  back:
+    - '/system/loginChk'
+    - '/login'
+    - '/logout'
+    - '/layout'
+    - '/system/auth/userMenuAuthData'

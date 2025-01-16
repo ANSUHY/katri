@@ -1,0 +1,152 @@
+server:
+  system: dev
+  port: 18084
+  servlet:
+    session:
+      timeout: 900
+      #persistent: true
+      cookie:
+        #max-age: -1    # 60m * 24h * 1d
+        name: BO_BIGDATATIC
+        http-only: true
+        secure: true
+    jsp:
+      init-parameters:
+        development: true
+    multipart:
+      file-size-threshold: 1MB
+      location: C:/KATRi/workspace/upload
+      max-file-size: 100MB
+      max-request-size: 100MB
+  error:
+    include-binding-errors: NEVER
+    include-exception: false
+    include-message: NEVER
+    include-stacktrace: NEVER
+    path: /error
+    whitelabel.enabled: true
+
+spring:
+  data-source:
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: jdbc:log4jdbc:postgresql://210.90.145.249:15432/ticportal
+    jdbc-url: jdbc:log4jdbc:postgresql://210.90.145.249:15432/ticportal
+    username: bigdatatic
+    password: tic!2022@
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      maximum-pool-size: 10
+      connection-test-query: SELECT 1
+      minimum-idle: 1
+      connection-timeout: 100000
+  messages:
+    basename: config/common/message
+    encoding: UTF-8
+  mvc:
+    #static-path-pattern: /static/**
+    view.prefix: /WEB-INF/views/
+    view.suffix: .jsp
+  #thymeleaf:
+    #cache: false
+  cache:
+    jcache:
+      config: classpath:ehcache.xml
+  servlet:
+    multipart:
+      maxFileSize: 100MB
+      maxRequestSize: 100MB
+
+mybatis:
+  mapper-locations: classpath:mappers/**/*.xml
+  configuration:
+    cache-enabled: true
+    lazy-loading-enabled: true
+    multiple-result-sets-enabled: true
+    use-column-label: true
+    default-statement-timeout: 65000
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    root: error
+    #root: error
+    com.katri.web: debug
+    sql: error
+    org.hibernate.SQL: off
+    jdbc: off
+    jdbc.sqlonly: off
+    jdbc.sqltiming: info
+    jdbc.audit: off
+    jdbc.resultset: off
+    jdbc.resultsettable: debug
+    jdbc.connection: off
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %magenta([%thread]) %-30.-30F : %msg%n'
+  response:
+    length: 50
+
+login:
+  password:
+    master.key: KATRI@2022!
+    aes256.key: 2022!KATRI@2022@
+
+domain:
+  web:
+    bo: http://localhost:18084
+    bo.url: localhost:18084
+    fo: http://localhost:18083
+    fo.url: localhost:18083
+
+const:
+  customer:
+    not.call.acc.gr: Z005
+
+config:
+  messages:
+    scheduler:
+      exec: N
+    file:
+      root:
+        path: C:/KATRi
+      separator: /
+      mkdirs:
+        path: upload/
+      nodbdirs:
+        path: /nodbfile/
+
+mail:
+  template:
+    path: C:/KATRi/workspace/bigdata-tic-bo/src/main/webapp/WEB-INF/template/mail/
+  sender:
+    email: no-reply@bigdata-tic.kr
+    name: 시험인증 빅데이터 플랫폼(발신전용)
+  api:
+    url: https://directsend.co.kr/index.php/api_v2/mail_change_word
+    username: imh2857
+    pwd: tcbpkatri01@
+    key: FnUDcmMgp3j1h0n
+  reserve:
+    maxcount: 150
+    time:
+      beforedrmncy:
+        hour: 11
+        minute: 0
+        second: 0
+      instagre:
+        hour: 17 #AAAAAAAAAAAAAAAAAAAAAAASH 수정하기
+        minute: 0
+        second: 0
+    term:
+      beforedrmncy: 5
+
+brno:
+  api:
+    key:
+      encoding: ZZe9qedzhlqFQCXVVpOsqL%2BmCE7Nrgu%2BN0%2BBZz8TI7UO0bKQi4wz0aRgWwgIoiuTsQXFqewRScw9cAnuakNMFw%3D%3D
+      decoding: ZZe9qedzhlqFQCXVVpOsqL+mCE7Nrgu+N0+BZz8TI7UO0bKQi4wz0aRgWwgIoiuTsQXFqewRScw9cAnuakNMFw==
+
+anls:
+  api:
+    key:
+      authentication: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImlzcyI6Im5kYXBfY29yZSIsInVzZXJJZCI6MSwiYXBwbGljYXRpb25LZXkiOiJWdkt1Y2JhT1FrSE1WX2ZxWVFwVUw1VUJ2aGM1RElxd3JkdjdONTBiWlljIiwiYXBwbGljYXRpb25OYW1lIjoicG9ydGFsIn0.M5HvOd3JmDEWmBxwfdBpaCAHo5kMn0l1IL1R4QYXPFD1HmKX4KQlbH6JETMYOw4CViuNnn9RsCoVlv8XtTK9Vg
+    url: http://210.90.145.246:23000/api/user

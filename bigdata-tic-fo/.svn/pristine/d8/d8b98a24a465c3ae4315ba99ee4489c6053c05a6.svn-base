@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.auth.mapper.LoginMapper">
+
+	<!-- 로그인 정보 조회 -->
+	<select id="selectLoginDetail" parameterType="com.katri.web.auth.model.LoginReq" resultType="com.katri.web.auth.model.LoginRes">
+		/* LoginMapper.selectLoginDetail (로그인 정보 조회) */
+
+		SELECT
+			tub.user_id
+			, tub.user_nm
+			, tub.user_ty_cd
+			, tub.user_pwd
+			, tub.user_lgcy_pwd
+			, tub.user_link_info_val
+			, tub.encpt_mbl_telno_val
+			, tub.encpt_eml_addr_val
+			, tub.eml_cert_no_val
+			, tub.user_stt_cd
+			, tub.authrt_grp_sn
+			, tub.join_aply_dmnd_dt
+			, tub.join_aply_prcs_dt
+			, tub.join_aply_prcr_id
+			, tub.join_ymd
+			, tub.whdwl_aply_dmnd_dt
+			, tub.whdwl_aply_prcs_dt
+			, tub.whdwl_aply_prcr_id
+			, tub.whdwl_ymd
+			, tub.whdwl_resn_cn
+			, tub.last_lgn_dt
+			, tub.last_lgn_ip_addr
+			, tub.lgn_fir_cnt
+			, tub.last_lgn_fir_dt
+			, tub.last_pwd_chg_dt
+			, (CASE
+				WHEN (tub.last_pwd_chg_dt is null) THEN 'Y'
+				WHEN (tub.last_pwd_chg_dt  <![CDATA[<]]> now() - '90 day'::interval) THEN 'Y'
+				ELSE 'N'
+			  END) as over_day_last_pwd_chg_dt
+			, tub.drmncy_ymd
+			, tub.last_drmncy_dt
+			, tub.last_drmncy_rmv_dt
+			, tub.lgn_ref_val
+
+			, tegb.ent_grp_sn 		--기업그룹일련번호
+			, tegb.brno				--사업자번호
+			, tegb.ent_grp_mng_no 	--기업그룹관리번호
+		FROM tb_user_bas tub
+
+		/* 기업그룹사용자관리 */
+		INNER JOIN tb_ent_grp_user_mng tegum
+			ON (tegum.use_yn ='Y' AND tegum.user_id = tub.user_id)
+
+		/* 기업그룹기본 */
+		INNER JOIN tb_ent_grp_bas tegb
+			ON (tegb.use_yn='Y' and tegb.ent_grp_sn = tegum.ent_grp_sn)
+
+		WHERE tub.user_stt_cd NOT IN ('USC012' , 'USC040') /* 사용자상태코드가 [가입반려], [탈퇴] 인거 제외 */
+			AND tub.user_id = #{loginId}
+	</select>
+
+	<!-- 로그인 시도한 사람의 정보 조회(LoginId로조회)-->
+	<select id="selectTryLoginUserDetail" parameterType="String" resultType="com.katri.web.auth.model.TryLoginUserSelectRes">
+		/* LoginMapper.selectTryLoginUserDetail ( 로그인 시도한 사람의 정보 조회(LoginId로조회) ) */
+
+		SELECT
+			tub.user_id
+			, tub.user_nm
+			, tub.user_ty_cd
+			<!--
+			, tub.user_pwd
+			, tub.user_lgcy_pwd
+			, tub.user_link_info_val
+			-->
+			, tub.encpt_mbl_telno_val
+			, tub.encpt_eml_addr_val
+			, tub.eml_cert_no_val
+			, tub.user_stt_cd
+			, tub.authrt_grp_sn
+			<!--
+			, tub.join_aply_dmnd_dt
+			, tub.join_aply_prcs_dt
+			, tub.join_aply_prcr_id
+			, tub.join_ymd
+			, tub.whdwl_aply_dmnd_dt
+			, tub.whdwl_aply_prcs_dt
+			, tub.whdwl_aply_prcr_id
+			, tub.whdwl_ymd
+			, tub.whdwl_resn_cn
+			, tub.last_lgn_dt
+			, tub.last_lgn_ip_addr
+			, tub.lgn_fir_cnt
+			, tub.last_lgn_fir_dt
+			, tub.last_pwd_chg_dt
+			-->
+			, tub.drmncy_ymd
+			, tub.last_drmncy_dt
+			, tub.last_drmncy_rmv_dt
+		FROM tb_user_bas tub
+		WHERE tub.user_stt_cd NOT IN ('USC012' , 'USC040') /* 사용자상태코드가 [가입반려], [탈퇴] 인거 제외 */
+			AND tub.user_id = #{loginId}
+	</select>
+
+	<!-- 로그인 실패시 DB 수정 -->
+	<update id="updateLoginFail" parameterType="com.katri.web.auth.model.LoginReq">
+		/* LoginMapper.updateLoginFail (로그인 실패시 DB 수정) */
+
+		UPDATE tb_user_bas
+		SET
+			last_lgn_fir_dt = NOW()
+			, lgn_fir_cnt = lgn_fir_cnt+1
+		WHERE user_id = #{loginId}
+	</update>
+
+	<!-- 로그인 성공시 DB 수정 -->
+	<update id="updateLoginSucess" parameterType="com.katri.web.auth.model.LoginReq">
+		/* LoginMapper.updateLoginSucess (로그인 성공시 DB 수정) */
+
+		UPDATE tb_user_bas
+		SET
+			last_lgn_dt = NOW()
+			, last_lgn_ip_addr = #{lastLgnIpAddr}
+			, lgn_ref_val = #{lgnRefVal}
+			, lgn_fir_cnt = 0
+		WHERE user_id = #{loginId}
+	</update>
+
+	<!-- 로그인 HIST 등록 -->
+	<insert id="insertLoginHist" parameterType="com.katri.web.auth.model.LoginHistReq">
+		/* LoginMapper.insertLoginHist (로그인 HIST 등록) */
+
+		INSERT INTO tb_lgn_hist (
+			site_ty_cd
+			, user_ip_addr
+			, user_agnt_val
+			, crt_dt
+			, crtr_id
+		) VALUES (
+			#{siteTyCd}
+			, #{userIpAddr}
+			, #{userAgntVal}
+			, now()
+			, #{crtrId}
+		)
+	</insert>
+
+	<!-- 로그인한 사람의 권한에 따른 메뉴 리스트 조회 -->
+	<select id="selectLoginAuthrtMenuList" parameterType="com.katri.web.auth.model.LoginAuthrtMenuReq" resultType="com.katri.web.auth.model.LoginAuthrtMenuRes">
+		/* LoginMapper.selectLoginAuthrtMenuList ( 로그인한 사람의 권한에 따른 메뉴 리스트 조회 ) */
+
+		<include refid='sqlSearchLoginAuthrtMenu'/>
+
+		ORDER BY srt_path
+
+	</select>
+
+	<!-- 로그인한 사람의 권한에 따른 메뉴 조회 -->
+	<select id="selectLoginAuthrtMenuDetail" parameterType="com.katri.web.auth.model.LoginAuthrtMenuReq" resultType="com.katri.web.auth.model.LoginAuthrtMenuRes">
+		/* LoginMapper.selectLoginAuthrtMenuDetail ( 로그인한 사람의 권한에 따른 메뉴 조회 ) */
+
+		<include refid='sqlSearchLoginAuthrtMenu'/>
+		AND (aml.menu_url_addr = #{searchMenuUrl} OR aml.menu_url_addr LIKE (#{searchMenuUrl} || '?%'))
+		LIMIT 1
+
+	</select>
+
+	<!-- SQL : 로그인한 사람의 권한에 따른 메뉴 -->
+	<sql id="sqlSearchLoginAuthrtMenu">
+		/* SQL : 로그인한 사람의 권한에 따른 메뉴 */
+
+		WITH RECURSIVE auth_menu_list( site_ty_cd, menu_sn, menu_nm, menu_url_addr, link_ty_cd, up_menu_sn, all_menu_sn_val, srt_seq, menu_lvl_val, use_yn , path ) as (
+
+			SELECT 	  tmb.site_ty_cd
+					, tmb.menu_sn
+					, tmb.menu_nm
+					, tmb.menu_url_addr
+					, tmb.link_ty_cd
+					, tmb.up_menu_sn
+					, tmb.all_menu_sn_val
+					, tmb.srt_seq
+					, tmb.menu_lvl_val
+					, tmb.use_yn
+					, array[tmb.srt_seq]
+			FROM 	tb_menu_bas tmb
+			WHERE 	tmb.use_yn = 'Y'
+			  AND	tmb.up_menu_sn is null
+
+			UNION ALL
+
+			SELECT 	  tmb.site_ty_cd
+					, tmb.menu_sn
+					, tmb.menu_nm
+					, tmb.menu_url_addr
+					, tmb.link_ty_cd
+					, tmb.up_menu_sn
+					, tmb.all_menu_sn_val
+					, tmb.srt_seq
+					, tmb.menu_lvl_val
+					, tmb.use_yn
+					, array_append(agm.path, tmb.srt_seq)
+			FROM 	tb_menu_bas tmb
+			INNER JOIN
+				 auth_menu_list agm on ( tmb.up_menu_sn = agm.menu_sn and tmb.use_yn = 'Y')
+		)
+
+		/* 권한 그룹 > 메뉴 권한 조회 */
+		SELECT	  aml.site_ty_cd
+				, aml.menu_sn
+				, aml.menu_nm
+				, aml.menu_url_addr
+				, aml.up_menu_sn
+				, aml.all_menu_sn_val
+				, aml.link_ty_cd
+				, aml.srt_seq
+				, aml.menu_lvl_val
+				, aml.use_yn
+				, aml.path as srt_path
+
+				, tagmm.authrt_grp_menu_sn
+				, tagmm.cntn_authrt_yn
+		/* 메뉴 목록 */
+		FROM 	auth_menu_list aml
+
+		/* 권한 그룹 > 메뉴 권한 */
+		INNER JOIN tb_authrt_grp_menu_mng tagmm
+			ON ( aml.menu_sn = tagmm.menu_sn AND aml.use_yn = 'Y' AND tagmm.authrt_grp_sn = #{loginAuthrtGrpSn}  AND tagmm.cntn_authrt_yn = 'Y')
+
+		/* 권한 그룹 정보  */
+		INNER JOIN tb_authrt_grp_bas tagb
+			ON ( tagmm.authrt_grp_sn = tagb.authrt_grp_sn AND tagb.use_yn = 'Y' )
+
+		WHERE aml.site_ty_cd = #{searchSiteTyCd}
+	</sql>
+
+	<!-- 로그인한 사람의 기업의 [기업그룹수집동의관리] 최종값이 Y인 개수 조회 -->
+	<select id="selectLoginEntGrpClctAgreYCnt"  parameterType="com.katri.web.auth.model.LoginAuthrtMenuReq" resultType="int">
+		/* LoginMapper.selectLoginEntGrpClctAgreYCnt (로그인한 사람의 기업의 [기업그룹수집동의관리] 최종값이 Y인 개수 조회) */
+
+		SELECT COUNT(1)
+		FROM tb_ent_grp_clct_agre_mng
+		WHERE info_pvsn_agre_yn ='Y'
+			AND ent_grp_sn = #{entGrpSn};
+	</select>
+
+</mapper>

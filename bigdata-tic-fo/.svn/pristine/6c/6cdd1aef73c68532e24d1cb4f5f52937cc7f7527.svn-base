@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.board.mapper.BoardMapper">
+
+	<!-- SQL : board 리스트 WHERE -->
+	<sql id="sqlWhereBoardList">
+		WHERE ${alias_board}del_yn = 'N'
+		<if test="searchKeyword != null and searchKeyword != ''">
+			<!-- 검색유형 -->
+			<choose>
+				<when test="searchType == 'title'">
+					/* [검색 조건] 검색유형 : 제목  */
+					AND (${alias_board}title LIKE '%' || #{searchKeyword} || '%' )
+				</when>
+				<when test="searchType == 'titleCont'">
+					/* [검색 조건] 검색유형 : 제목, 내용 */
+					AND (
+							${alias_board}title LIKE CONCAT('%', #{searchKeyword}, '%')
+							OR
+							${alias_board}cont LIKE CONCAT('%', #{searchKeyword}, '%')
+						)
+				</when>
+			</choose>
+		</if>
+		<if test="searchBoardType != null and searchBoardType != ''">
+			/* [검색 조건] board 타입  */
+			AND (${alias_board}type_cd = #{searchBoardType})
+		</if>
+		<if test="searchArrBoardType != null and searchArrBoardType.length != 0">
+			/*  [검색 조건] board 타입 arr */
+			AND ${alias_board}type_cd IN
+				<foreach collection="searchArrBoardType" item="item" index="index" open="(" close=")" separator=",">
+					#{item}
+				</foreach>
+		</if>
+	</sql>
+
+	<!-- board 리스트 개수 조회 -->
+	<select id="selectBoardListCount" parameterType="com.katri.web.board.model.BoardSelectReq" resultType="int">
+		/* BoardMapper.selectBoardListCount (board 리스트 개수 조회) */
+
+		SELECT
+			count(btb.board_no) as count
+		FROM temp_tb_board btb
+		<include refid='sqlWhereBoardList'>
+			<property name="alias_board" value="btb."/>
+		</include>
+	</select>
+
+	<!-- board 리스트 조회 -->
+	<select id="selectBoardList" parameterType="com.katri.web.board.model.BoardSelectReq" resultType="com.katri.web.board.model.BoardSelectRes">
+		/* BoardMapper.selectBoardList (board 리스트 조회) */
+
+		SELECT
+			(row_number() over(order by btb.board_no ASC)) as rownum
+			, btb.board_no
+			, btb.title
+			, btb.type_cd
+			, coalesce(null, tcc.comn_cd_nm, '') AS type_nm
+			, btb.reg_dt
+		FROM temp_tb_board btb
+		<!-- 공통코드 : ABOT : BOARD 타입 -->
+		LEFT OUTER JOIN tb_comn_cd_bak tcc
+			ON (tcc.comn_cd = btb.type_cd
+				AND tcc.up_cd='ABOT' AND TCC.cd_step_val='1' AND tcc.stt_cd ='A' )
+		<include refid='sqlWhereBoardList'>
+			<property name="alias_board" value="btb."/>
+		</include>
+		ORDER BY rownum desc
+		OFFSET #{startRow} LIMIT #{endRow};
+	</select>
+
+	<!-- board 리스트 조회_MAP으로 반환 -->
+	<select id="selectBoardListMap" parameterType="HashMap" resultType="com.katri.web.board.model.BoardSelectRes">
+		/* BoardMapper.selectBoardListMap (board 리스트 조회_MAP으로 반환) */
+
+		SELECT
+			(row_number() over(order by btb.board_no ASC)) as rownum
+			, btb.board_no
+			, btb.title
+			, btb.cont
+			, btb.type_cd
+			, coalesce(null, tcc.comn_cd_nm, '') AS type_nm
+			, btb.reg_dt
+		FROM temp_tb_board btb
+		<!-- 공통코드 : ABOT : BOARD 타입 -->
+		LEFT OUTER JOIN tb_comn_cd_bak tcc
+			ON (tcc.comn_cd = btb.type_cd
+				AND tcc.up_cd='ABOT' AND TCC.cd_step_val='1' AND tcc.stt_cd ='A' )
+		<include refid='sqlWhereBoardList'>
+			<property name="alias_board" value="btb."/>
+		</include>
+		ORDER BY rownum desc
+	</select>
+
+	<!-- board 상세 조회 -->
+	<select id="selectBoardDetail" resultType="com.katri.web.board.model.BoardSelectRes">
+		/* BoardMapper.selectBoardDetail (board 상세 조회) */
+
+		SELECT
+			btb.board_no
+			, btb.title
+			, btb.cont
+			, btb.type_cd
+			, coalesce(null, tcc.comn_cd_nm, '') AS type_nm
+			, btb.reg_dt
+		FROM temp_tb_board btb
+		<!-- 공통코드 : ABOT : BOARD 타입 -->
+		LEFT OUTER JOIN tb_comn_cd_bak tcc
+			ON (tcc.comn_cd = btb.type_cd
+				AND tcc.up_cd='ABOT' AND TCC.cd_step_val='1' AND tcc.stt_cd ='A' )
+		WHERE board_no = #{boardNo}
+	</select>
+
+	<!-- board 등록 -->
+	<insert id="insertBoard" parameterType="com.katri.web.board.model.BoardSaveReq" useGeneratedKeys="true" keyProperty="boardNo">
+		/* BoardMapper.insertBoard (board 등록) */
+
+		INSERT INTO temp_tb_board (
+			title
+			, cont
+			, type_cd
+			, reg_dt
+			, del_yn
+		) VALUES (
+			#{title}
+			, #{cont}
+			, #{typeCd}
+			, now()
+			, 'N'
+		)
+	</insert>
+
+	<!-- board 수정 -->
+	<update id="updateBoard" parameterType="com.katri.web.board.model.BoardSaveReq">
+		/* BoardMapper.updateBoard (board 수정) */
+
+		UPDATE temp_tb_board
+		SET
+			title 		= #{title}
+			, type_cd 	= #{typeCd}
+			, cont 		= #{cont}
+		WHERE board_no 	= #{boardNo}
+	</update>
+
+	<!-- board del_yn = 'Y' 로 수정 -->
+	<update id="updateDeleteBoard" parameterType="com.katri.web.board.model.BoardSaveReq">
+		/* BoardMapper.updateDeleteBoard (board del_yn = 'Y' 로 수정) */
+
+		UPDATE temp_tb_board
+		SET del_yn 	= 'Y'
+		WHERE board_no 	= #{boardNo}
+	</update>
+
+	<!-- board 차트 정보 리스트 조회 -->
+	<select id="selectBoardChartList" resultType="com.katri.web.board.model.BoardSelectRes">
+		/* BoardMapper.selectBoardChartList (board 차트 정보 리스트 조회) */
+
+		SELECT	  btb.type_cd
+				, tcc.comn_cd_nm as type_nm
+				, count(btb.board_no) as tot_cnt
+
+		FROM 	temp_tb_board btb
+		LEFT OUTER JOIN
+				tb_comn_cd_bak tcc ON ( btb.type_cd = tcc.comn_cd and tcc.up_cd = 'ABOT' )
+
+		GROUP BY btb.type_cd, tcc.comn_cd_nm
+
+	</select>
+
+</mapper>

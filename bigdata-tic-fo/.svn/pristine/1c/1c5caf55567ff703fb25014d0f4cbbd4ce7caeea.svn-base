@@ -1,0 +1,154 @@
+server:
+  system: prd
+  port: 18083
+  servlet:
+    session:
+      timeout: 900
+      #persistent: true
+      cookie:
+        #max-age: -1    # 60m * 24h * 1d
+        #name: BIGDATATIC
+        http-only: true
+        secure: true
+    jsp:
+      init-parameters:
+        development: true
+    multipart:
+      file-size-threshold: 1MB
+      location: /nas/upload
+      max-file-size: 100MB
+      max-request-size: 100MB
+  error:
+    include-binding-errors: NEVER
+    include-exception: false
+    include-message: NEVER
+    include-stacktrace: NEVER
+    path: /error
+    whitelabel.enabled: true
+
+spring:
+  data-source:
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: jdbc:log4jdbc:postgresql://10.62.226.50:5432/ticportal
+    jdbc-url: jdbc:log4jdbc:postgresql://10.62.226.50:5432/ticportal
+    username: bigdatatic
+    password: tic!2022@
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      maximum-pool-size: 10
+      connection-test-query: SELECT 1
+      minimum-idle: 1
+      connection-timeout: 100000
+  messages:
+    basename: config/common/message
+    encoding: UTF-8
+  mvc:
+    #static-path-pattern: /static/**
+    view.prefix: /WEB-INF/views/
+    view.suffix: .jsp
+  #thymeleaf:
+    #cache: false
+  cache:
+    jcache:
+      config: classpath:ehcache.xml
+  servlet:
+    multipart:
+      maxFileSize: 100MB
+      maxRequestSize: 100MB
+
+mybatis:
+  mapper-locations: classpath:mappers/**/*.xml
+  configuration:
+    cache-enabled: true
+    lazy-loading-enabled: true
+    multiple-result-sets-enabled: true
+    use-column-label: true
+    default-statement-timeout: 65000
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    root: error
+    #root: error
+    com.katri.web: error
+    sql: off
+    org.hibernate.SQL: off
+    jdbc: off
+    jdbc.sqlonly: off
+    jdbc.sqltiming: off
+    jdbc.audit: off
+    jdbc.resultset: off
+    jdbc.resultsettable: off
+    jdbc.connection: off
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %magenta([%thread]) %-30.-30F : %msg%n'
+  response:
+    length: 50
+
+login:
+  password:
+    super.key: KATRI@2022!
+    aes256.key: 2022!KATRI@2022@
+
+domain:
+  web:
+    bo: https://admin.bigdata-tic.kr
+    bo.url: admin.bigdata-tic.kr
+    fo: https://dev.bigdata-tic.kr
+    fo.url: dev.bigdata-tic.kr
+
+const:
+  customer:
+    not.call.acc.gr: Z005
+
+config:
+  messages:
+    scheduler:
+      exec: N
+    file:
+      root:
+        path: /nas
+      separator: /
+      mkdirs:
+        path: upload/
+      nodbdirs:
+        path: /nodbfile/
+
+mail:
+  template:
+    path: /data/tcbpjeus/app/bigdatatic-fo/WEB-INF/template/mail/
+  sender:
+    email: no-reply@bigdata-tic.kr
+    name: 시험인증 빅데이터 플랫폼
+  api:
+    url: http://directsend.co.kr/index.php/api_v2/mail_change_word
+    username: imh2857
+    pwd: tcbpkatri01@
+    key: FnUDcmMgp3j1h0n
+  reserve:
+    maxcount: 2
+    time:
+      beforedrmncy:
+        hour: 18
+        minute: 5
+        second: 0
+    term:
+      beforedrmncy: 5
+
+brno:
+  api:
+    key:
+      encoding: ZZe9qedzhlqFQCXVVpOsqL%2BmCE7Nrgu%2BN0%2BBZz8TI7UO0bKQi4wz0aRgWwgIoiuTsQXFqewRScw9cAnuakNMFw%3D%3D
+      decoding: ZZe9qedzhlqFQCXVVpOsqL+mCE7Nrgu+N0+BZz8TI7UO0bKQi4wz0aRgWwgIoiuTsQXFqewRScw9cAnuakNMFw==
+
+anls:
+  api:
+    key:
+      authentication: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImlzcyI6Im5kYXBfY29yZSIsInVzZXJJZCI6MSwiYXBwbGljYXRpb25LZXkiOiJWdkt1Y2JhT1FrSE1WX2ZxWVFwVUw1VUJ2aGM1RElxd3JkdjdONTBiWlljIiwiYXBwbGljYXRpb25OYW1lIjoicG9ydGFsIn0.M5HvOd3JmDEWmBxwfdBpaCAHo5kMn0l1IL1R4QYXPFD1HmKX4KQlbH6JETMYOw4CViuNnn9RsCoVlv8XtTK9Vg
+    url: http://10.62.226.36:8080/api/user
+
+pass:
+  site.code: BZ642
+  site.password: coQHE2JOT2Zh
+  return.url: /comm/niceSuccess
+  error.url: /comm/niceFail

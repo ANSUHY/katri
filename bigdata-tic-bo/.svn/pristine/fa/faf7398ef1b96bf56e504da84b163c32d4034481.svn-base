@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>시험인증 빅데이터 포탈 관리자</title>
+
+<link href="../css/style.css" rel="stylesheet">
+<script src="../js/jquery.min.js"></script>
+<script src="../js/jquery-ui.js"></script>
+<script src="../js/custom.js"></script>
+</head>
+
+<body class="popup">
+
+	<div id="pop-wrap">
+
+		<h1 class="pop-tit">약관동의 이력</h1>
+
+		<div class="pop-contnet">
+
+			<select class="select" style="margin-bottom: 20px;">
+				<option value="JOIN">회원가입</option>
+				<option value="EEE">내손안의 시험인증</option>
+			</select>
+
+			<div class="row-tbl">
+				<table>
+					<colgroup>
+						<col>
+						<col>
+					</colgroup>
+					<thead>
+						<tr>
+							<th>약관종류</th>
+							<th>동의일자</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>서비스 이용 약관</td>
+							<td>2022-09-29</td>
+						</tr>
+						<tr>
+							<td>만 14세 이상 이용확인</td>
+							<td>2022-09-29</td>
+						</tr>
+						<tr>
+							<td>개인(신용)정보 수집 및 이용동의</td>
+							<td>2022-09-29</td>
+						</tr>
+						<tr>
+							<td>개인정보 제3자 제공동의</td>
+							<td>2022-09-29</td>
+						</tr>
+						<tr>
+							<td>개인정보처리방침</td>
+							<td>2022-09-29</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+
+		</div><!-- /pop-contnet -->
+		<a href="javascript:self.close();" class="pop-close"><i class="fa fa-times"></i></a>
+	</div><!-- /pop-wrao -->
+
+	</body>
+</html>

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.hmpgCptn.popupZone.mapper.PopupZoneMapper">
+
+	<!-- hmpgCptnBas 메인 비주얼 리스트 조건 sql -->
+	<sql id="sqlWherePopup">
+
+		WHERE thcb.hmpg_cptn_ty_cd = #{searchHmpgCptnTyCd}
+
+		<!-- 검색 사용 여부 -->
+		<if test="searchUseYn != null and searchUseYn != ''">
+			AND thcb.use_yn = #{searchUseYn}
+		</if>
+
+	</sql>
+
+	<!-- hmpgCptnBas 팝업존 리스트 개수 조회  -->
+	<select id="getPopupCount" parameterType="com.katri.web.hmpgCptn.popupZone.model.PopupZoneSelectReq" resultType="int">
+		/* PopupZoneMapper.selectPopupZoneList ( 팝업존 리스트 개수 조회 ) */
+
+		SELECT	COUNT(thcb.hmpg_cptn_sn) AS cnt
+		FROM 	tb_hmpg_cptn_bas thcb
+		<include refid="sqlWherePopup"/>
+	</select>
+
+
+	<select id="selectPopupZoneList" parameterType="com.katri.web.hmpgCptn.popupZone.model.PopupZoneSelectReq" resultType="com.katri.web.hmpgCptn.popupZone.model.PopupZoneSelectRes">
+		/* PopupZoneMapper.selectPopupZoneList ( 팝업존 리스트 조회 ) */
+
+		SELECT	  (row_number() over(order by thcb.srt_seq asc)) as rnum
+				, thcb.hmpg_cptn_sn
+				, thcb.hmpg_cptn_ty_cd
+				, thcb.hmpg_cptn_desc_cn
+				, thcb.link_url_addr
+				, thcb.link_ty_cd
+				, tcc.comn_cd_nm as link_ty_cd_nm
+				, tcc.comn_cd_val as link_ty_cd_val
+				, thcb.srt_seq
+				, thcb.use_yn
+				, thcb.crt_dt
+				, thcb.crtr_id
+				, thcb.mdfcn_dt
+				, thcb.mdfr_id
+				, CONCAT(tfmpc.strg_file_path_addr, tfmpc.strg_file_nm) AS pc_img_strg_file_full_path_addr
+				, CONCAT(tfmmo.strg_file_path_addr, tfmmo.strg_file_nm) AS mobile_img_strg_file_full_path_addr
+
+		FROM 	tb_hmpg_cptn_bas thcb
+
+		/* 연계 유형 코드 */
+		LEFT OUTER JOIN tb_comn_cd tcc ON ( thcb.link_ty_cd = tcc.comn_cd and tcc.use_yn = 'Y')
+
+		/* PC 이미지 파일 조회 */
+		LEFT OUTER JOIN tb_file_mng tfmpc ON ( tfmpc.ref_div_val::INTEGER = thcb.hmpg_cptn_sn and tfmpc.file_div_nm = #{searchVisualPcImg} and tfmpc.del_yn = 'N' )
+
+		/* Mobile 이미지 파일 조회 */
+		LEFT OUTER JOIN tb_file_mng tfmmo ON ( tfmmo.ref_div_val::INTEGER = thcb.hmpg_cptn_sn and tfmmo.file_div_nm = #{searchVisualMobileImg} and tfmmo.del_yn = 'N' )
+
+		<include refid="sqlWherePopup"/>
+
+		ORDER BY rnum asc
+
+	</select>
+
+	<select id="selectPopupZoneDetail" parameterType="com.katri.web.hmpgCptn.popupZone.model.PopupZoneSelectReq" resultType="com.katri.web.hmpgCptn.popupZone.model.PopupZoneSelectRes">
+		/* PopupZoneMapper.SelectPopupZoneDetail ( 팝업 상세 조회 ) */
+
+		SELECT	  thcb.hmpg_cptn_sn
+				, thcb.hmpg_cptn_ty_cd
+				, thcb.hmpg_cptn_desc_cn
+				, thcb.link_url_addr
+				, thcb.link_ty_cd
+				, tcc.comn_cd_nm as link_ty_cd_nm
+				, tcc.comn_cd_val as link_ty_cd_val
+				, thcb.srt_seq
+				, thcb.use_yn
+				, thcb.crt_dt
+				, thcb.crtr_id
+				, thcb.mdfcn_dt
+				, thcb.mdfr_id
+
+		FROM 	tb_hmpg_cptn_bas thcb
+
+		/* 연계 유형 코드 */
+		LEFT OUTER JOIN tb_comn_cd tcc ON ( tcc.comn_grp_cd = 'LTC' and thcb.link_ty_cd = tcc.comn_cd and tcc.use_yn = 'Y')
+
+		WHERE	thcb.hmpg_cptn_sn = #{hmpgCptnSn}
+
+	</select>
+
+
+	<update id="updatePopupZone" parameterType="com.katri.web.hmpgCptn.popupZone.model.PopupZoneSaveReq">
+		/* PopupZoneMapper.updatePopupZone ( 팝업존 수정 ) */
+
+		UPDATE	tb_hmpg_cptn_bas
+
+		SET		  hmpg_cptn_desc_cn	= #{hmpgCptnDescCn}
+				, link_url_addr		= #{linkUrlAddr}
+				, link_ty_cd		= #{linkTyCd}
+				, use_yn			= #{useYn}
+				, mdfcn_dt			= now()
+				, mdfr_id			= #{mdfrId}
+
+		WHERE	hmpg_cptn_sn 	= #{hmpgCptnSn}
+
+	</update>
+
+
+	<insert id="insertPopup" parameterType="com.katri.web.hmpgCptn.popupZone.model.PopupZoneSaveReq" useGeneratedKeys="true" keyProperty="hmpgCptnSn">
+		/* PopupZoneMapper.insertPopup ( 팝업 등록 ) */
+
+		INSERT INTO
+			tb_hmpg_cptn_bas
+				(
+					  hmpg_cptn_ty_cd
+					, hmpg_cptn_desc_cn
+					, link_url_addr
+					, link_ty_cd
+					, srt_seq
+					, use_yn
+					, crt_dt
+					, crtr_id
+				)
+		VALUES
+				(
+					  #{hmpgCptnTyCd}
+					, #{hmpgCptnDescCn}
+					, #{linkUrlAddr}
+					, #{linkTyCd}
+					, (
+						SELECT	COALESCE(MAX(srt_seq) + 1, 1)
+						FROM	tb_hmpg_cptn_bas
+						WHERE	hmpg_cptn_ty_cd	= #{hmpgCptnTyCd}
+					 )
+					, #{useYn}
+					, now()
+					, #{crtrId}
+				)
+
+	</insert>
+
+
+	<update id="updatePopupZoneSeq" parameterType="com.katri.web.hmpgCptn.popupZone.model.PopupZoneSaveReq">
+		/* PopupZoneMapper.updatePopupZoneSeq ( 팝업 순서 수정 ) */
+
+		UPDATE	tb_hmpg_cptn_bas
+
+		SET		  srt_seq		= #{srtSeq}
+				, mdfcn_dt		= now()
+				, mdfr_id		= #{mdfrId}
+
+		WHERE	hmpg_cptn_sn 	= #{hmpgCptnSn}
+
+	</update>
+
+
+
+</mapper>

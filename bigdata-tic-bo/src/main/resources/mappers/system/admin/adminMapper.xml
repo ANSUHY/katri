@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.system.admin.mapper.AdminMapper">
+
+<resultMap id="authorResultMap" type="com.katri.web.system.admin.model.AuthorSelectRes">
+	<id property="authrt_grp_sn" column="AUTHRT_GRP_SN"/>
+	<result property="authrt_grp_nm" column="AUTHRT_GRP_NM"/>
+	<result property="use_yn" column="USE_YN"/>
+	<result property="crt_dt" column="CRT_DT"/>
+	<result property="crtr_id" column="CRTR_ID"/>
+	<result property="mdfcn_dt" column="MDFCN_DT"/>
+	<result property="mdfr_id" column="MDFR_ID"/>
+</resultMap>
+
+<select id="getAdminList" resultType="com.katri.web.system.admin.model.AdminSelectRes">
+	/* AdminMapper.getAdminList (관리자 목록 조회) */
+
+		SELECT
+		(ROW_NUMBER() OVER (order by crt_dt asc)) as rownum
+	  , mngr_id
+	  , mngr_nm
+	  , use_yn
+	 from tb_mngr_bas
+	 order by rownum desc
+</select>
+
+
+<select id="getAdminCnt" resultType="int">
+	/* AdminMapper.getAdminCnt (총 관리자 수 조회)*/
+
+		SELECT
+			count(mngr_id) as count
+		FROM tb_mngr_bas
+
+</select>
+
+
+<select id="getAdminIdCheck" resultType="int" parameterType="String">
+	/* AdminMapper.getAdminIdCheck ( 관리자 아이디 중복 여부 조회 ) */
+	SELECT SUM(cnt) FROM(
+	SELECT COUNT(*) as cnt FROM tb_mngr_bas WHERE mngr_id LIKE #{ adminId }
+	UNION ALL
+	SELECT count(*) as cnt FROM tb_user_bas WHERE user_id like #{ adminId }
+	) as s
+</select>
+
+<select id="getAuthorList" resultMap="authorResultMap">
+	/* AdminMapper.getAuthorList( 권한 목록 조회 ) */
+
+		SELECT
+			authrt_grp_sn
+		  , authrt_grp_nm
+		  , use_yn
+		FROM tb_authrt_grp_bas
+		WHERE use_yn = 'Y'
+		AND site_ty_cd LIKE 'admin'
+
+</select>
+
+<insert id="regAdmin" parameterType="com.katri.web.system.admin.model.AdminSaveReq">
+	/* AdminMapper.regAdmin ( 관리자 등록 ) */
+
+		INSERT INTO
+			tb_mngr_bas
+			(
+			  mngr_id
+			, mngr_nm
+			, mngr_pwd
+			, use_yn
+			, crtr_id
+			, authrt_grp_sn
+			)
+			VALUES
+			(
+			  #{ mngr_id }
+			, #{ mngr_nm }
+			, #{ mngr_pwd }
+			, #{ use_yn }
+			, #{ crtr_id }
+			, #{ auth_grp_sn }
+			)
+
+</insert>
+
+
+<select id="getAdminDetail" resultType="com.katri.web.system.admin.model.AdminSelectRes">
+	/* AdminMapper.getAdminDetail ( 관리자 상세 조회 )*/
+	SELECT
+			mngr_id
+		  , mngr_nm
+		  , use_yn
+		  , authrt_grp_sn
+		FROM tb_mngr_bas
+	 WHERE mngr_id LIKE #{ id }
+</select>
+
+<update id="modifyAdmin">
+	/* AdminMapper.modifyAdmin ( 관리자 정보 수정 )*/
+	UPDATE
+		TB_MNGR_BAS
+		SET
+			mngr_nm	= #{ mngr_nm }
+		  , authrt_grp_sn = #{ auth_grp_sn }
+		  , use_yn		= #{ use_yn }
+		  , mdfcn_dt	= now()
+		  , mdfr_id		= #{ mdfr_id }
+		WHERE mngr_id LIKE #{ mngr_id }
+</update>
+</mapper>

@@ -1,0 +1,213 @@
+package com.katri.web.platformSvc.myData.mapper;
+
+import java.util.List;
+import java.util.Map;
+
+import org.apache.ibatis.annotations.Mapper;
+import org.springframework.stereotype.Repository;
+
+import com.katri.common.datasource.MainMapperAnnotation;
+import com.katri.web.platformSvc.myData.model.MyDataSaveReq;
+import com.katri.web.platformSvc.myData.model.MyDataSelectReq;
+import com.katri.web.platformSvc.myData.model.MyDataSelectRes;
+
+
+@Repository
+@Mapper
+@MainMapperAnnotation
+public interface MyDataMapper {
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [서비스 안내] 각 페이지에 맞는 데이터 조회
+	 * @param myDataSelectReq
+	 * @return [플랫폼 서비스] _메뉴구성내용
+	*****************************************************/
+	MyDataSelectRes selectIntroSvcData(MyDataSelectReq myDataSelectReq);
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 리스트 개수 조회
+	 * @param myCertSelectReq
+	 * @return 리스트개수
+	 *****************************************************/
+	int selectMyCertCount(MyDataSelectReq myCertSelectReq);
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 리스트 조회
+	 * @param myCertSelectReq
+	 * @return 리스트
+	 *****************************************************/
+	List<MyDataSelectRes> selectMyCertList(MyDataSelectReq myCertSelectReq);
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 리스트 조회(Map으로 반환)
+	 * @param myCertSelectReq
+	 * @return 리스트
+	 *****************************************************/
+	List<Map<String, Object>> selectMyCertListMap(MyDataSelectReq myCertSelectReq);
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 상세 조회
+	 * @param myCertSelectReq
+	 * @return 상세정보
+	 *****************************************************/
+	MyDataSelectRes selectMyCertDetail(MyDataSelectReq myCertSelectReq);
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 인증] 이미지 리스트 조회
+	 * @param myCertSelectReq
+	 * @return 리스트
+	 *****************************************************/
+	List<String> selectMyCertImgList(MyDataSelectReq myCertSelectReq);
+
+	/*****************************************************
+	 * [인증서추가정보관리] 등록,수정
+	 * @param MyDataSaveReq [인증서추가정보관리] 등록,수정 정보
+	 * @return 성공 카운트
+	 *****************************************************/
+	int mergeCertAditInfoMng(MyDataSaveReq myDataSaveReq);
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 리스트 개수 조회
+	 * @param myRprtSelectReq
+	 * @return 리스트개수
+	 *****************************************************/
+	int selectMyRprtCount(MyDataSelectReq myRprtSelectReq);
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 리스트 조회
+	 * @param myRprtSelectReq
+	 * @return 리스트
+	 *****************************************************/
+	List<MyDataSelectRes> selectMyRprtList(MyDataSelectReq myRprtSelectReq);
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 리스트 조회(Map으로 반환)
+	 * @param myRprtSelectReq
+	 * @return 리스트
+	 *****************************************************/
+	List<Map<String, Object>> selectMyRprtListMap(MyDataSelectReq myRprtSelectReq);
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] 상세 조회
+	 * @param myRprtSelectReq
+	 * @return 상세정보
+	 *****************************************************/
+	MyDataSelectRes selectMyRprtDetail(MyDataSelectReq myRprtSelectReq);
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] [##품목 정보##] 리스트 조회
+	 * @param myRprtSelectReq
+	 * @return 리스트
+	 *****************************************************/
+	List<MyDataSelectRes> selectMyRprtPdctgList(MyDataSelectReq myRprtSelectReq);
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] [##품목 정보##] 상세 조회
+	 * @param myRprtSelectReq
+	 * @return 상세정보
+	 *****************************************************/
+	MyDataSelectRes selectMyRprtPdctgDetail(MyDataSelectReq myRprtSelectReq);
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] [##시료 정보##] 리스트 조회
+	 * @param myRprtSelectReq
+	 * @return 리스트
+	 *****************************************************/
+	List<MyDataSelectRes> selectMyRprtInstSampleList(MyDataSelectReq myRprtSelectReq);
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] [##시료별 시험항목 정보##] 리스트 조회
+	 * @param myRprtSelectReq
+	 * @return 리스트
+	 *****************************************************/
+	List<MyDataSelectRes> selectMyRprtInstTestItemList(MyDataSelectReq myRprtSelectReq);
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] > [나의 시험인증 정보조회 : 성적서] [##시험항목 별 시험결과 정보##] 리스트 조회
+	 * @param myRprtSelectReq
+	 * @return 리스트
+	 *****************************************************/
+	List<MyDataSelectRes> selectMyRprtInstTestItemRsltList(MyDataSelectReq myRprtSelectReq);
+
+	/*****************************************************
+	 * [기업그룹수집동의이력] 등록
+	 * @param MyDataSaveReq [기업그룹수집동의이력] 등록 정보
+	 * @return 성공 카운트
+	 *****************************************************/
+	int insertEntGrpClctAgreHist(MyDataSaveReq myDataSaveReq);
+
+	/*****************************************************
+	 * [기업그룹수집동의약관이력] 등록
+	 * @param MyDataSaveReq [기업그룹수집동의약관이력] 등록 정보
+	 * @return 성공 카운트
+	 *****************************************************/
+	int insertEntGrpClctAgreTrmsHist(MyDataSaveReq myDataSaveReq);
+
+	/*****************************************************
+	 * [기업그룹제출회사공개동의이력] 등록
+	 * @param MyDataSaveReq [기업그룹제출회사공개동의이력] 등록 정보
+	 * @return 성공 카운트
+	 *****************************************************/
+	int insertEntGrpSbmsnCoRlsAgreHist(MyDataSaveReq myDataSaveReq);
+
+	/*****************************************************
+	 * [기업그룹수집동의약관이력] 등록
+	 * @param MyDataSaveReq [기업그룹수집동의약관이력] 등록 정보
+	 * @return 성공 카운트
+	 *****************************************************/
+	int insertEntGrpSbmsnCoRlsTrmsAgreHist(MyDataSaveReq myDataSaveReq);
+
+	/*****************************************************
+	 * [접수기본 : pt_rf_rcpt_bas] 비식별처리 UPDATE(*로 처리)
+	 * @param MyDataSaveReq [접수기본 : pt_rf_rcpt_bas] 비식별처리 정보
+	 * @return 성공 카운트
+	 *****************************************************/
+	int updatePtRfRcptBasNonIdenti(MyDataSaveReq myDataSaveReq);
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] 각 이용약관 조회
+	 * @param temsCode
+	 * @return [플랫폼 서비스] _이용약관
+	*****************************************************/
+	MyDataSelectRes selectMyDataTerms(String temsCode);
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] [##인증기관+기업그룹수집동의이력##] 리스트 조회
+	 * @param MyDataSelectReq
+	 * @return 리스트
+	 *****************************************************/
+	List<MyDataSelectRes> selectCoInstEntGrpClctAgreList(MyDataSelectReq myDataSaveReq);
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] [##인증기관##] 리스트 조회
+	 * @return 리스트
+	 *****************************************************/
+	List<MyDataSelectRes> selectCoInstList();
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] [##CO_법정제품분류##] 리스트 조회
+	 * @return 리스트
+	 *****************************************************/
+	List<MyDataSelectRes> selectPtCoSttyPrdtClfCdList();
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] [##제품분류_대##] 리스트 조회
+	 * @return 리스트
+	 *****************************************************/
+	List<MyDataSelectRes> selectPtCoIndstStdLgclfCdList();
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] [##제품분류_중##] 리스트 조회
+	 * @param upStdLgclfCd 찾을 기준이 되는 표준대분류코드
+	 * @return 리스트
+	 *****************************************************/
+	List<MyDataSelectRes> selectPtCoIndstStdMlclfCdList(String upStdLgclfCd);
+
+	/*****************************************************
+	 * [플랫폼 서비스] > [내 손안의 시험인증] [##통합공통상세코드##] 리스트 조회
+	 * @param grpCd
+	 * @return 리스트
+	 *****************************************************/
+	List<MyDataSelectRes> selectPtComnDtlCdList(String grpCd);
+
+}

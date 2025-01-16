@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jeus-web-dd xmlns="http://www.tmaxsoft.com/xml/ns/jeus" version="8.0">
+    <aliasing>
+        <alias>
+            <alias-name>/images/</alias-name>
+            <real-path>/nas/images/</real-path>
+        </alias>
+        <alias>
+            <alias-name>/upload/</alias-name>
+            <real-path>/nas/upload/</real-path>
+        </alias>
+    </aliasing>
+</jeus-web-dd>

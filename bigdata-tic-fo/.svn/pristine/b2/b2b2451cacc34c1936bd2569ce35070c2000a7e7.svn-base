@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.mypage.accountMng.mapper.AccountMngMapper">
+
+	<sql id="sqlAccountMng">
+
+		SELECT	ROW_NUMBER() OVER(ORDER BY tub.crt_dt ASC) AS rnum
+				, tub.user_id
+				, tub.user_nm
+				, tub.user_ty_cd
+				, tcc1.comn_cd_nm as user_ty_nm
+				, tub.encpt_mbl_telno_val
+				, tub.encpt_eml_addr_val
+				, tub.user_stt_cd
+				, tcc2.comn_cd_nm as user_stt_nm
+				, tub.join_ymd
+				, TO_CHAR( tub.last_lgn_dt , 'YYYY-MM-DD HH24:MI:SS' ) as last_lgn_dt
+				, tub.anls_env_user_id
+
+				, um.user_dept_nm
+				, um.wrc_telno
+
+				<if test="targetUserTyCd =='MTC001'">
+				, pcib.inst_nm
+				</if>
+
+				<if test="targetUserTyCd =='MTC003'">
+				, um.user_jbgd_nm
+				, um.wrc_zip
+				, um.wrc_bas_addr
+				, um.wrc_daddr
+
+				<!-- 기업 정보 -->
+				, egb.ent_grp_nm
+				, eb.ent_nm
+
+				<!-- 관심 키워드 정보 -->
+				, (
+					select	pm.std_lgclf_cd
+					from	tb_user_prdt_clf_chc_mng pm
+					where 	pm.user_id = tub.user_id
+					group by pm.std_lgclf_cd
+					order by pm.std_lgclf_cd asc
+					offset 0 limit 1
+				) AS std_lgclf_cd_1
+				, (
+					select	pm.std_lgclf_cd
+					from	tb_user_prdt_clf_chc_mng pm
+					where 	pm.user_id = tub.user_id
+					group by pm.std_lgclf_cd
+					order by pm.std_lgclf_cd asc
+					offset 1 limit 1
+				) AS std_lgclf_cd_2
+
+				</if>
+
+		FROM	tb_user_bas tub
+
+		<if test="targetUserTyCd =='MTC001'">
+
+			INNER JOIN tb_inst_user_mng um ON ( tub.user_id = um.user_id
+												AND um.inst_id =
+														(
+															SELECT 	inst_id
+															FROM 	tb_inst_user_mng
+															WHERE	user_id = #{targetUserId}
+														)
+											 )
+			LEFT OUTER JOIN pt_co_inst_bas pcib ON ( um.inst_id = pcib.inst_id )
+			LEFT OUTER JOIN tb_comn_cd tcc1 on ( tcc1.comn_grp_cd = 'MTC' and tcc1.comn_cd = tub.user_ty_cd and tcc1.use_yn = 'Y' )
+			LEFT OUTER JOIN tb_comn_cd tcc2 on ( tcc2.comn_grp_cd = 'USC' and tcc2.comn_cd = tub.user_stt_cd and tcc2.use_yn = 'Y' )
+
+			WHERE tub.user_ty_cd not in ( #{targetUserTyCd} )
+
+		</if>
+
+		<if test="targetUserTyCd =='MTC003'">
+			INNER JOIN tb_ent_grp_user_mng um ON ( tub.user_id = um.user_id
+													AND um.ent_grp_sn =
+														(
+															select 	ent_grp_sn
+															from 	tb_ent_grp_user_mng
+															where	user_id = #{targetUserId}
+														)
+												 )
+			INNER JOIN tb_ent_grp_bas egb ON ( um.ent_grp_sn = egb.ent_grp_sn )
+			INNER JOIN tb_ent_bas eb ON ( egb.brno = eb.brno )
+			LEFT OUTER JOIN tb_comn_cd tcc1 on ( tcc1.comn_grp_cd = 'MTC' and tcc1.comn_cd = tub.user_ty_cd and tcc1.use_yn = 'Y' )
+			LEFT OUTER JOIN tb_comn_cd tcc2 on ( tcc2.comn_grp_cd = 'USC' and tcc2.comn_cd = tub.user_stt_cd and tcc2.use_yn = 'Y' )
+
+			WHERE tub.user_ty_cd not in ( #{targetUserTyCd} )
+		</if>
+
+	</sql>
+
+	<sql id="sqlWhereAccountMng">
+
+		<!-- 검색 사용자상태코드 -->
+		<if test="searchUserSttCd != null and searchUserSttCd != ''">
+			AND tub.user_stt_cd = #{searchUserSttCd}
+		</if>
+
+		<!-- 검색 키워드 -->
+		<if test="searchKeyword != null and searchKeyword != ''">
+			AND ( tub.user_nm LIKE '%' || #{searchKeyword} || '%' )
+		</if>
+
+	</sql>
+
+	<!-- [계정 관리] > 계정 관리 목록 개수 조회 -->
+	<select id="selectAccountMngListCnt" parameterType="com.katri.web.mypage.accountMng.model.AccountMngSelectReq" resultType="int">
+		/* AccountMngMapper.selectAccountMngListCnt ( 계정 관리 목록 개수 조회 ) */
+
+		SELECT COUNT(*) AS CNT
+
+		FROM (
+			<include refid="sqlAccountMng"/>
+			<include refid="sqlWhereAccountMng"/>
+		) a
+
+	</select>
+
+	<!-- [계정 관리] > 계정 관리 목록 데이터 조회 -->
+	<select id="selectAccountMngList" parameterType="com.katri.web.mypage.accountMng.model.AccountMngSelectReq" resultType="com.katri.web.mypage.accountMng.model.AccountMngSelectRes">
+		/* AccountMngMapper.selectAccountMngList ( 계정 관리 목록 데이터 조회 ) */
+
+		<include refid="sqlAccountMng"/>
+
+		<include refid="sqlWhereAccountMng"/>
+
+		ORDER BY rnum DESC
+		OFFSET #{startRow} LIMIT #{endRow}
+
+	</select>
+
+	<!-- [계정 관리] > 계정 관리 상세 데이터 조회 -->
+	<select id="selectAccountMngDetail" parameterType="com.katri.web.mypage.accountMng.model.AccountMngSelectReq" resultType="com.katri.web.mypage.accountMng.model.AccountMngSelectRes">
+		/* AccountMngMapper.selectAccountMngDetail ( 계정 관리 상세 데이터 조회 ) */
+
+		select 	a.*
+			<if test="targetUserTyCd =='MTC003'">
+				, tcc3.std_lgclf_nm as std_lgclf_nm_1
+				, tcc4.std_lgclf_nm as std_lgclf_nm_2
+			</if>
+		FROM
+			(
+				<include refid="sqlAccountMng"/>
+				AND tub.user_id = #{accountUserId}
+			) a
+
+		<if test="targetUserTyCd =='MTC003'">
+
+			LEFT OUTER JOIN pt_co_indst_std_lgclf_cd tcc3 on ( a.std_lgclf_cd_1 = tcc3.std_lgclf_cd and tcc3.use_yn = 'Y' )
+			LEFT OUTER JOIN pt_co_indst_std_lgclf_cd tcc4 on ( a.std_lgclf_cd_2 = tcc4.std_lgclf_cd and tcc4.use_yn = 'Y' )
+
+		</if>
+
+	</select>
+
+	<!-- [계정 관리] > 관심 키워드 목록 조회 -->
+	<select id="selectUserPrdtClfChcMngList" parameterType="com.katri.web.mypage.accountMng.model.AccountMngSelectReq" resultType="com.katri.web.mypage.accountMng.model.AccountMngPrdtSelectRes">
+		/* AccountMngMapper.selectAccountMngDetail ( 관심 키워드 목록 조회 ) */
+
+		SELECT	tupccm.std_lgclf_cd
+				, tcc1.std_lgclf_nm
+				, tupccm.std_mlclf_cd
+				, tcc2.std_mlclf_nm
+				, tupccm.srt_seq
+
+		FROM 	tb_user_prdt_clf_chc_mng tupccm
+
+		LEFT OUTER JOIN pt_co_indst_std_lgclf_cd tcc1 on ( tupccm.std_lgclf_cd = tcc1.std_lgclf_cd and tcc1.use_yn = 'Y' )
+		LEFT OUTER JOIN pt_co_indst_std_mlclf_cd tcc2 on ( tupccm.std_mlclf_cd = tcc2.std_mlclf_cd and tcc2.use_yn = 'Y' )
+
+		WHERE 		tupccm.user_id 		= #{accountUserId}
+
+		ORDER BY 	tupccm.std_lgclf_cd, tupccm.srt_seq
+
+	</select>
+
+	<!-- [계정 관리] > 회원 상태 코드 수정 -->
+	<update id="updateUserSttCd" parameterType="com.katri.web.mypage.accountMng.model.AccountMngSaveReq">
+		/* AccountMngMapper.updateUserSttCd ( 회원 상태 코드 수정 ) */
+
+		UPDATE 	tb_user_bas
+
+		SET		  user_stt_cd	= #{targetUserSttCd}
+				, mdfcn_dt		= now()
+				, mdfr_id		= #{mdfrId}
+
+		WHERE	user_id = #{targetUserId}
+
+	</update>
+
+	<!-- [계정 관리] > 가입 승인 - 사용자 정보 수정 -->
+	<update id="updateJoinUserBas" parameterType="com.katri.web.mypage.accountMng.model.AccountMngSaveReq">
+		/* AccountMngMapper.updateJoinUserBas ( 사용자 정보 수정 ) */
+
+		UPDATE 	tb_user_bas
+
+		SET		  join_aply_prcs_dt	= now()
+				, join_aply_prcr_id	= #{joinAplyPrcrId}
+				, join_ymd			= TO_CHAR(now(), 'YYYYMMDD')
+				, mdfcn_dt			= now()
+				, mdfr_id			= #{mdfrId}
+
+		WHERE	user_id = #{targetUserId}
+
+	</update>
+
+	<!-- [계정 관리] > 가입 반려 - 사용자 정보 DB 삭제 -->
+	<update id="deleteUserBas" parameterType="com.katri.web.mypage.accountMng.model.AccountMngSaveReq">
+		/* AccountMngMapper.deleteUserBas ( 사용자 정보 DB 삭제 ) */
+
+		DELETE
+		FROM	tb_user_bas
+		WHERE	user_id = #{targetUserId}
+
+	</update>
+
+	<!-- [계정 관리] > 가입 반려 - 기업 사용자 관리 정보 DB 삭제 -->
+	<update id="deleteEntGrpUserMng" parameterType="com.katri.web.mypage.accountMng.model.AccountMngSaveReq">
+		/* AccountMngMapper.deleteEntGrpUserMng ( 기업 사용자 관리 정보 DB 삭제 ) */
+
+		DELETE
+		FROM	tb_ent_grp_user_mng
+		WHERE	user_id = #{targetUserId}
+
+	</update>
+
+	<!-- [계정 관리] > 가입 반려 - 기관 사용자 관리 정보 DB 삭제 -->
+	<update id="deleteInstUserMng" parameterType="com.katri.web.mypage.accountMng.model.AccountMngSaveReq">
+		/* AccountMngMapper.deleteInstUserMng ( 기관 사용자 관리 정보 DB 삭제 ) */
+
+		DELETE
+		FROM	tb_inst_user_mng
+		WHERE	user_id = #{targetUserId}
+
+	</update>
+
+	<!-- [계정 관리] > 가입 반려 - 사용자 관심 키워드 정보 DB 삭제 -->
+	<update id="deleteUserPrdtClfChcMng" parameterType="com.katri.web.mypage.accountMng.model.AccountMngSaveReq">
+		/* AccountMngMapper.deleteUserPrdtClfChcMng ( 사용자 관심 키워드 정보 DB 삭제 ) */
+
+		DELETE
+		FROM	tb_user_prdt_clf_chc_mng
+		WHERE	user_id = #{targetUserId}
+
+	</update>
+
+	<!-- [계정 관리] > 탈퇴 완료 - 사용자 정보 수정 -->
+	<update id="updateWhdwlUserBas" parameterType="com.katri.web.mypage.accountMng.model.AccountMngSaveReq">
+		/* AccountMngMapper.updateWhdwlUserBas ( 사용자 정보 수정 ) */
+
+		UPDATE 	tb_user_bas
+
+		SET		  whdwl_aply_prcs_dt	= now()
+				, whdwl_aply_prcr_id	= #{whdwlAplyPrcrId}
+				, whdwl_ymd				= TO_CHAR(now(), 'YYYYMMDD')
+				, mdfcn_dt				= now()
+				, mdfr_id				= #{mdfrId}
+
+				/* 사용자 개인정보 'x' 값 처리 */
+				, user_nm				= 'x'
+				, user_pwd				= 'x'
+				, user_lgcy_pwd			= 'x'
+				, user_link_info_val	= 'x'
+				, encpt_mbl_telno_val	= 'x'
+				, encpt_eml_addr_val	= 'x'
+				, eml_cert_no_val		= 'x'
+
+		WHERE	user_id 	= #{targetUserId}
+
+	</update>
+
+	<!-- [계정 관리] > 탈퇴 완료 - 기관 사용자 관리 정보 수정 -->
+	<update id="updateWhdwlInstUserMng" parameterType="com.katri.web.mypage.accountMng.model.AccountMngSaveReq">
+		/* AccountMngMapper.updateWhdwlUserBas ( 기관 사용자 관리 정보 수정 ) */
+
+		UPDATE	tb_inst_user_mng
+
+		SET		  use_yn		= 'N'
+				, mdfcn_dt		= now()
+				, mdfr_id		= #{mdfrId}
+
+				/* 기관 사용자 정보 'x' 값 처리 */
+				, user_dept_nm 	= 'x'
+				, wrc_telno		= 'x'
+
+		WHERE	user_id = #{targetUserId}
+
+	</update>
+
+	<!-- [계정 관리] > 탈퇴 완료 - 기업 사용자 관리 정보 수정 -->
+	<update id="updateWhdwlEntGrpUserMng" parameterType="com.katri.web.mypage.accountMng.model.AccountMngSaveReq">
+		/* AccountMngMapper.updateWhdwlUserBas ( 기업 사용자 관리 정보 수정 ) */
+
+		UPDATE 	tb_ent_grp_user_mng
+
+		SET		  use_yn		= 'N'
+				, mdfcn_dt		= now()
+				, mdfr_id		= #{mdfrId}
+
+				/* 기업그룹 사용자 개인정보 'x'값 처리 */
+				, user_dept_nm	= 'x'
+				, user_jbgd_nm	= 'x'
+				, wrc_telno		= 'x'
+				, wrc_zip		= 'x'
+				, wrc_bas_addr	= 'x'
+				, wrc_daddr		= 'x'
+
+		WHERE	user_id		= #{targetUserId}
+
+	</update>
+
+	<!-- [계정 관리] > 탈퇴 완료 - 게시글 관련 삭제 여부 처리 -->
+	<update id="updateWhdwlNttMngDelete" parameterType="com.katri.web.mypage.accountMng.model.AccountMngSaveReq">
+		/* AccountMngMapper.updateWhdwlUserBas ( 게시글 관련 삭제 여부 처리 ) */
+
+		UPDATE	tb_ntt_mng
+
+		SET		  del_yn		= 'Y'
+				, mdfcn_dt		= now()
+				, mdfr_id		= #{mdfrId}
+
+		WHERE	crtr_id		= #{targetUserId}
+
+	</update>
+
+	<!-- [계정 관리] > 검색 조건 회원 상태 목록 조회 -->
+	<select id="selectSearchUserSttCdList" resultType="com.katri.common.tlds.model.CommonTldRes">
+		/** AccountMngMapper.selectSearchUserSttCdList( 검색 조건 회원 상태 목록 조회 ) */
+
+		SELECT	  tcc.comn_cd		as code_id
+				, tcc.comn_cd_nm 	as code_nm
+		FROM	tb_comn_cd tcc
+		WHERE	tcc.comn_grp_cd = 'USC'
+		AND		tcc.use_yn = 'Y'
+		AND		tcc.comn_cd not in ( 'USC041' )
+		ORDER BY tcc.srt_seq
+
+	</select>
+
+	<!-- [계정 관리] > 가입 반려 - 사용자 정보 수정 -->
+	<update id="updateRejectUserBas" parameterType="com.katri.web.mypage.accountMng.model.AccountMngSaveReq">
+		/* AccountMngMapper.updateRejectUserBas ( 사용자 정보 수정 ) */
+
+		UPDATE 	tb_user_bas
+
+		SET		  mdfcn_dt				= now()
+				, mdfr_id				= #{mdfrId}
+
+				/* 사용자 개인정보 'x' 값 처리 */
+				, user_nm				= 'x'
+				, user_pwd				= 'x'
+				, user_lgcy_pwd			= 'x'
+				, user_link_info_val	= 'x'
+				, encpt_mbl_telno_val	= 'x'
+				, encpt_eml_addr_val	= 'x'
+				, eml_cert_no_val		= 'x'
+
+		WHERE	user_id 	= #{targetUserId}
+
+	</update>
+
+	<!-- [계정 관리] > 가입 반려 - 기관 사용자 관리 정보 수정 -->
+	<update id="updateRejectInstUserMng" parameterType="com.katri.web.mypage.accountMng.model.AccountMngSaveReq">
+		/* AccountMngMapper.updateRejectInstUserMng ( 기관 사용자 관리 정보 수정 ) */
+
+		UPDATE	tb_inst_user_mng
+
+		SET		  use_yn		= 'N'
+				, mdfcn_dt		= now()
+				, mdfr_id		= #{mdfrId}
+
+				/* 기관 사용자 정보 'x' 값 처리 */
+				, user_dept_nm 	= 'x'
+				, wrc_telno		= 'x'
+
+		WHERE	user_id = #{targetUserId}
+
+	</update>
+
+</mapper>

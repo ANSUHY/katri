@@ -1,0 +1,340 @@
+package com.katri.web.auth.service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.katri.common.Const;
+import com.katri.common.GlobalExceptionHandler.CustomMessageException;
+import com.katri.common.util.EncryptUtil;
+import com.katri.common.util.StringUtil;
+import com.katri.web.auth.mapper.UserFindMapper;
+import com.katri.web.auth.model.UserFindSaveReq;
+import com.katri.web.auth.model.UserFindSaveRes;
+import com.katri.web.auth.model.UserFindSelectReq;
+import com.katri.web.auth.model.UserFindSelectRes;
+import com.katri.web.comm.model.MailMakeBodyDto;
+import com.katri.web.comm.model.MailSendDto;
+import com.katri.web.comm.model.MailSendReceiverDto;
+import com.katri.web.comm.service.AnlsApiService;
+import com.katri.web.comm.service.MailService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional(rollbackFor = {Exception.class})
+public class UserFindService {
+
+	private final MailService mailService;
+
+	private final UserFindMapper userFindMapper;
+
+	private final AnlsApiService anlsApiService;
+
+	/*****************************************************
+	 * [마스터 회원] 메인 인증 번호 발송
+	 * @param request
+	 * @param findUserInfoSelectReq
+	 * @return boolean
+	 * @throws Exception
+	*****************************************************/
+	public boolean userFindCertMailSend(HttpServletRequest request, UserFindSelectReq userFindSelectReq) throws Exception {
+
+		// [0] 유효성 검사. 입력한 [이메일] 있는지 체크
+		if( userFindSelectReq.getRcvrEmlAddr() == null  || "".equals(userFindSelectReq.getRcvrEmlAddr()) ) {
+			throw new CustomMessageException("result-message.messages.common.message.required.data2" + "||msgArgu=이메일||"); // {0}를(을) 입력해주세요.
+		}
+
+		// [1] 유효성 검사. [이메일] 형식 체크 */
+		String emlPattern = "^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a-zA-Z]{2,3}$";
+		Matcher emlM = Pattern.compile(emlPattern).matcher(userFindSelectReq.getRcvrEmlAddr());
+		if( ! emlM.find() ) {
+			throw new CustomMessageException("result-message.messages.join.message.email.pattern.error"); // 이메일을 형식에 맞게 입력해 주세요.
+		}
+
+		String 	strSavetErrMsgCode 	= "result-message.messages.common.message.save.error"; // 저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		String	strRcvrEmlAddr		= userFindSelectReq.getRcvrEmlAddr(); // 인증 번호 받는 이메일 주소
+		boolean success 			= false;
+		int 	saveCount 			= 0;
+
+		/* [[0]]. 메일 body 생성 */
+		// 0_0. mailParam설정
+		Map<String, Object> mailParam = new HashMap<String, Object>();
+
+		// 0_1. 6자리 랜덤 숫자문자열 추가
+		int strCertNo = ThreadLocalRandom.current().nextInt(100000, 1000000);
+		mailParam.put( "certNo", Integer.toString(strCertNo) );
+
+		// 0_1. body
+		MailMakeBodyDto mailMakeBodyDto = new MailMakeBodyDto();
+		mailMakeBodyDto.setMailTmepCd( Const.Code.MailTemplateCd.SEND_EMAIL_AUTH_NUMBER ); 	// 메일 template 공통코드 - 이메일인증번호발송
+		mailMakeBodyDto.setMailParam(mailParam); //메일 param (메일내용에 들어갈 param들)
+		String sBody = mailService.makeMailBody(request, mailMakeBodyDto);
+
+		/* [[1]]. 메일보내기 */
+		if(! "".equals(sBody)) {
+
+			// 1_1. 수신자 LIST
+			List<MailSendReceiverDto> listResiver = new ArrayList<MailSendReceiverDto>();
+			listResiver.add( new MailSendReceiverDto( strRcvrEmlAddr ));
+
+			// 1_2. DTO생성 후 메일 보내기
+			MailSendDto mailSendDto = new MailSendDto();
+			mailSendDto.setSubject( "시험인증 빅데이터 이메일 인증 안내" );
+			mailSendDto.setBody(sBody);
+			mailSendDto.setReceiverList(listResiver);
+			success = mailService.sendMail(mailSendDto);
+
+		} else {
+			throw new CustomMessageException(strSavetErrMsgCode);
+		}
+
+		/* [[2]]. 보낸 인증 번호 DB 저장 */
+		// 메일 전송 성공 시
+		if( success ) {
+			// 2_0. 인증번호 셋팅
+			UserFindSaveReq findUserInfoSaveReq = new UserFindSaveReq();
+			findUserInfoSaveReq.setCertNo( Integer.toString(strCertNo) );
+			findUserInfoSaveReq.setRcvrEmlAddr( strRcvrEmlAddr );
+
+			// 2_1. 인증번호 DB 저장
+			saveCount = userFindMapper.insertCertNoSndngHist(findUserInfoSaveReq);
+
+			if(saveCount == 0) {
+				throw new CustomMessageException(strSavetErrMsgCode);
+			}
+		}
+
+		return success;
+	}
+
+	/*****************************************************
+	 * [마스터 회원] 가장 최근의 이메일 인증 번호 가져오기
+	 * @param findUserInfoSelectReq
+	 * @return String
+	 * @throws Exception
+	*****************************************************/
+	public String getCertNoOfEmlAddr(UserFindSelectReq findUserInfoSelectReq) throws Exception {
+		String strCertNo = null;
+
+		strCertNo = userFindMapper.selectCertNoOfEmlAddr(findUserInfoSelectReq);
+
+		if( "".equals(strCertNo) || strCertNo == null ) {
+			throw new CustomMessageException("result-message.messages.common.message.cert.code.no.data"); // 해당 메일의 인증시 발급한 인증코드가 없습니다.
+		}
+
+		return strCertNo;
+	}
+
+	/*****************************************************
+	 * [마스터 회원] 암호화된 입력한 이메일에 일치하는 회원정보 존재 여부
+	 * @param userFindSelectReq
+	 * @return UserFindSelectRes
+	 * @throws Exception
+	*****************************************************/
+	public UserFindSelectRes getFindByEmail(UserFindSelectReq userFindSelectReq) throws Exception {
+		String strEncemlAddr = null;
+		UserFindSelectRes userFindSelectRes = null;
+		String maskingUserId = null;
+
+		//이메일 암호화
+		strEncemlAddr = StringUtil.nvl(EncryptUtil.encryptAes256(userFindSelectReq.getRcvrEmlAddr()));
+		userFindSelectReq.setEncptEmlAddrVal(strEncemlAddr);
+
+		// 회원정보 존재 여부 확인
+		userFindSelectRes = userFindMapper.selectFindByEmail(userFindSelectReq);
+
+		if (userFindSelectRes == null) {
+			throw new CustomMessageException("result-message.messages.user.message.nomatch.user"); // 입력한 정보와 일치하는 회원정보가 없습니다.
+		}
+
+		// 아이디 마스킹 처리
+		maskingUserId = StringUtil.stringFormatType(userFindSelectRes.getUserId(), "masking", "id");
+		userFindSelectRes.setUserId(maskingUserId);
+
+		return userFindSelectRes;
+	}
+
+	/*****************************************************
+	 * [마스터 회원] 입력한 아이디와 암호화된 이메일에 일치하는 회원정보 존재 여부
+	 * @param userFindSelectReq
+	 * @return UserFindSelectRes
+	 * @throws Exception
+	*****************************************************/
+	public UserFindSelectRes getFindByIdAndEmail(UserFindSelectReq userFindSelectReq) throws Exception {
+		//이메일 암호화
+		String strEncemlAddr = StringUtil.nvl(EncryptUtil.encryptAes256(userFindSelectReq.getRcvrEmlAddr()));
+		userFindSelectReq.setEncptEmlAddrVal(strEncemlAddr);
+
+		// 회원정보 존재 여부 확인
+		UserFindSelectRes userFindSelectRes = userFindMapper.selectFindByIdAndEmail(userFindSelectReq);
+
+		if (userFindSelectRes == null) {
+			throw new CustomMessageException("result-message.messages.user.message.nomatch.user"); // 입력한 정보와 일치하는 회원정보가 없습니다.
+		}
+
+		return userFindSelectRes;
+	}
+
+	/*****************************************************
+	 * 비밀번호 초기화 저장
+	 * @param userFindSaveReq
+	 * @return UserFindSaveRes
+	 * @throws Exception
+	*****************************************************/
+	public UserFindSaveRes chgUserPwd(UserFindSaveReq userFindSaveReq) throws Exception {
+		// 0. 값 셋팅
+		String 		strSaveErrMsgCode = "result-message.messages.common.message.save.error"; // 저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+
+		UserFindSaveRes userFindSaveRes = new UserFindSaveRes();
+		int nSaveCount = 0;
+
+		/** ================================= [0]. 유효성 검사 ================================= */
+		if( !userFindSaveReq.getChgUserPwd().equals( userFindSaveReq.getChgUserPwdChk() ) ) {
+			strSaveErrMsgCode = "result-message.messages.pwd.message.nomatch.chgpwd.chgpwdcheck";
+			throw new CustomMessageException(strSaveErrMsgCode); // 비밀번호가 일치하지 않습니다.
+		}
+
+		/** ================================ [1]. 기존 패스워드 검사 ================================ */
+		/* 2_0. 기존 패스워드 가져오기 */
+		UserFindSelectReq userFindSelectReq = new UserFindSelectReq();
+
+		userFindSelectReq.setTargetUserId( userFindSaveReq.getTargetUserId() );
+
+		// 2_1. 비밀번호 패턴 체크
+		String pwdPattern = "^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,20}$";
+		Matcher pwdM = Pattern.compile(pwdPattern).matcher(userFindSaveReq.getChgUserPwd());
+		if( ! pwdM.find() ) {
+			throw new CustomMessageException("result-message.messages.join.message.pwd.pattern.error"); // '비밀번호는 8~20자의 영문, 숫자, 특수문자 중 3가지 이상의 문자를 조합하여 사용할 수 있습니다.'
+		}
+
+		// 2_2. 해당 아이디 > 현재 비밀번호 상세 조회 및 새 비밀번호 암호화
+		UserFindSelectRes userFindSelectRes = userFindMapper.selectUserPwd(userFindSelectReq);
+		// 기존 비밀번호
+		String strUserPwd = userFindSelectRes.getUserPwd();
+		// 새 비밀번호
+		String strUserApiPwd = userFindSaveReq.getChgUserPwd();
+		// 새 비밀번호 암호화
+		String encChgUserPwd = StringUtil.nvl(EncryptUtil.encryptSha256( userFindSaveReq.getChgUserPwd(), userFindSaveReq.getTargetUserId() ));
+
+		// 2_3. 기존 비밀번호랑 새 비밀번호 동일한지 확인
+		if( strUserPwd.equals( encChgUserPwd ) ) {
+			strSaveErrMsgCode = "result-message.messages.pwd.message.eq.chgpwd.oripwd";
+			throw new CustomMessageException(strSaveErrMsgCode); // '기존비밀번호와 동일합니다.'
+		}
+
+		// 2_4. 새 비밀번호에 아이디계정 들어가 있는지 확인
+		if( userFindSaveReq.getChgUserPwd().contains( userFindSaveReq.getTargetUserId() ) ) {
+			strSaveErrMsgCode = "result-message.messages.pwd.message.include.chgpwd.id";
+			throw new CustomMessageException(strSaveErrMsgCode); // '비밀번호에 아이디가 포함되면 안됩니다.'
+		}
+
+		/** ======================================== [1] ===================================== */
+
+		/** ==================================== [2]. 저장 시작 ================================= */
+		// 3_0. 암호화한 패스워드값 셋팅
+		userFindSaveReq.setChgUserPwd(encChgUserPwd);
+
+		nSaveCount = userFindMapper.updateUserPwd(userFindSaveReq);
+
+		if(! (nSaveCount > 0 ) ) {
+			throw new CustomMessageException(strSaveErrMsgCode); // 저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		}
+		/** ======================================== [2] ===================================== */
+
+		// 기관일반과 기관마스터는 수정 시 API 호출
+		/** ============= [3]. [기관(마스터), 기관(일반)] -> 데이터 분석환경 API 호출( USER 수정 ) ============= */
+		// [3_0]. 사용자 유형 셋팅
+		String strUserTyCd = userFindSelectRes.getUserTyCd();
+
+		if( Const.Code.UserTyCd.INST_MASTER.equals(strUserTyCd) || Const.Code.UserTyCd.INST_GENERAL.equals(strUserTyCd) ) {
+
+			// [3_1]. API 요청 값 셋팅
+			Map<String, Object> mapRequestData = new HashMap<String, Object>();
+			Map<String, Object> mapResponseData = new HashMap<String, Object>();
+
+			mapRequestData.put("id"			, userFindSelectRes.getAnlsEnvUserId() );
+			mapRequestData.put("userName"	, userFindSelectRes.getUserId() );
+			mapRequestData.put("password"	, strUserApiPwd );
+			mapRequestData.put("email"		, StringUtil.nvl(EncryptUtil.decryptAes256( userFindSelectRes.getEncptEmlAddrVal() )) );
+
+			// [3_2]. USER 수정 API 호출
+			mapResponseData = anlsApiService.apiConnectionUserUpdateInit(mapRequestData);
+
+			if( mapResponseData == null || mapResponseData.isEmpty() ) {
+				throw new CustomMessageException(strSaveErrMsgCode); // 저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+			}
+
+		}
+		/** ==================================================================================== */
+
+		// 로그인 카운트 초기화
+		int updateCount = userFindMapper.resetLgnCnt(userFindSaveReq);
+
+		if(! (updateCount > 0 ) ) {
+			throw new CustomMessageException(strSaveErrMsgCode); // 저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		}
+
+		/** ======================= [3]. 반환값 셋팅 ===================== */
+		userFindSaveRes.setUserId( userFindSaveReq.getTargetUserId() );
+		/** ============================ [3] ========================= */
+
+		return userFindSaveRes;
+	}
+
+	/*****************************************************
+	 * [일반 회원] 연계정보 확인값과 일치하는 회원정보 조회
+	 * @param userFindSelectReq
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	public UserFindSelectRes getFindByCi(UserFindSelectReq userFindSelectReq) throws Exception {
+		UserFindSelectRes userFindSelectRes = null;
+		String maskingUserId = null; // 마스킹 아이디
+
+		// 회원정보 존재 여부 확인
+		userFindSelectRes = userFindMapper.selectFindByCi(userFindSelectReq); // 연계정보 확인값으로 회원 조회
+
+		if (userFindSelectRes == null) {
+			throw new CustomMessageException("result-message.messages.user.message.nomatch.user"); // 입력한 정보와 일치하는 회원정보가 없습니다.
+		}
+
+		// 아이디 마스킹 처리
+		maskingUserId = StringUtil.stringFormatType(userFindSelectRes.getUserId(), "masking", "id");
+		userFindSelectRes.setUserId(maskingUserId);
+
+		return userFindSelectRes;
+	}
+
+	/*****************************************************
+	 * [일반 회원] 연계정보 확인값과 아이디로 회원정보 조회
+	 * @param userFindSelectReq
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	public UserFindSelectRes getFindByCiAndId(UserFindSelectReq userFindSelectReq) throws Exception {
+		UserFindSelectRes userFindSelectRes = null;
+
+		// 회원정보 존재 여부 확인
+		userFindSelectRes = userFindMapper.selectFindByCiAndId(userFindSelectReq); // 연계정보 확인값과 아이디로 회원 조회
+
+		if (userFindSelectRes == null) {
+			throw new CustomMessageException("result-message.messages.user.message.nomatch.user"); // 입력한 정보와 일치하는 회원정보가 없습니다.
+		}
+
+		return userFindSelectRes;
+	}
+
+}

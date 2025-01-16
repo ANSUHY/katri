@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.auth.mapper.OverDayChgPwdMapper">
+
+	<!-- 기존 비밀번호 조회 (loginUserId로조회) -->
+	<select id="selectOriPwd" parameterType="String" resultType="String">
+		/* OverDayChgPwdMapper.selectOriPwd ( 기존 비밀번호 조회 (loginUserId로조회) ) */
+
+		SELECT
+			tub.user_pwd
+		FROM tb_user_bas tub
+		WHERE tub.user_stt_cd NOT IN ('USC012' , 'USC040') /* 사용자상태코드가 [가입반려], [탈퇴] 인거 제외 */
+			AND tub.user_id = #{loginUserId}
+	</select>
+
+	<!-- 비밀번호 수정 -->
+	<update id="updateChgOverDayChgPwd" parameterType="com.katri.web.auth.model.OverDayChgPwdSaveReq">
+		/* OverDayChgPwdMapper.updateChgOverDayChgPwd (비밀번호 수정) */
+
+		UPDATE tb_user_bas
+		SET
+			user_pwd			= #{eyptChgPwd}
+			, last_pwd_chg_dt 	= NOW()
+			, mdfr_id			= #{mdfrId}
+			, mdfcn_dt			= now()
+		WHERE user_id = #{userId}
+	</update>
+
+	<!-- last_pwd_chg_dt를 지금으로 수정 -->
+	<update id="updatePwdChgDtNow" parameterType="com.katri.web.auth.model.OverDayChgPwdSaveReq">
+		/* OverDayChgPwdMapper.updatePwdChgDtNow (last_pwd_chg_dt를 지금으로 수정) */
+
+		UPDATE tb_user_bas
+		SET
+			last_pwd_chg_dt 	= NOW()
+			, mdfr_id			= #{mdfrId}
+			, mdfcn_dt			= now()
+		WHERE user_id = #{userId}
+	</update>
+
+	<!-- [분석환경 API 호출] > 수정 대상 사용자 API 관련 정보 조회 -->
+	<select id="selectAnlsEnvUserInfo" parameterType="String" resultType="com.katri.web.auth.model.OverDayChgPwdSelectRes">
+		/* OverDayChgPwdMapper.selectAnlsEnvUserInfo (수정 대상 사용자 API 관련 정보 조회) */
+		SELECT
+				  tub.user_id
+				, tub.encpt_eml_addr_val
+				, tub.anls_env_user_id
+		FROM	tb_user_bas tub
+		WHERE	tub.user_id = #{loginUserId}
+
+	</select>
+
+</mapper>

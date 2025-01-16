@@ -1,0 +1,378 @@
+package com.katri.web.board.controller;
+
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+
+import org.springframework.context.MessageSource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+
+import com.katri.common.model.Common;
+import com.katri.common.model.CommonRes;
+import com.katri.common.model.ResponseDto;
+import com.katri.common.util.CommonUtil;
+import com.katri.common.util.ExcelUtil;
+import com.katri.common.util.SessionUtil;
+import com.katri.web.board.model.BoardSaveReq;
+import com.katri.web.board.model.BoardSaveRes;
+import com.katri.web.board.model.BoardSelectReq;
+import com.katri.web.board.model.BoardSelectRes;
+import com.katri.web.board.service.BoardService;
+import com.nhncorp.lucy.security.xss.XssPreventer;
+
+import io.swagger.annotations.Api;
+import lombok.RequiredArgsConstructor;
+
+
+@Controller
+@RequiredArgsConstructor
+@Api(tags = {"board Controller"})
+public class BoardController {
+
+	/** board Service */
+	private final BoardService boardService;
+
+	/** 메시지 Component */
+	private final MessageSource messageSource;
+
+
+	/*****************************************************
+	 * board 리스트_페이지
+	 * @param model
+	 * @param boardSelectReq
+	 * @return String
+	*****************************************************/
+	@GetMapping(value = {"/board/boardList"})
+	public String boardList(Model model, @ModelAttribute BoardSelectReq boardSelectReq) {
+
+		model.addAttribute("boardSearchData", boardSelectReq); //검색조건 유지하기위해
+
+		return "board/boardList";
+
+	}
+
+	/*****************************************************
+	 * board 리스트 정보 조회
+	 * @param boardSelectReq
+	 * @return ResponseEntity<ResponseDto>
+	 * @throws Exception
+	*****************************************************/
+	@GetMapping(value = {"/board/getBoardList"})
+	public ResponseEntity<ResponseDto> getBoardList( @ModelAttribute BoardSelectReq boardSelectReq) throws Exception {
+
+		// [[0]]. 반환할 정보들
+		String msg 						= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer resultCode 				= HttpStatus.BAD_REQUEST.value();
+		int boardCtnt					= 0;
+		List<BoardSelectRes> boardList = null;
+		CommonRes commonRes 			= new CommonRes();
+
+		// [[1]]. Paging 변수 설정
+		Common common = CommonUtil.setPageParams(boardSelectReq.getCurrPage(), boardSelectReq.getRowCount());
+		boardSelectReq.setStartRow(common.getStartRow());
+		boardSelectReq.setEndRow(common.getEndRow());
+
+		// [[2]]. 데이터 조회
+		/* 2-1. board Cnt 정보*/
+		boardCtnt = boardService.getBoardCnt(boardSelectReq);
+
+		if(boardCtnt != 0) {
+
+			/* 2-2. board List 정보*/
+			boardList = boardService.getBoardList(boardSelectReq);
+
+			resultCode = HttpStatus.OK.value();
+			msg = messageSource.getMessage("result-message.messages.common.message.search", null, SessionUtil.getLocale()); // 정상적으로 조회 하였습니다.
+
+		}else {
+
+			resultCode = HttpStatus.OK.value();
+			msg = messageSource.getMessage("result-message.messages.common.message.no.data", null, SessionUtil.getLocale()); // 데이터가 없습니다.
+
+		}
+
+		// [[3]]. 데이터 셋팅
+		commonRes.setTotCnt(boardCtnt);
+		commonRes.setList(boardList);
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(commonRes)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+
+	}
+
+	/*****************************************************
+	 * board 리스트 정보 엑셀 파일 다운로드
+	 * @param request
+	 * @param response
+	 * @param boardSelectReq
+	 * @throws Exception
+	*****************************************************/
+	@GetMapping(value = {"/board/downloadExcelBoard"})
+	public void downloadExcelBoard(HttpServletRequest request, HttpServletResponse response, @ModelAttribute BoardSelectReq boardSelectReq) throws Exception{
+
+		ExcelUtil excelUtil = new ExcelUtil();
+
+		// 0. board List 정보 조회
+		List<Map<String, Object>> list = boardService.getBoardListMap(boardSelectReq);
+
+		// 1. 브라우저별 한글 깨짐 방지
+		String excelName = CommonUtil.getDisposition(request, "게시판 목록 현황");
+
+		// 2. 엑셀 다운로드
+		excelUtil.download2(request, response, list, excelName, "board_list_template.xlsx");
+
+	}
+
+	/*****************************************************
+	 * board 상세_페이지 + 데이터
+	 * @param response
+	 * @param model
+	 * @param boardSelectReq
+	 * @return String
+	 * @throws Exception
+	*****************************************************/
+	@GetMapping(value = {"/board/boardDetail"})
+	public String boardDetail(HttpServletResponse response, Model model, @ModelAttribute BoardSelectReq boardSelectReq) throws Exception {
+
+		/* 뒤로가기 방지 */
+		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
+		response.setHeader("Pragma", "no-cache"); // HTTP 1.0.
+		response.setHeader("Expires", "0"); // Proxies.
+
+		BoardSelectRes boardDetail = null;
+
+		// 데이터 조회
+		boardDetail = boardService.getBoardDetail(boardSelectReq.getTargetBoardNo());
+
+		// 데이터 셋팅
+		model.addAttribute("boardSearchData", boardSelectReq); //검색조건 유지하기위해
+		model.addAttribute("boardDetail"	, boardDetail);
+
+		return "board/boardDetail";
+
+	}
+
+	/*****************************************************
+	 * board 등록 및 수정_페이지 + 데이터
+	 * @param response
+	 * @param model
+	 * @param boardReq
+	 * @return String
+	*****************************************************/
+	@GetMapping(value = {"/board/boardReg"})
+	public String boardReg(HttpServletResponse response, Model model, @ModelAttribute BoardSaveReq boardReq) throws Exception {
+
+		/* 뒤로가기 방지 */
+		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
+		response.setHeader("Pragma", "no-cache"); // HTTP 1.0.
+		response.setHeader("Expires", "0"); // Proxies.
+
+		// 수정이면 boardDta 보내기
+		if( boardReq.getTargetBoardNo() != null ) {
+
+			BoardSelectRes boardDetail = boardService.getBoardDetail(boardReq.getTargetBoardNo());
+			// 데이터 셋팅
+			model.addAttribute( "boardDetail", boardDetail);
+		}
+
+		// 데이터 셋팅
+		model.addAttribute("boardSearchData", boardReq); //검색조건 유지하기위해
+
+		return "board/boardReg";
+	}
+
+	/*****************************************************
+	 * board 등록 및 수정
+	 * @param request
+	 * @param boardReq
+	 * @return ResponseEntity<ResponseDto>
+	*****************************************************/
+	@PostMapping(value = {"/board/saveBoard"})
+	public ResponseEntity<ResponseDto> saveBoard(HttpServletRequest request, @ModelAttribute @Valid BoardSaveReq boardReq) throws Exception{
+
+		// [[0]]. 반환할 정보들 & 변수 지정
+		String msg 				= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer resultCode 		= HttpStatus.BAD_REQUEST.value();
+		BoardSaveRes boardRes 	= new BoardSaveRes();
+
+		// [[1]]. 저장 및 수정
+		Integer nBoardNo = boardReq.getBoardNo();
+		if( nBoardNo != null ) {
+
+			/* 게시글 수정 */
+			boardRes = boardService.updateBoard(request, boardReq);
+
+			if(boardRes.getBoardNo() == null) {
+				resultCode = HttpStatus.BAD_REQUEST.value();
+				msg = messageSource.getMessage("result-message.messages.common.message.update.error", null, SessionUtil.getLocale()); 	//수정 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+			} else {
+				resultCode = HttpStatus.OK.value();
+				msg = messageSource.getMessage("result-message.messages.common.message.update", null, SessionUtil.getLocale()); 		//정상적으로 수정 하였습니다.
+			}
+
+		} else {
+
+			/* 게시글 등록 */
+			boardRes = boardService.insertBoard(request, boardReq);
+
+			if(boardRes.getBoardNo() == null) {
+				resultCode = HttpStatus.BAD_REQUEST.value();
+				msg = messageSource.getMessage("result-message.messages.common.message.save.error", null, SessionUtil.getLocale()); //저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+			} else {
+				resultCode = HttpStatus.OK.value();
+				msg = messageSource.getMessage("result-message.messages.common.message.save", null, SessionUtil.getLocale()); 		//정상적으로 저장 하였습니다.
+			}
+
+		}
+
+		return new ResponseEntity<>(
+			ResponseDto.builder()
+			.data(boardRes)
+			.resultMessage(msg)
+			.resultCode(resultCode)
+			.build()
+			, HttpStatus.OK);
+
+	}
+
+	/*****************************************************
+	 * board 삭제
+	 * @param request
+	 * @param boardReq
+	 * @return ResponseEntity<ResponseDto>
+	*****************************************************/
+	@DeleteMapping(value = {"/board/deleteBoard"})
+	public ResponseEntity<ResponseDto> deleteBoard(HttpServletRequest request, @ModelAttribute BoardSaveReq boardReq) throws Exception{
+
+		// [[0]]. 반환할 정보들 & 변수 지정
+		String msg 				= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer resultCode 		= HttpStatus.BAD_REQUEST.value();
+		int saveCount			= 0;
+
+		// [[1]]. 삭제
+		saveCount = boardService.deleteBoard(boardReq);
+
+		if(saveCount > 0) {
+			resultCode = HttpStatus.OK.value();
+			msg = messageSource.getMessage("result-message.messages.common.message.delete", null, SessionUtil.getLocale());  //정상적으로 삭제 하였습니다.
+		} else {
+			resultCode = HttpStatus.BAD_REQUEST.value();
+			msg = messageSource.getMessage("result-message.messages.common.message.delete.error", null, SessionUtil.getLocale());  //삭제 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		}
+
+		return new ResponseEntity<>(
+			ResponseDto.builder()
+			.data(null)
+			.resultMessage(msg)
+			.resultCode(resultCode)
+			.build()
+			, HttpStatus.OK);
+
+	}
+
+	/*****************************************************
+	 * board 차트 페이지
+	 * @param model
+	 * @return String
+	*****************************************************/
+	@GetMapping(value = {"/board/boardChart"})
+	public String boardChart(Model model) {
+
+		return "board/boardChart";
+
+	}
+
+	/*****************************************************
+	 * board 차트 페이지 정보 조회
+	 * @return ResponseEntity<ResponseDto>
+	*****************************************************/
+	@GetMapping(value = {"/board/getBoardChart"})
+	public ResponseEntity<ResponseDto> getBoardChart() throws Exception {
+
+		// [[0]]. 반환할 정보들
+		String 		msg 		= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer 	resultCode 	= HttpStatus.BAD_REQUEST.value();
+		CommonRes 	commonRes 	= new CommonRes();
+
+
+		// 1. 게시판 타입별 데이터 조회
+		List<BoardSelectRes> boardChartList = boardService.getBoardChart();
+
+		// 2. 결과값 셋팅
+		if(boardChartList.size() > 0) {
+
+			// 3. 차트 데이터 목록 셋팅
+			commonRes.setList(boardChartList);
+
+			resultCode = HttpStatus.OK.value();
+			msg = messageSource.getMessage("result-message.messages.common.message.search", null, SessionUtil.getLocale()); // 정상적으로 조회 하였습니다.
+
+		}else {
+
+			resultCode = HttpStatus.OK.value();
+			msg = messageSource.getMessage("result-message.messages.common.message.no.data", null, SessionUtil.getLocale()); // 데이터가 없습니다.
+
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(commonRes)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	/*****************************************************
+	 * 임시페이지 _ QR코드 다운 받을 페이지
+	 * @param model
+	 * @param boardSelectReq
+	 * @return String
+	*****************************************************/
+	@GetMapping(value = {"/board/boardZQR"})
+	public String boardZQR(Model model, @ModelAttribute BoardSelectReq boardSelectReq) {
+
+		return "board/boardZQR";
+
+	}
+
+	/*****************************************************
+	 * 임시페이지 _ BO에서 [미리보기] 할 경우 사용하는 페이지
+	 * @param model
+	 * @param boardSelectReq
+	 * @return String
+	*****************************************************/
+	@PostMapping(value = {"/board/previewBoardDetail"})
+	public String previewBoardDetail(Model model, @ModelAttribute BoardSelectReq previewBoardSelectReq) {
+
+		// [미리보기] 시 받은 내용 UNESCAPE 처리
+		String previewMenuCptnCn = previewBoardSelectReq.getPreviewMenuCptnCn();
+		previewBoardSelectReq.setPreviewMenuCptnCnUnescape(XssPreventer.unescape(previewMenuCptnCn));
+
+		model.addAttribute("previewBoard", previewBoardSelectReq); //[미리보기] 콘텐츠 담겨있음
+
+		return "board/previewBoardDetail";
+
+	}
+
+}

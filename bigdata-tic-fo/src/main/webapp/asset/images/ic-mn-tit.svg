@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22">
+    <g data-name="사각형 667" style="stroke:#004cf0;fill:#fff">
+        <path style="stroke:none" d="M0 0h14v14H0z" transform="translate(8 8)"/>
+        <path style="fill:none" d="M.5.5h13v13H.5z" transform="translate(8 8)"/>
+    </g>
+    <path data-name="사각형 627" style="fill:#004cf0" d="M0 0h14v14H0z"/>
+    <path data-name="사각형 668" transform="translate(8 8)" style="fill:#fff" d="M0 0h5v5H0z"/>
+</svg>

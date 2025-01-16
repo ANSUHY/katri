@@ -1,0 +1,12 @@
+@charset "utf-8";
+@font-face { font-family : nanum ; src:url(../font/NanumGothic.ttf)}
+
+html {height:100%; position:relative;}
+body { margin:0;height: 95%;font-family: nanum, Arial;font-size: 12px;line-height: 17px;position: relative;background-color: #f5f5f5;color: #3b3b3b;}
+body,li,ul,p,header,article,section,nav,ol,footer,fieldset{margin:0; padding:0;}
+header, nav, article, footer, div.city, div.country{border:0;}
+
+.margin0{padding:0;}
+.line{ border:1px solid #F00}
+.l2{ border:1px solid #f5f5f5}
+footer{ clear:both; bottom:0; height:10%}

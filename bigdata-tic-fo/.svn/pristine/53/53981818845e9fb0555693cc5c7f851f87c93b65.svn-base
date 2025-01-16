@@ -1,0 +1,206 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="503" height="485" viewBox="0 0 503 485">
+    <defs>
+        <filter id="mqzyrpdhma" x="136" y="0" width="233" height="233" filterUnits="userSpaceOnUse">
+            <feOffset dy="43"/>
+            <feGaussianBlur stdDeviation="28" result="blur"/>
+            <feFlood flood-opacity=".051"/>
+            <feComposite operator="in" in2="blur"/>
+            <feComposite in="SourceGraphic"/>
+        </filter>
+        <filter id="lc3p89m3kb" x="28" y="60" width="232" height="231" filterUnits="userSpaceOnUse">
+            <feOffset dy="43"/>
+            <feGaussianBlur stdDeviation="28" result="blur-2"/>
+            <feFlood flood-opacity=".051"/>
+            <feComposite operator="in" in2="blur-2"/>
+            <feComposite in="SourceGraphic"/>
+        </filter>
+        <filter id="7rb7vmwdqc" x="245" y="63" width="232" height="232" filterUnits="userSpaceOnUse">
+            <feOffset dy="43"/>
+            <feGaussianBlur stdDeviation="28" result="blur-3"/>
+            <feFlood flood-opacity=".051"/>
+            <feComposite operator="in" in2="blur-3"/>
+            <feComposite in="SourceGraphic"/>
+        </filter>
+        <filter id="nlvyb6l74d" x="0" y="165" width="234" height="234" filterUnits="userSpaceOnUse">
+            <feOffset dy="43"/>
+            <feGaussianBlur stdDeviation="28" result="blur-4"/>
+            <feFlood flood-opacity=".051"/>
+            <feComposite operator="in" in2="blur-4"/>
+            <feComposite in="SourceGraphic"/>
+        </filter>
+        <filter id="mq6beofppe" x="269" y="165" width="234" height="234" filterUnits="userSpaceOnUse">
+            <feOffset dy="43"/>
+            <feGaussianBlur stdDeviation="28" result="blur-5"/>
+            <feFlood flood-opacity=".051"/>
+            <feComposite operator="in" in2="blur-5"/>
+            <feComposite in="SourceGraphic"/>
+        </filter>
+        <filter id="alw5qmu7ef" x="206" y="252" width="234" height="233" filterUnits="userSpaceOnUse">
+            <feOffset dy="43"/>
+            <feGaussianBlur stdDeviation="28" result="blur-6"/>
+            <feFlood flood-opacity=".051"/>
+            <feComposite operator="in" in2="blur-6"/>
+            <feComposite in="SourceGraphic"/>
+        </filter>
+        <filter id="rsordch7yg" x="75" y="252" width="234" height="233" filterUnits="userSpaceOnUse">
+            <feOffset dy="43"/>
+            <feGaussianBlur stdDeviation="28" result="blur-7"/>
+            <feFlood flood-opacity=".051"/>
+            <feComposite operator="in" in2="blur-7"/>
+            <feComposite in="SourceGraphic"/>
+        </filter>
+    </defs>
+    <g data-name="그룹 992">
+        <g data-name="그룹 990">
+            <g data-name="타원 41" transform="translate(113 68)" style="stroke:#dedede;fill:#fff">
+                <circle cx="137.5" cy="137.5" r="137.5" style="stroke:none"/>
+                <circle cx="137.5" cy="137.5" r="137" style="fill:none"/>
+            </g>
+            <g data-name="그룹 994">
+                <g data-name="타원 56" transform="translate(173 128.001)" style="fill:#fafafa;stroke:#868da4;stroke-dasharray:4">
+                    <circle cx="78" cy="78" r="78" style="stroke:none"/>
+                    <circle cx="78" cy="78" r="77.5" style="fill:none"/>
+                </g>
+                <g data-name="그룹 993" transform="translate(196.317 150.389)">
+                    <circle data-name="타원 54" cx="56.5" cy="56.5" r="56.5" transform="translate(-.318 -.388)" style="fill:#30385c"/>
+                    <text data-name="내 손안의 시험인증 서비스" transform="translate(56.682 52.612)" style="font-weight:800;font-size:14px;font-family:NotoSansKR-Black,Noto Sans KR;fill:#fff"><tspan x="-27.363" y="0">내 손안의</tspan><tspan x="-46.683" y="20">시험인증 서비스</tspan></text>
+                </g>
+            </g>
+        </g>
+        <g data-name="그룹 989">
+            <g data-name="1">
+                <g style="filter:url(#mqzyrpdhma)">
+                    <g data-name="타원 53" transform="translate(219.998 41)" style="stroke:#e3e3e3;fill:#fff">
+                        <circle cx="32.5" cy="32.5" r="32.5" style="stroke:none"/>
+                        <circle cx="32.5" cy="32.5" r="32" style="fill:none"/>
+                    </g>
+                </g>
+                <g data-name="그룹 991">
+                    <text data-name="한국의류시험 연구원" transform="translate(252.999 80)" style="font-size:8px;font-family:NotoSansKR-Regular,Noto Sans KR;fill:#333"><tspan x="-22.08" y="0">한국의류시험</tspan><tspan x="-11.04" y="10">연구원</tspan></text>
+                    <text transform="translate(253.999 66)" style="font-size:11px;font-family:Montserrat;fill:#333;font-weight:800"><tspan x="-17.511" y="0">KATRI</tspan></text>
+                </g>
+            </g>
+            <g data-name="1">
+                <g style="filter:url(#lc3p89m3kb)">
+                    <g data-name="타원 53" transform="translate(112.004 100.997)" style="stroke:#e3e3e3;fill:#fff">
+                        <ellipse cx="32" cy="31.5" rx="32" ry="31.5" style="stroke:none"/>
+                        <ellipse cx="32" cy="31.5" rx="31.5" ry="31" style="fill:none"/>
+                    </g>
+                </g>
+                <g data-name="그룹 991">
+                    <text data-name="한국과학융합 시험연구원" transform="translate(144 139)" style="font-size:8px;font-family:NotoSansKR-Regular,Noto Sans KR;fill:#333"><tspan x="-22.08" y="0">한국과학융합</tspan><tspan x="-18.4" y="10">시험연구원</tspan></text>
+                    <text transform="translate(144 125)" style="font-size:11px;font-family:Montserrat;fill:#333;font-weight:800"><tspan x="-11.419" y="0">KTR</tspan></text>
+                </g>
+            </g>
+            <g data-name="1">
+                <g style="filter:url(#7rb7vmwdqc)">
+                    <g data-name="타원 53" transform="translate(328.996 104.004)" style="stroke:#e3e3e3;fill:#fff">
+                        <circle cx="32" cy="32" r="32" style="stroke:none"/>
+                        <circle cx="32" cy="32" r="31.5" style="fill:none"/>
+                    </g>
+                </g>
+                <g data-name="그룹 991">
+                    <text data-name="한국산업 기술시험원" transform="translate(361 142.999)" style="font-size:8px;font-family:NotoSansKR-Regular,Noto Sans KR;fill:#333"><tspan x="-14.72" y="0">한국산업</tspan><tspan x="-18.4" y="10">기술시험원</tspan></text>
+                    <text transform="translate(362 128.999)" style="font-size:11px;font-family:Montserrat;fill:#333;font-weight:800"><tspan x="-8.199" y="0">Ktl</tspan></text>
+                </g>
+            </g>
+            <g data-name="1">
+                <g style="filter:url(#nlvyb6l74d)">
+                    <g data-name="타원 53" transform="translate(84 205.999)" style="stroke:#e3e3e3;fill:#fff">
+                        <circle cx="33" cy="33" r="33" style="stroke:none"/>
+                        <circle cx="33" cy="33" r="32.5" style="fill:none"/>
+                    </g>
+                </g>
+                <g data-name="그룹 991">
+                    <text transform="translate(117 251)" style="font-size:8px;font-family:NotoSansKR-Regular,Noto Sans KR;fill:#333"><tspan x="-18.4" y="0">시험연구원</tspan></text>
+                    <text transform="translate(117 237)" style="font-size:11px;font-family:Montserrat;fill:#333;font-weight:800"><tspan x="-19.313" y="0">KOTITI</tspan></text>
+                </g>
+            </g>
+            <g data-name="1">
+                <g style="filter:url(#mq6beofppe)">
+                    <g data-name="타원 53" transform="translate(352.996 205.999)" style="stroke:#e3e3e3;fill:#fff">
+                        <circle cx="33" cy="33" r="33" style="stroke:none"/>
+                        <circle cx="33" cy="33" r="32.5" style="fill:none"/>
+                    </g>
+                </g>
+                <g data-name="그룹 991">
+                    <text data-name="한국건설생활환경 시험연구원" transform="translate(386 243)" style="font-size:8px;font-family:NotoSansKR-Regular,Noto Sans KR;fill:#333"><tspan x="-29.44" y="0">한국건설생활환경</tspan><tspan x="-18.4" y="10">시험연구원</tspan></text>
+                    <text transform="translate(386 229)" style="font-size:11px;font-family:Montserrat;fill:#333;font-weight:800"><tspan x="-11.417" y="0">KCL</tspan></text>
+                </g>
+            </g>
+            <g data-name="1">
+                <g style="filter:url(#alw5qmu7ef)">
+                    <g data-name="타원 53" transform="translate(289.999 293.003)" style="stroke:#e3e3e3;fill:#fff">
+                        <ellipse cx="33" cy="32.5" rx="33" ry="32.5" style="stroke:none"/>
+                        <ellipse cx="33" cy="32.5" rx="32.5" ry="32" style="fill:none"/>
+                    </g>
+                </g>
+                <g data-name="그룹 991">
+                    <text data-name="한국기계전기 전자시험연구원" transform="translate(323 332)" style="font-size:8px;font-family:NotoSansKR-Regular,Noto Sans KR;fill:#333"><tspan x="-22.08" y="0">한국기계전기</tspan><tspan x="-25.76" y="10">전자시험연구원</tspan></text>
+                    <text transform="translate(322 318)" style="font-size:11px;font-family:Montserrat;fill:#333;font-weight:800"><tspan x="-11.353" y="0">KTC</tspan></text>
+                </g>
+            </g>
+            <g data-name="1">
+                <g style="filter:url(#rsordch7yg)">
+                    <g data-name="타원 53" transform="translate(159.004 293.003)" style="stroke:#e3e3e3;fill:#fff">
+                        <ellipse cx="33" cy="32.5" rx="33" ry="32.5" style="stroke:none"/>
+                        <ellipse cx="33" cy="32.5" rx="32.5" ry="32" style="fill:none"/>
+                    </g>
+                </g>
+                <g data-name="그룹 991">
+                    <text data-name="시험연구원" transform="translate(192 337)" style="font-size:8px;font-family:NotoSansKR-Regular,Noto Sans KR;fill:#333"><tspan x="-18.4" y="0">시험연구원</tspan></text>
+                    <text transform="translate(192 323)" style="font-size:11px;font-family:Montserrat;fill:#333;font-weight:800"><tspan x="-10.75" y="0">FITI</tspan></text>
+                </g>
+            </g>
+        </g>
+    </g>
+    <g data-name="1">
+        <g data-name="타원 55" transform="translate(243 120)" style="stroke:#868da5;fill:#fff">
+            <circle cx="7" cy="7" r="7" style="stroke:none"/>
+            <circle cx="7" cy="7" r="6.5" style="fill:none"/>
+        </g>
+        <path data-name="합치기 3" d="M2.7 6V3.557H0V2.7h2.7V0h.857v2.7H6v.858H3.558V6z" transform="translate(247 124)" style="fill:#868da5"/>
+    </g>
+    <g data-name="1">
+        <g data-name="타원 55" transform="translate(179 156.999)" style="stroke:#868da5;fill:#fff">
+            <circle cx="7" cy="7" r="7" style="stroke:none"/>
+            <circle cx="7" cy="7" r="6.5" style="fill:none"/>
+        </g>
+        <path data-name="합치기 3" d="M2.7 6V3.557H0V2.7h2.7V0h.857v2.7H6v.858H3.558V6z" transform="translate(183 160.999)" style="fill:#868da5"/>
+    </g>
+    <g data-name="1">
+        <g data-name="타원 55" transform="translate(312.001 156.999)" style="stroke:#868da5;fill:#fff">
+            <circle cx="7" cy="7" r="7" style="stroke:none"/>
+            <circle cx="7" cy="7" r="6.5" style="fill:none"/>
+        </g>
+        <path data-name="합치기 3" d="M2.7 6V3.557H0V2.7h2.7V0h.857v2.7H6v.858H3.558V6z" transform="translate(316.001 160.999)" style="fill:#868da5"/>
+    </g>
+    <g data-name="1">
+        <g data-name="타원 55" transform="translate(173.001 229)" style="stroke:#868da5;fill:#fff">
+            <circle cx="7" cy="7" r="7" style="stroke:none"/>
+            <circle cx="7" cy="7" r="6.5" style="fill:none"/>
+        </g>
+        <path data-name="합치기 3" d="M2.7 6V3.557H0V2.7h2.7V0h.857v2.7H6v.858H3.558V6z" transform="translate(177.001 233)" style="fill:#868da5"/>
+    </g>
+    <g data-name="1">
+        <g data-name="타원 55" transform="translate(320 229)" style="stroke:#868da5;fill:#fff">
+            <circle cx="7" cy="7" r="7" style="stroke:none"/>
+            <circle cx="7" cy="7" r="6.5" style="fill:none"/>
+        </g>
+        <path data-name="합치기 3" d="M2.7 6V3.557H0V2.7h2.7V0h.857v2.7H6v.858H3.558V6z" transform="translate(324 233)" style="fill:#868da5"/>
+    </g>
+    <g data-name="1">
+        <g data-name="타원 55" transform="translate(211 270.999)" style="stroke:#868da5;fill:#fff">
+            <circle cx="7" cy="7" r="7" style="stroke:none"/>
+            <circle cx="7" cy="7" r="6.5" style="fill:none"/>
+        </g>
+        <path data-name="합치기 3" d="M2.7 6V3.557H0V2.7h2.7V0h.857v2.7H6v.858H3.558V6z" transform="translate(215 274.999)" style="fill:#868da5"/>
+    </g>
+    <g data-name="1">
+        <g data-name="타원 55" transform="translate(283 270.999)" style="stroke:#868da5;fill:#fff">
+            <circle cx="7" cy="7" r="7" style="stroke:none"/>
+            <circle cx="7" cy="7" r="6.5" style="fill:none"/>
+        </g>
+        <path data-name="합치기 3" d="M2.7 6V3.557H0V2.7h2.7V0h.857v2.7H6v.858H3.558V6z" transform="translate(287 274.999)" style="fill:#868da5"/>
+    </g>
+</svg>

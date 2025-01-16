@@ -1,0 +1,239 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="c"		uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="cm" 		uri="/WEB-INF/tlds" %>
+
+<!DOCTYPE html>
+<html lang="${sessionScope.SS_KATRI_BO.ui_lang_cd}">
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+		<meta name="format-detection" content="telephone=no">
+		<meta name="format-detection" content="email=no">
+		<title>시험인증 빅데이터 플랫폼</title>
+		<meta name="description" content="">
+		<meta name="keywords" content="">
+
+		<link href="/asset/css/style.css" rel="stylesheet">
+		<script src="/asset/js/jquery.min.js"></script>
+		<script src="/asset/js/common.js"></script>
+
+		<!--swier css 추가-->
+		<script src="/asset/css/swiper-bundle.min.css"></script>
+		<!--swier 스크립트 추가-->
+		<script src="/asset/js/swiper-bundle.min.js"></script>
+
+		<script type="text/javascript">
+
+			/* qr랜딩 이미지 */
+			$(function(){
+				var qrswiper = new Swiper(".qr-swiper", {
+						scrollbar: {
+						el: ".swiper-scrollbar",
+						hide: false,
+						},
+						pagination: {
+							el: ".swiper-pagination",
+							type: "fraction",
+						},
+					});
+				})
+
+		</script>
+
+	</head>
+
+	<body>
+		<!-- ===== wrap ====== -->
+		<div id="wrap">
+
+			<!-- ===== header ====== -->
+			<header id="header">
+				<div id="sub-mv" class="sub-myservice QRlanding">
+					<div class="inner QRlanding">
+						<h2>인증 정보 상세</h2>
+						<p><span>"${certDataDetail.prdtNm}"</span>의 인증상태</p>
+						<div class="qr-state-mo"><span class="ok">${certDataDetail.certSttNm}</span></div>
+					</div>
+				</div>
+			</header>
+			<!-- ===== /header ====== -->
+
+			<!-- ===== container ====== -->
+			<!--container-->
+			<div id="cont" class="cont-myservice dtl-myservice qr-chk-wr qr-block">
+
+				<!--이미지-->
+				<c:if test="${! empty certDataDetail.imgNameList}">
+					<div class="qr-swiper page swiper">
+						<div class="swiper-wrapper">
+							<c:forEach items="${certDataDetail.imgNameList}" var="item">
+								<div class="swiper-slide">
+<%-- 									<img src="/svc/certInfo/displayImage?instEngNmLower=${certDataDetail.instEngNmLower}&certNo=${certDataDetail.certNo}&imgName=${item}" onerror="this.src='/asset/images/cert_no_image.png'" alt="${item}" /> --%>
+									<img src="/images/${certDataDetail.instEngNmLower}/cert/${certDataDetail.certNo}/${item}" alt="${item}" onerror="this.src='/asset/images/cert_no_image.png'" style="margin-bottom:10px;">
+								</div>
+							</c:forEach>
+						</div>
+						<div class="swiper-scrollbar"></div>
+						<div class="swiper-pagination"></div>
+					</div>
+				</c:if>
+
+				<h3 class="tit">인증정보</h3>
+
+				<!--리스트-->
+				<div class="svc-info-dtl">
+					<table summary="인증정보 상세 - 인증기관, 통합접수번호, 인증번호, 인증구분, 인증일자, 인증상태, 최초인증번호, 인증변경일자, 인증변경사유 내용 포함">
+						<tr>
+							<th>인증기관</th>
+							<td>${certDataDetail.instNm}(${certDataDetail.instEngNm})</td>
+							<th>통합접수번호</th>
+							<td>${certDataDetail.instCertIdntfcVal}</td>
+						</tr>
+
+						<tr>
+							<th>인증번호</th>
+							<td>${certDataDetail.certNo}</td>
+							<th>인증구분</th>
+							<td>${certDataDetail.certDivNm}</td>
+						</tr>
+
+						<tr>
+							<th>인증일자</th>
+							<td><cm:stringFormat type="date" format="YYYY-MM-DD" value="${certDataDetail.certYmd}" /></td>
+							<th>인증상태</th>
+							<td>${certDataDetail.certSttNm}</td>
+						</tr>
+
+						<tr>
+							<th>최초인증번호</th>
+							<td>${certDataDetail.frstCertNo}</td>
+							<th>인증변경일자</th>
+							<td><cm:stringFormat type="date" format="YYYY-MM-DD" value="${certDataDetail.certLastChgYmd}" /></td>
+						</tr>
+
+						<tr>
+							<th>인증변경사유</th>
+							<td colspan="3">${certDataDetail.certChgResnCn}</td>
+						</tr>
+
+					</table>
+				</div>
+
+				<h3 class="tit">제품정보</h3>
+
+				<!--리스트-->
+				<div class="svc-info-dtl">
+					<table summary="인증정보 상세 - 제품명, 브랜드명, 모델명, 규격, 제품분류코드, 제품세분류명, 파생모델명, 비고 내용 포함">
+						<tr>
+							<th>제품명</th>
+							<td>${certDataDetail.prdtNm}</td>
+							<th>브랜드명</th>
+							<td>${certDataDetail.brdNm}</td>
+						</tr>
+
+						<tr>
+							<th>모델명</th>
+							<td>${certDataDetail.mdlNm}</td>
+							<th>규격</th>
+							<td>${certDataDetail.stndNm}</td>
+						</tr>
+
+						<tr>
+							<th>제품분류코드</th>
+							<td>${certDataDetail.sttyPrdtClfCd}</td>
+							<th>제품세분류명</th>
+							<td>${certDataDetail.sttyPrdtClfNm}</td>
+						</tr>
+
+						<tr>
+							<th>파생모델명</th>
+							<td colspan="3">${certDataDetail.drvnMdlNm}</td>
+						</tr>
+
+						<tr>
+							<th>비고</th>
+							<td colspan="3">${certDataDetail.rmkCn}</td>
+						</tr>
+
+					</table>
+				</div>
+
+				<h3 class="tit">제조사 정보</h3>
+
+				<!--리스트-->
+				<div class="svc-info-dtl">
+					<table summary="제조사 상세 - 제조사, 사업자 등록번호, 제조국, 대표자, 주소, 전화번호 내용 포함">
+						<tr>
+							<th>제조사</th>
+							<td>${certDataDetail.mnftrCustcoNm}</td>
+							<th>사업자 등록번호</th>
+							<td>${certDataDetail.mnftrCustcoBrno}</td>
+						</tr>
+
+						<tr>
+							<th>제조국</th>
+							<td>${certDataDetail.mnftrCustcoNtnNm}</td>
+							<th>대표자</th>
+							<td>${certDataDetail.mnftrCustcoRprsvNm}</td>
+						</tr>
+
+						<tr>
+							<th>주소</th>
+							<td colspan="3">${certDataDetail.mnftrCustcoAddr}</td>
+						</tr>
+
+						<tr>
+							<th>전화번호</th>
+							<td colspan="3">${certDataDetail.mnftrCustcoTelno}</td>
+						</tr>
+
+					</table>
+				</div>
+
+				<h3 class="tit">수입업체 정보</h3>
+
+				<!--리스트-->
+				<div class="svc-info-dtl">
+					<table summary="수입업체 상세 - 수입업체, 사업자 등록번호, 전화번호, 대표자, 주소 내용 포함">
+						<tr>
+							<th>수입업체</th>
+							<td>${certDataDetail.incmCustcoNm}</td>
+							<th>사업자 등록번호</th>
+							<td>${certDataDetail.incmCustcoBrno}</td>
+						</tr>
+
+						<tr>
+							<th>전화번호</th>
+							<td>${certDataDetail.incmCustcoTelno}</td>
+							<th>대표자</th>
+							<td>${certDataDetail.incmCustcoRprsvNm}</td>
+						</tr>
+
+						<tr>
+							<th>주소</th>
+							<td colspan="3">${certDataDetail.incmCustcoAddr}</td>
+						</tr>
+
+					</table>
+
+				</div>
+
+				<h3 class="tit bBr">추가 정보</h3>
+				<div class="dtl-inr">
+					<c:if test="${ certDataDetail.certAditInfoCn ne '' && ! empty certDataDetail.certAditInfoCn }">
+						<a href="${certDataDetail.certAditInfoCn}" target="_blank" >${certDataDetail.certAditInfoCn}</a>
+					</c:if>
+					<c:if test="${ certDataDetail.certAditInfoCn eq '' || empty certDataDetail.certAditInfoCn }">
+						추가 정보가 없습니다.
+					</c:if>
+				</div>
+
+			</div>
+			<!--// container-->
+			<!-- ===== /container ====== -->
+		</div>
+		<!-- ===== /wrap ====== -->
+
+	</body>
+</html>

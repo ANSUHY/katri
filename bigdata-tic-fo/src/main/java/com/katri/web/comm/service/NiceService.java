@@ -1,0 +1,333 @@
+package com.katri.web.comm.service;
+
+import java.util.HashMap;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+/***************************************************
+ * <ul>
+ * <li>업무 그룹명 : NICE 서비스</li>
+ * <li>서브 업무명 : NICE 서비스</li>
+ * <li>설		 명 : NICE 관련 기능 제공</li>
+ * <li>작   성   자 : ASH</li>
+ * <li>작   성   일 : 2022. 10. 24.</li>
+ * </ul>
+ * <pre>
+ * ======================================
+ * 변경자/변경일 :
+ * 변경사유/내역 :
+ * --------------------------------------
+ * 변경자/변경일 :
+ * 변경사유/내역 :
+ * ======================================
+ * </pre>
+ ***************************************************/
+@Service
+@RequiredArgsConstructor
+@Transactional(rollbackFor = {Exception.class})
+@Slf4j
+public class NiceService {
+
+	/** NICE로부터 부여받은 사이트 코드 */
+	@Value("${pass.site.code}")
+	String SITE_CODE;
+
+	/** NICE로부터 부여받은 사이트 패스워드 */
+	@Value("${pass.site.password}")
+	String SITE_PASSWORD;
+
+	@Value("${domain.web.fo}")
+	String DOMAIN_URL;
+
+	/** NICE 성공 RETURN URL */
+	@Value("${pass.return.url}")
+	String RETURN_URL;
+
+	/** NICE 실패 RETURN URL */
+	@Value("${pass.error.url}")
+	String ERROR_URL;
+
+	/*****************************************************
+	 * [NICE 업체정보를 암호화 한 데이터] 리턴
+	 * @param session
+	 * @return sEncData [NICE 업체정보를 암호화 한 데이터]
+	 * @throws Exception
+	*****************************************************/
+	public String getNiceData(HttpSession session) throws Exception {
+
+		NiceID.Check.CPClient niceCheck = new  NiceID.Check.CPClient();
+
+		String sSiteCode = SITE_CODE;			// NICE로부터 부여받은 사이트 코드
+		String sSitePassword = SITE_PASSWORD;	// NICE로부터 부여받은 사이트 패스워드
+
+		String sRequestNumber = "REQ0000000001";			// 요청 번호, 이는 성공/실패후에 같은 값으로 되돌려주게 되므로
+															// 업체에서 적절하게 변경하여 쓰거나, 아래와 같이 생성한다.
+		sRequestNumber = niceCheck.getRequestNO(sSiteCode);
+		session.setAttribute("REQ_SEQ" , sRequestNumber);	// 해킹등의 방지를 위하여 세션을 쓴다면, 세션에 요청번호를 넣는다.
+
+		String sAuthType = "";	  	// 없으면 기본 선택화면, M(휴대폰), X(인증서공통), U(공동인증서), F(금융인증서), S(PASS인증서), C(신용카드)
+		String customize 	= "";		//없으면 기본 웹페이지 / Mobile : 모바일페이지
+
+		// CheckPlus(본인인증) 처리 후, 결과 데이타를 리턴 받기위해 다음예제와 같이 http부터 입력합니다.
+		//리턴url은 인증 전 인증페이지를 호출하기 전 url과 동일해야 합니다. ex) 인증 전 url : http://www.~ 리턴 url : http://www.~
+		String sReturnUrl	= DOMAIN_URL + RETURN_URL;	// 성공시 이동될 URL
+		String sErrorUrl	= DOMAIN_URL + ERROR_URL;	// 실패시 이동될 URL
+
+		// 입력될 plain 데이타를 만든다.
+		String sPlainData 	= "7:REQ_SEQ" + sRequestNumber.getBytes().length + ":" + sRequestNumber +
+							"8:SITECODE" + sSiteCode.getBytes().length + ":" + sSiteCode +
+							"9:AUTH_TYPE" + sAuthType.getBytes().length + ":" + sAuthType +
+							"7:RTN_URL" + sReturnUrl.getBytes().length + ":" + sReturnUrl +
+							"7:ERR_URL" + sErrorUrl.getBytes().length + ":" + sErrorUrl +
+							"9:CUSTOMIZE" + customize.getBytes().length + ":" + customize;
+
+		String sMessage 	= "";
+		String sEncData 	= "";
+
+		int iReturn = niceCheck.fnEncode(sSiteCode, sSitePassword, sPlainData);
+
+		if( iReturn == 0 )
+		{
+			sEncData = niceCheck.getCipherData();
+		}
+		else if( iReturn == -1)
+		{
+			sMessage = "암호화 시스템 에러입니다.";
+		}
+		else if( iReturn == -2)
+		{
+			sMessage = "암호화 처리오류입니다.";
+		}
+		else if( iReturn == -3)
+		{
+			sMessage = "암호화 데이터 오류입니다.";
+		}
+		else if( iReturn == -9)
+		{
+			sMessage = "입력 데이터 오류입니다.";
+		}
+		else
+		{
+			sMessage = "알수 없는 에러 입니다. iReturn : " + iReturn;
+		}
+
+		if( !"".equals(sMessage) ) {
+			log.error("\n===============ERROR_NICE=========================\n" + sMessage);
+		}
+
+		return sEncData;
+
+	}
+
+	/*****************************************************
+	 * [NICE 본인 인증] > 성공 후 Return 값 셋팅 및 페이지 이동
+	 * @param request
+	 * @param session
+	 * @return
+	*****************************************************/
+	@SuppressWarnings("unchecked")
+	public HashMap<Object, Object> responseNiceSuccess(HttpServletRequest request, HttpSession session) {
+
+		HashMap<Object, Object> mapResult = null;
+
+		NiceID.Check.CPClient niceCheck = new  NiceID.Check.CPClient();
+
+		String sEncodeData 		= this.requestReplace(request.getParameter("EncodeData"), "encodeData");
+
+		String 	sSiteCode 		= SITE_CODE;	// NICE로부터 부여받은 사이트 코드
+		String 	sSitePassword 	= SITE_PASSWORD;// NICE로부터 부여받은 사이트 패스워드
+		String 	sRequestNumber 	= "";			// 요청 번호
+		String 	sPlainData 		= "";
+
+		int 	iReturn 		= niceCheck.fnDecode(sSiteCode, sSitePassword, sEncodeData);
+
+		String 	sMessage 		= "";
+
+		if( iReturn == 0 )
+		{
+			sMessage		= "본인 인증이 완료 되었습니다.";
+			sPlainData 		= niceCheck.getPlainData();
+
+			// [0]. Nice 성공 return 데이터 map에 담기
+			mapResult 		= niceCheck.fnParse(sPlainData);
+			sRequestNumber  = (String) mapResult.get("REQ_SEQ");
+
+			// [1]. Map에 담겨있는 Data
+//			sResponseNumber = (String)mapresult.get("RES_SEQ");
+//			sAuthType		= (String)mapresult.get("AUTH_TYPE");
+//			sName			= (String)mapresult.get("NAME");
+//			encName			= (String)mapresult.get("UTF8_NAME"); //charset utf8 사용시 주석 해제 후 사용
+//			sBirthDate		= (String)mapresult.get("BIRTHDATE");
+//			sGender			= (String)mapresult.get("GENDER");
+//			sNationalInfo  	= (String)mapresult.get("NATIONALINFO");
+//			sDupInfo		= (String)mapresult.get("DI");
+//			sConnInfo		= (String)mapresult.get("CI");
+//			sMobileNo		= (String)mapresult.get("MOBILE_NO");
+//			sMobileCo		= (String)mapresult.get("MOBILE_CO");
+//			sRequestNumber  = (String) mapResult.get("REQ_SEQ");
+
+			String session_sRequestNumber = (String)session.getAttribute("REQ_SEQ");
+			if(!sRequestNumber.equals(session_sRequestNumber))
+			{
+				sMessage = "세션값 불일치 오류입니다.";
+				mapResult.put("RES_SEQ"		, "");
+				mapResult.put("AUTH_TYPE"	, "");
+			}
+		}
+		else if( iReturn == -1)
+		{
+			sMessage = "복호화 시스템 오류입니다.";
+		}
+		else if( iReturn == -4)
+		{
+			sMessage = "복호화 처리 오류입니다.";
+		}
+		else if( iReturn == -5)
+		{
+			sMessage = "복호화 해쉬 오류입니다.";
+		}
+		else if( iReturn == -6)
+		{
+			sMessage = "복호화 데이터 오류입니다.";
+		}
+		else if( iReturn == -9)
+		{
+			sMessage = "입력 데이터 오류입니다.";
+		}
+		else if( iReturn == -12)
+		{
+			sMessage = "사이트 패스워드 오류입니다.";
+		}
+		else
+		{
+			sMessage = "알수 없는 에러 입니다. iReturn : " + iReturn;
+		}
+
+		mapResult.put("iReturn"	, iReturn);
+		mapResult.put("sMessage", sMessage);
+
+		// [2]. 인증 완료된 인증 정보 > 세션에 저장
+		session.setAttribute("niceInfo", mapResult);
+
+		return mapResult;
+	}
+
+	/*****************************************************
+	 * [NICE 본인 인증] > 실패 후 Return 값 셋팅 및 페이지 이동
+	 * @param request
+	 * @param session
+	 * @return
+	*****************************************************/
+	@SuppressWarnings("unchecked")
+	public HashMap<Object, Object> responseNiceFail(HttpServletRequest request, HttpSession session) {
+		NiceID.Check.CPClient niceCheck = new  NiceID.Check.CPClient();
+
+		String sEncodeData = requestReplace(request.getParameter("EncodeData"), "encodeData");
+
+		String sSiteCode 		= "";			// NICE로부터 부여받은 사이트 코드
+		String sSitePassword 	= "";			// NICE로부터 부여받은 사이트 패스워드
+
+		String sMessage 		= "";
+		String sPlainData 		= "";
+
+		int iReturn = niceCheck.fnDecode(sSiteCode, sSitePassword, sEncodeData);
+
+		HashMap<Object, Object> mapResult = null;
+
+		if( iReturn == 0 ){
+			sMessage = "본인 인증이 실패하였습니다.";
+			// [0]. Nice 성공 return 데이터 map에 담기
+			sPlainData 	= niceCheck.getPlainData();
+			mapResult 	= niceCheck.fnParse(sPlainData);
+
+			// [1]. Map에 담겨있는 Data
+			// sRequestNumber 	= (String)mapresult.get("REQ_SEQ");
+			// sErrorCode 		= (String)mapresult.get("ERR_CODE");
+			// sAuthType 		= (String)mapresult.get("AUTH_TYPE");
+		}
+		else if( iReturn == -1)
+		{
+			sMessage = "복호화 시스템 에러입니다.";
+		}
+		else if( iReturn == -4)
+		{
+			sMessage = "복호화 처리오류입니다.";
+		}
+		else if( iReturn == -5)
+		{
+			sMessage = "복호화 해쉬 오류입니다.";
+		}
+		else if( iReturn == -6)
+		{
+			sMessage = "복호화 데이터 오류입니다.";
+		}
+		else if( iReturn == -9)
+		{
+			sMessage = "입력 데이터 오류입니다.";
+		}
+		else if( iReturn == -12)
+		{
+			sMessage = "사이트 패스워드 오류입니다.";
+		}
+		else
+		{
+			sMessage = "알수 없는 에러 입니다. iReturn : " + iReturn;
+		}
+
+		mapResult.put("iReturn", iReturn);
+		mapResult.put("sMessage", sMessage);
+
+		return mapResult;
+	}
+
+	/*****************************************************
+	 * [NICE 본인 인증] > NICE 제공 parameter Replace
+	 * @param request
+	 * @param session
+	 * @return
+	*****************************************************/
+	public String requestReplace (String paramValue, String gubun) {
+		String result = "";
+
+		if (paramValue != null) {
+			paramValue = paramValue.replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+			paramValue = paramValue.replaceAll("\\*", "");
+			paramValue = paramValue.replaceAll("\\?", "");
+			paramValue = paramValue.replaceAll("\\[", "");
+			paramValue = paramValue.replaceAll("\\{", "");
+			paramValue = paramValue.replaceAll("\\(", "");
+			paramValue = paramValue.replaceAll("\\)", "");
+			paramValue = paramValue.replaceAll("\\^", "");
+			paramValue = paramValue.replaceAll("\\$", "");
+			paramValue = paramValue.replaceAll("'", "");
+			paramValue = paramValue.replaceAll("@", "");
+			paramValue = paramValue.replaceAll("%", "");
+			paramValue = paramValue.replaceAll(";", "");
+			paramValue = paramValue.replaceAll(":", "");
+			paramValue = paramValue.replaceAll("-", "");
+			paramValue = paramValue.replaceAll("#", "");
+			paramValue = paramValue.replaceAll("--", "");
+			paramValue = paramValue.replaceAll("-", "");
+			paramValue = paramValue.replaceAll(",", "");
+
+			if( !"encodeData".equals(gubun) ){
+				paramValue = paramValue.replaceAll("\\+", "");
+				paramValue = paramValue.replaceAll("/", "");
+				paramValue = paramValue.replaceAll("=", "");
+			}
+
+			result = paramValue;
+
+		}
+		return result;
+	}
+
+}

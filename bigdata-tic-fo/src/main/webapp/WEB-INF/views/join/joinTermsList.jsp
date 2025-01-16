@@ -1,0 +1,253 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<%@ taglib prefix="c"		uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="cm"		uri="/WEB-INF/tlds" %>
+
+<%@ page import="com.katri.common.Const" %>
+
+<script type="text/javascript">
+
+	$(document).ready(function() {
+
+		var $checkHead = $("input[id='chkAll']");
+		var $checkBody = $("input[name='arrChkTrmsSn']");
+
+		/* 전체선택 */
+		$checkHead.click(function(){
+			if($checkHead.prop("checked")) {
+				$checkBody.prop("checked",true);
+			} else {
+				$checkBody.prop("checked",false); }
+		});
+
+		$checkHead.click(function() {
+			if($checkHead.is(":checked")) $checkBody.prop("checked", true);
+			else $checkBody.prop("checked", false);
+		});
+
+		$checkBody.click(function() {
+			var total = $checkBody.length;
+			var checked = $("input[name=arrChkTrmsSn]:checked").length;
+
+			if(total != checked) $checkHead.prop("checked", false);
+			else $checkHead.prop("checked", true);
+		});
+
+	});
+
+	/*
+	 * 함수명 : fn_validation
+	 * 설 명 : 약관 유효성 검사
+	*/
+	function fn_validation() {
+
+		let isValid = true;
+
+		/* 0. 이용 약관 중 1개라도 동의를 선택하지 않은 경우 */
+		let chkCnt = $("input[name=arrChkTrmsSn]:checked").length;
+		if( chkCnt == 0 ){
+			alert("<spring:message code='result-message.messages.join.message.trms.required.checked.data01'/>"); // '필수 이용약관에 동의해 주세요.'
+			isValid = false;
+			return false;
+		}
+
+		/* 1. 이용약관 체크 검사 */
+		if( ! $("#chk01").is(":checked") ) {
+			alert("<spring:message code='result-message.messages.join.message.trms.required.checked.data02' arguments='이용약관 동의'/>"); // '{0} : 필수 체크 사항입니다.'
+			isValid = false;
+			return false;
+		}
+
+		/* 2. 개인정보처리방침 체크 검사 */
+		/*
+		if( ! $("#chk02").is(":checked") ) {
+			alert("<spring:message code='result-message.messages.join.message.trms.required.checked.data02' arguments='개인정보처리방침'/>"); // '{0} : 필수 체크 사항입니다.'
+			isValid = false;
+			return false;
+		}
+		*/
+
+		/* 3. 개인정보 수집·이용 필수 체크 검사 */
+		if( ! $("#chk03").is(":checked") ) {
+			alert("<spring:message code='result-message.messages.join.message.trms.required.checked.data02' arguments='개인정보 수집·이용 필수 약관'/>"); // '{0} : 필수 체크 사항입니다.'
+			isValid = false;
+			return false;
+		}
+
+		/* 4. 개인정보 수집·이용 선택 체크 검사 */
+		if( ! $("#chk04").is(":checked") ) {
+			alert("<spring:message code='result-message.messages.join.message.trms.required.checked.data02' arguments='개인정보 수집·이용 선택 약관'/>"); // '{0} : 필수 체크 사항입니다.'
+			isValid = false;
+			return false;
+		}
+
+		/* 5. 저작권 정책 체크 검사 */
+		/*
+		if( ! $("#chk05").is(":checked") ) {
+			alert("<spring:message code='result-message.messages.join.message.trms.required.checked.data02' arguments='저작권 정책 동의'/>"); // '{0} : 필수 체크 사항입니다.'
+			isValid = false;
+			return false;
+		}
+		*/
+
+		/* 6. 만 14세 이상 이용확인 체크 검사 */
+		if( ! $("#chk06").is(":checked") ) {
+			alert("<spring:message code='result-message.messages.join.message.trms.required.checked.data03'/>"); // '만 14세 미만은 이용불가 서비스 입니다.'
+			isValid = false;
+			return false;
+		}
+
+		return isValid;
+
+	}
+
+	/*
+	 * 함수명 : fn_joinUserInfo
+	 * 설   명 : 회원 가입 정보 페이지 이동
+	 */
+	function fn_joinUserInfo() {
+
+		// 0. 유효성 검사
+		if(! fn_validation() ){
+			return;
+		}
+
+		// 1. 페이지 이동
+		$("#frm_join").attr("method", "POST");
+		$("#frm_join").attr("action", "/join/joinUserInfo");
+		$("#frm_join").submit();
+
+	}
+
+</script>
+
+	<!-- ===== header ====== -->
+	<header id="header">
+		<div id="sub-mv" class="sub-join">
+			<div class="inner">
+				<h2>회원가입</h2>
+				<!-- <p>시험인증 빅데이터<br class="mo-block"> 플랫폼 회원가입 입니다.</p> -->
+				<div class="sub-obj">오브젝트</div>
+			</div>
+		</div>
+	</header>
+	<!-- ===== /header ====== -->
+
+
+	<!-- ===== container ====== -->
+	<div id="container">
+		<!-- <div id="breadcrumb-wr">
+			<div class="inner">
+				<a href="/" class="home">처음으로</a>
+				<div class="bcb-wrap">
+					<p class="breadcrumb">플랫폼 소개</p>
+					<div class="snb-sbox">
+						<ul>
+							<li><a href="">데이터활용</a></li>
+							<li><a href="">내 손안의 시험인증</a></li>
+							<li><a href="">참여기관 라운지</a></li>
+							<li><a href="">커뮤니티</a></li>
+						</ul>
+					</div>
+				</div>
+				<div class="bcb-wrap">
+					<p class="breadcrumb">참여기관 소개</p>
+					<div class="snb-sbox">
+						<ul>
+							<li><a href="">시험인증 빅데이터 플랫폼 소개</a></li>
+							<li><a href="">참여기관 소개</a></li>
+							<li><a href="">시험인증 산업 소개</a></li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div> -->
+
+		<!--container-->
+		<div id="cont" class="cont-join join-agree">
+			<!--tit-->
+			<div class="cont-agree-tit">
+			<h2 class="tit">약관동의</h2>
+			<ul class="step-ul"><!--스텝에 갈때 해당 li에 on-->
+				<li class="on">
+				<em></em>
+				<p>약관동의</p>
+				</li>
+				<li><i></i></li>
+				<li>
+				<em></em>
+				<p>정보입력</p>
+				</li>
+				<li><i></i></li>
+				<li>
+				<em></em>
+				<p>가입완료</p>
+				</li>
+			</ul>
+			</div>
+
+			<!--약관 form-->
+			<form action="/join/joinUserInfo" method="post" id="frm_join" name="frm_join">
+
+				<input type="hidden" id="targetUserTypeCd" 	name="targetUserTypeCd" value="${joinData.targetUserTypeCd}" />
+
+				<h3 class="stit">이용약관</h3>
+				<div class="info-rect tBr" style="overflow-y: auto;">
+					${joinTrms01.trmsCn}
+				</div>
+				<label for="chk01" class="chk-f">
+					<input type="checkbox" id="chk01" name="arrChkTrmsSn" value="${joinTrms01.trmsSn}"><span>“이용약관” 약관에 동의합니다. <strong>(필수)</strong></span>
+				</label>
+
+				<!--<h3 class="stit">개인정보처리방침</h3>
+				<div class="info-rect tBr" style="overflow-y: auto;">
+					${joinTrms02.trmsCn}
+				</div>
+				<label for="chk02" class="chk-f">
+					<input type="checkbox" id="chk02" name="arrChkTrmsSn" value="${joinTrms02.trmsSn}"><span>“개인정보처리방침” 약관에 동의합니다. <strong>(필수)</strong></span>
+				</label>-->
+
+				<h3 class="stit">개인정보 수집·이용 필수 약관</h3>
+				<div class="info-rect tBr" style="overflow-y: auto;">
+					${joinTrms03.trmsCn}
+				</div>
+				<label for="chk03" class="chk-f">
+					<input type="checkbox" id="chk03" name="arrChkTrmsSn" value="${joinTrms03.trmsSn}"><span>“개인정보 수집·이용 필수” 약관에 동의합니다. <strong>(필수)</strong></span>
+				</label>
+
+				<h3 class="stit">개인정보 수집·이용 선택 약관</h3>
+				<div class="info-rect tBr" style="overflow-y: auto;">
+					${joinTrms04.trmsCn}
+				</div>
+				<label for="chk04" class="chk-f">
+					<input type="checkbox" id="chk04" name="arrChkTrmsSn" value="${joinTrms04.trmsSn}"><span>“개인정보 수집·이용 선택” 약관에 동의합니다. <strong>(필수)</strong></span>
+				</label>
+
+				<!--<h3 class="stit">저작권 정책</h3>
+				<div class="info-rect tBr" style="overflow-y: auto;">
+					${joinTrms05.trmsCn}
+				</div>
+				<label for="chk05" class="chk-f">
+					<input type="checkbox" id="chk05" name="arrChkTrmsSn" value="${joinTrms05.trmsSn}"><span>“저작권 정책” 약관에 동의합니다. <strong>(필수)</strong></span>
+				</label>-->
+
+				<label for="chk06" class="chk-f bMg0">
+					<input type="checkbox" id="chk06" name="arrChkTrmsSn" value="${joinTrms06.trmsSn}"><span>만 14세 이상입니다. <strong>(필수)</strong></span>
+				</label>
+				<!--<div class="info-rect info-age">
+					${joinTrms06.trmsCn}
+				</div>-->
+				<br></br>
+
+				<label for="chkAll" class="chk-f bd-wr">
+					<input type="checkbox" id="chkAll" name="chkAll"><span>회원서비스 이용을 위한 약관에 모두 동의합니다.</span>
+				</label>
+
+				<div class="btn-wr">
+					<a href="/" class="btn cancel">취소</a>
+					<a href="javascript:void(0);" class="btn" onclick="fn_joinUserInfo();">동의하기</a>
+				</div>
+			</form>
+		</div>
+	</div>
+	<!-- ===== /container ====== -->

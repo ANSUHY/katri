@@ -1,0 +1,54 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+
+<%@ page isErrorPage="true"%>
+<%response.setStatus(200);%>
+<!DOCTYPE html>
+<html lang="ko">
+
+	<head>
+
+		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+		<meta name="format-detection" content="telephone=no">
+		<meta name="format-detection" content="email=no">
+		<title>시험인증 빅데이터 플랫폼</title>
+		<meta name="description" content="">
+		<meta name="keywords" content="">
+
+		<script type="text/javascript">
+			function fn_main(){
+				location.href='/';
+			}
+		</script>
+
+		<style type="text/css">
+			.error_frame{margin-top:45px;padding:60px 80px;background:#f5f5f5;text-align:center;}
+			.error_frame .errorimg{margin-bottom:15px;}
+			.error_copy01{letter-spacing:-.5px;font-weight:500;font-size:25px;color:#e02f2f;}
+			.error_copy01 span{display:block;}
+			.error_copy02{margin:15px 0 25px;letter-spacing:1px;font-weight:300;font-size:15px;color:#636363;}
+			.error_copy02 span{display:block;}
+		</style>
+
+	</head>
+
+	<body>
+		<div id="wrap">
+			<div class="contentsInner">
+				<!--error st-->
+					<div class="error_frame">
+						<div class="errorimg"><img src="/asset/images/error_ico.png" alt=""></div>
+						<div class="error_copy01"><span>죄송합니다.</span>요청하신 페이지를 찾을 수 없습니다.</div>
+						<div class="error_copy02">
+							<span>현재 페이지가 존재하지 않거나, 현재 이용할 수 없는 페이지 입니다.</span>
+							이용에 불편함을 드려 죄송합니다. 조속히 해결하도록 하겠습니다.
+						</div>
+						<button style="cursor:pointer;" class="button_default maingo" onclick="fn_main();">메인페이지로 이동</button>
+					</div>
+				<!--error ed-->
+			</div>
+		</div>
+	</body>
+
+</html>

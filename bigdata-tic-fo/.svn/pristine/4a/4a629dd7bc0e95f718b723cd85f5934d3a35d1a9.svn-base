@@ -1,0 +1,162 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags"%>
+
+<script type="text/javascript">
+
+	$(document).ready(function() {
+
+		// 로그인 엔터 처리
+		$(document).on("keydown", ".loginInput", function(key) {
+			if(key.keyCode==13)
+				fn_login();
+		});
+
+	});
+
+	/*
+	 * 함수명 : fn_login
+	 * 설   명 : 로그인
+	 */
+	 function fn_login() {
+
+		let count = 0;
+
+		/* ======= 1. 유효성검사 */
+		// 1-1. 아이디 빈값
+		if (fn_emptyCheck($("#frm_login #loginId").val())) {
+			alert("<spring:message code='result-message.messages.login.message.required.loginid.data'/>"); //'아이디를 입력해 주세요.'
+			count++;
+			return;
+		}
+
+		// 1-2. 비밀번호 빈값
+		if (fn_emptyCheck($("#frm_login #loginPwd").val())) {
+			alert("<spring:message code='result-message.messages.login.message.required.loginpwd.data'/>"); //'비밀번호를 입력해 주세요.'
+			count++;
+			return;
+		}
+
+		/* ======= 2. 로그인 처리 */
+		if (count == 0) {
+
+			$.blockUI();
+
+			$.ajax({
+				url	 		: "/auth/processLogin"
+				, type 		: "POST"
+				, dataType 	: "json"
+				, data 		: $("#frm_login").serialize()
+				, success 	: function(result) {
+					$.unblockUI();
+
+					if (result.resultCode === 200) {
+
+						//입력한 ID form에 셋팅
+						$("#frm_loginIdData #tagetLoginId").val($("#frm_login #loginId").val());
+
+						let resultData = result.data;
+						let sLoginResCode = resultData.loginResCode;
+
+						if(sLoginResCode === "fail_noMatchId"){//----------------------- loginId로 조회한 값이 없을 경우
+
+							alert("<spring:message code='result-message.messages.login.message.not.user.password'/>"); // '회원 아이디 또는 비밀번호가 일치하지 않습니다.'
+
+						} else if(sLoginResCode === "fail_overFailCnt") {//------------- 3회 입력 실패로 잠금 상태
+
+							$("#frm_loginIdData").attr("action", "/auth/overFailCntInfo").submit();
+
+						} else if(sLoginResCode === "fail_noMatchPwd") {//--------------- password가 맞지않을 경우
+
+							alert("<spring:message code='result-message.messages.login.message.not.user.password'/>"); // '회원 아이디 또는 비밀번호가 일치하지 않습니다.'
+
+						} else if(sLoginResCode === "fail_sttJoinApply"){//-------------- 상태코드 : [가입 신청]일 경우
+
+							$("#frm_loginIdData").attr("action", "/auth/joinApplyInfo").submit();
+
+						} else if(sLoginResCode === "fail_sttDrmncy"){//------------------ 상태코드 : [휴면]일 경우
+
+							$("#frm_loginIdData").attr("action", "/auth/drmncyInfo").submit();
+
+						} else if(sLoginResCode === "fail_sttWIthdrawalApply"){//--------- 상태코드 : [탈퇴 신청]일 경우
+
+							$("#frm_loginIdData").attr("action", "/auth/wIthdrawalApplyInfo").submit();
+
+						} else if(sLoginResCode === "fail_sttNoNomal"){//----------------- 상태코드 : 정상이 아닐경우
+
+							alert("<spring:message code='result-message.messages.login.message.fail'/>"); // '회원 아이디 또는 비밀번호가 일치하지 않습니다.'
+
+						} else if(sLoginResCode === "success"){//------------------------- 성공시
+
+							if(resultData.overDayLastPwdChgDt === 'Y'){ //성공 + 비밀번호가 90일 넘었을때
+								location.href = "/auth/overDayChgPwdInfo";
+							} else {
+								location.href = "/"
+							}
+
+						}
+
+					} else {
+						alert(result.resultMessage);
+					}
+				}
+			});
+
+		}
+	}
+
+	/*
+	 * 함수명 : fn_login
+	 * 설   명 : 회원 가입 > 회원유형 선택 페이지 이동
+	*/
+	function fn_join() {
+		location.href = "/join/joinUserType";
+	}
+
+</script>
+
+<!-- ===== header ====== -->
+<header id="header">
+	<div id="sub-mv" class="sub-mem">
+		<div class="inner">
+			<h2>로그인</h2>
+			<div class="sub-obj">오브젝트</div>
+		</div>
+	</div>
+</header>
+<!-- ===== /header ====== -->
+
+<!-- ===== container ====== -->
+<div id="container">
+
+	<!--container-->
+	<div id="cont" class="cont-login">
+		<section class="login-wr">
+
+			<h2 class="tit">시험인증 빅데이터 플랫폼</h2>
+			<p class="stit">등록하신 아이디와 패스워드로 로그인 해주세요</p>
+
+			<article class="inner">
+
+				<form method="post" id="frm_loginIdData" name="frm_loginIdData" >
+					<input type="hidden" id="tagetLoginId"  name="loginId" value=""/>
+				</form>
+
+				<form id="frm_login" name="frm_login" method="post" onSubmit="return false;">
+					<input type="text" 		id="loginId"	name="loginId"	placeholder="아이디를 입력해주세요." 		class="loginInput inp-id" title="아이디"/>
+					<input type="password" 	id="loginPwd"	name="loginPwd" placeholder="비밀번호를 입력해주세요." 	class="loginInput inp-pw" title="password"/>
+
+					<button type="button" class="btn" onclick="fn_login();">로그인</button>
+				</form>
+
+				<div class="btn-wr" style="width:100%; text-align:center; display:block;">
+					<a href="/auth/findId">아이디 찾기</a>
+					<a href="/auth/resetPwd">비밀번호 재설정</a>
+					<a href="javascript:void(0);" onclick="fn_join();">회원가입</a>
+				</div>
+			</article>
+
+		</section>
+	</div>
+</div>
+<!-- ===== /container ====== -->

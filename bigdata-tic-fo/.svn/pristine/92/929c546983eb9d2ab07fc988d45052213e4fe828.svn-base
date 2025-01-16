@@ -1,0 +1,605 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="c"		uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="cm" 		uri="/WEB-INF/tlds" %>
+<%@ taglib prefix="spring"	uri="http://www.springframework.org/tags" %>
+
+<%@ page import="com.katri.common.Const" %>
+<c:set var="ROW_COUNT" value="<%=Const.Paging.ROW_COUNT%>" />
+
+<!-- select2 css 수정 -->
+<style>
+	.select2-container .select2-selection--single{
+		height: var(--w-40);
+		color : var(--grey-767);
+		font-size : var(--font-size-14);
+	}
+	.md-rect .select2-container .select2-selection--single{
+		margin-bottom : var(--w-10);
+	}
+	.select2-container--default .select2-selection--single .select2-selection__rendered {
+		line-height: var(--w-40);
+	}
+	.select2-container--default .select2-selection--single .select2-selection__arrow {
+		height: var(--w-40);
+		line-height: var(--w-40);
+	}
+	.select2-container--default .select2-search--dropdown .select2-search__field {
+		height: 35px;
+	}
+	/*툴팁*/
+	.tooltip-text {
+		display: none;
+		position: absolute;
+		width: 355px;
+		border: 1px solid;
+		border-radius: 5px;
+		padding: 5px;
+		font-size: 0.8em;
+		color: #FFFFFF;
+		background: #4e637e;
+		text-align:left;
+	}
+</style>
+
+<script type="text/javascript">
+
+	/* 진입인지(데이터가 없을때 문장여부 결정지음) */
+	let isItYN = false;
+
+	/* 뒤로가기 시 스크롤 이동을 위한 초기화 */
+	window.onpageshow = function(event){
+		if(event.persisted || (window.performance && window.performance.navigation.type == 2)){
+			$("#targetInstId").val("");
+			$("#targetCertNo").val("");
+		}
+	}
+
+	$(document).ready(function() {
+
+		/* 초기 작업 */
+		fn_myCertListInit();
+
+		/* data 가져오기 _ 모바일이나 PC둘다 초기 셋팅은 같게 해놓음 */
+		fn_searchMyCertList('p', $("#currPage").val());
+
+		/* 툴팁 관련 처리 */
+		$(document).on("mouseenter", "#img_cert_info", function() {
+			if($("#board-lst").hasScrollBar()){
+				$("div.tooltip-text").css("left", "calc(10%)");
+			} else {
+				$("div.tooltip-text").css("left", $(this).css("left"));
+			}
+			$("div.tooltip-text").show();
+		});
+		$(document).on("mouseleave", "#img_cert_info", function() {
+			$("div.tooltip-text").hide();
+		});
+
+	});
+
+	/*
+	 * 함수명 : hasScrollBar
+	 * 설	 명 : 스크롤 여부 (true of false)
+	 */
+	$.fn.hasScrollBar = function() {
+		return (this.prop("scrollWidth") == 0 && this.prop("clientWidth") == 0) || (this.prop("scrollWidth") > this.prop("clientWidth"));
+	};
+
+	/*
+	 * 함수명 : fn_myCertListInit()
+	 * 설	 명 : 초기 작업
+	 */
+	function fn_myCertListInit() {
+
+		//진입여부 TRUE로 바꿔주기
+		isItYN = true;
+
+		//제품분류 select2 적용
+		$("select[id$='SPrdtClfCd']").select2();
+
+		// PC 검색어 엔터 처리
+		$(document).on("keydown", ".searchInput", function(key) {
+			if(key.keyCode==13)
+				fn_searchMyCertList('p', 1);
+		});
+
+	}
+
+	/*
+	 * 함수명 : fn_searchMyCertList(schType, p_page)
+	 * 설	 명 : 검색할 경우(페이징x_페이징은 따로있음)
+	 * @param schType : m(모바일), p(PC)
+	*/
+	function fn_searchMyCertList(schType, p_page) {
+
+		/* ======== 1. 유효성 검사 */
+
+		/* ======== 2. frm에 데이터 셋팅 */
+		// 2-1. 검색조건 셋팅
+		let inputList	= $("#" + schType + "SchInner").find("input:text");//input태그 리스트
+		let selectList 	= $("#" + schType + "SchInner").find("select"); //select태그 리스트
+		/* 2-2-1. inupt태그 리스트 */
+		for (let i = 0 ; i < inputList.length ; i++) {
+			let name = $(inputList[i]).attr('name');
+			name = name.substr(2);	//mS, pS빼기
+			$("#frm_myCertList #sch" +name).val($(inputList[i]).val());
+		}
+		/* 2-2-2. select태그 리스트 */
+		for (let i = 0 ; i < selectList.length ; i++) {
+			let name = $(selectList[i]).attr('name');
+			name = name.substr(2);	//mS, pS빼기
+			$("#frm_myCertList #sch"+name).val($(selectList[i]).val());
+		}
+
+		/* ======== 3. data 가져오기 */
+		fn_getMyCertList(p_page);
+
+	}
+
+	/*
+	 * 함수명 : fn_goPageMyCertList(p_page)
+	 * 설	 명 : 페이징(검색X_검색은 따로있음)
+	*/
+	function fn_goPageMyCertList(p_page) {
+
+		/* ======== 1. 유효성 검사 */
+
+		/* ======== 2. frm에 데이터 셋팅 */
+
+		/* ======== 3. data 가져오기 */
+		fn_getMyCertList(p_page);
+
+	}
+
+	/*
+	 * 함수명 : fn_getMyCertList(p_page)
+	 * 설	 명 : myCertList data 가져오기
+	*/
+	function fn_getMyCertList(p_page) {
+
+		/* html비우기 */
+		$("#areaMyCert").html("");
+		$("#areaMycertPaging").html("");
+
+		/* 페이지 셋팅 */
+		if ( fn_emptyCheck(p_page) ){
+			p_page = 1;
+		}
+		$("#currPage").val(p_page);
+
+		/* Paging Row Count 셋팅 */
+		$("#frm_myCertList #rowCount").val(${ROW_COUNT});
+
+		/* 리스트 가져오기 */
+		$.blockUI();
+		$.ajax({
+			url	 		: "/platformSvc/myData/myInfoCert/getMyCertList"
+			, type 		: "GET"
+			, dataType 	: "json"
+			, data 		: $("#frm_myCertList").serialize()
+			, success 	: function(jsonData, textStatus, jqXHR) {
+				$.unblockUI();
+
+				/* myCertList data 가져오고 난후 */
+				fn_afterGetMyCertList(jsonData);
+
+			}
+		});
+
+	}
+
+	/*
+	 * 함수명 : fn_afterGetMyCertList(jsonData)
+	 * 설	 명 : myCertList data 가져오고 난후
+	*/
+	function fn_afterGetMyCertList(jsonData){
+
+		/* html 셋팅 */
+		let html = '';
+		if(jsonData.resultCode === 200){
+
+			if(jsonData.data.list !== null && jsonData.data.list.length > 0){ /* 데이터가 있을 경우 */
+
+				// 1. 리스트 html 만들기
+				$.each(jsonData.data.list, function(index, data){
+					html += fn_returnMyCertListHtml(data);
+				})
+
+				// 2. 페이징 뿌리기
+				fn_makePaging2("#areaMycertPaging", jsonData.data.totCnt, $("#currPage").val(), $("#rowCount").val(), "fn_goPageMyCertList");
+
+			} else { /* 데이터가 없을 경우 */
+
+				//진입 여부에 따라 메시지 셋팅
+				let noDataMsg = "";
+				if(isItYN){
+					noDataMsg = "<spring:message code='result-message.messages.cert.data.message.no.data'/>"; // 등록된 인증 정보가 없습니다.
+				} else {
+					noDataMsg = "<spring:message code='result-message.messages.cert.data.message.no.search'/>"; // 검색 결과가 없습니다.
+				}
+
+				// 리스트 html 만들기
+				html += '<tr><td colspan="10" class="no-data">' + noDataMsg + '</td></tr>';
+
+			}
+
+			//3. 리스트 뿌리기
+			$("#areaMyCert").append(html);
+
+		} else {
+			alert(jsonData.resultMessage);
+		}
+
+		/* 진입여부 FALSE로 바꿔주기 */
+		if(isItYN){
+			isItYN = false;
+		}
+
+		/* 스크롤 이동 */
+		if ( (!fn_emptyCheck($("#targetInstId").val())) && (!fn_emptyCheck($("#targetCertNo").val())) ) {
+			fn_moveScrollMyCert( $("#targetInstId").val(), $("#targetCertNo").val() );
+		}
+
+	}
+
+	/*
+	 * 함수명 : fn_returnMyCertListHtml
+	 * 설	 명 : List html생성
+	*/
+	function fn_returnMyCertListHtml(data){
+		let returnHtml = "";
+
+		/* 1. html생성*/
+		returnHtml += '<tr class="board-tr" style="cursor:pointer;" id="myCertTr_' + data.instId + '_' + data.certNo + '" onclick="fn_goMyCertDetail(\'' + data.instId + '\', \'' + data.certNo + '\')">';
+		returnHtml += '		<td>' + data.rownum + '</td>';
+		returnHtml += '		<td>' + data.certYmdFmt + '</td>';
+		returnHtml += '		<td>' + data.instKoEngNm + '</td>';
+		returnHtml += '		<td>' + data.prdtNm + '</td>';
+		returnHtml += '		<td>' + data.mdlNm + '</td>';
+		returnHtml += '		<td>' + data.certNo + '</td>';
+		returnHtml += '		<td>' + data.certSttNm + '</td>';
+		returnHtml += '		<td>' + data.certEndYmdFmt + (data.certEndMinusDay < 0 ? ' (D' + data.certEndMinusDay + ')' : '') + '</td>';
+		returnHtml += '		<td>' + data.haveCertAditInfo + '</td>';
+		returnHtml += '		<td>' + data.haveQrImgFile + '</td>';
+		returnHtml += '</tr>';
+
+		return returnHtml;
+	}
+
+	/*
+	 * 함수명 : fn_moveScrollMyCert
+	 * 설	 명 : 스크롤 처리
+	*/
+	function fn_moveScrollMyCert(instId, certNo) {
+
+		if ( (!fn_emptyCheck(instId)) && (!fn_emptyCheck(certNo)) ) {
+			if(document.getElementById("myCertTr_" + instId + '_' + certNo) !== null){
+				document.getElementById("myCertTr_" + instId + '_' + certNo).scrollIntoView({behavior: "smooth", block: "center"});
+			}
+			$("#targetInstId").val("");
+			$("#targetCertNo").val("");
+		}
+
+	}
+
+	/*
+	 * 함수명 : fn_resetSearch(schType)
+	 * 설	 명 : 검색 조건 초기화
+	 * @param schType : m(모바일), p(PC)
+	 */
+	function fn_resetSearch(schType) {
+
+		let inputList	= $("#" + schType + "SchInner").find("input:text");//input태그 리스트
+		let selectList 	= $("#" + schType + "SchInner").find("select"); //select태그 리스트
+
+		for (var i = 0 ; i < inputList.length ; i++) {
+			$(inputList[i]).val("");
+		}
+		for (var i = 0 ; i < selectList.length ; i++) {
+			$(selectList[i]).val("");
+		}
+
+		/* select2 리셋 */
+		$("#" + schType + "SPrdtClfCd").trigger("change");
+
+	}
+
+	/*
+	 * 함수명 : fn_goMyCertDetail
+	 * 설	 명 : 상세 페이지로 이동
+	*/
+	function fn_goMyCertDetail(instId, certNo) {
+
+		$("#frm_myCertList #targetInstId").val(instId);
+		$("#frm_myCertList #targetCertNo").val(certNo);
+		$("#frm_myCertList").attr("method", "GET");
+		$("#frm_myCertList").attr("action", "/platformSvc/myData/myInfoCert/myCertDetail");
+		$("#frm_myCertList").submit();
+	}
+
+	/*
+	 * 함수명 : fn_downExcelMyCert()
+	 * 설	 명 : 엑셀다운로드(아래 리스트대로_검색조건 바꾸고 해도 리스트대로나옴)
+	*/
+	function fn_downExcelMyCert() {
+		$("#frm_myCertList").attr("action", "/platformSvc/myData/myInfoCert/downExcelMyCertList");
+		$("#frm_myCertList").attr("method", "GET");
+		$("#frm_myCertList").submit();
+	}
+
+
+</script>
+
+<!-- ===== header ====== -->
+<header id="header">
+	<div id="sub-mv" class="sub-myservice">
+		<div class="inner">
+			<h2>플랫폼 서비스</h2>
+			<div class="sub-obj">오브젝트</div>
+		</div>
+	</div>
+</header>
+<!-- ===== /header ====== -->
+
+<!-- ===== container ====== -->
+<div id="container">
+
+	<!--breadcrumb-wr-->
+	<jsp:include page="/WEB-INF/views/layout/breadcrumbWr.jsp">
+		<jsp:param name="menuTopNo" value="02"/>
+		<jsp:param name="menuSubNo" value="0201"/>
+	</jsp:include>
+	<!-- // breadcrumb-wr-->
+
+	<!--container-->
+	<div id="cont" class="cont-myservice board-myservice">
+
+		<!-- 검색 조건 -->
+		<form method="get" name="frm_myCertList" 	id="frm_myCertList">
+
+			<input type="hidden" name="rowCount" 		id="rowCount" 			value="${schDatamyCert.rowCount}"/>
+			<input type="hidden" name="currPage" 		id="currPage"			value="${schDatamyCert.currPage}"/>
+
+			<input type="hidden" name="targetInstId" 	id="targetInstId" 		value="${schDatamyCert.targetInstId}"/> <!-- Detail 갈때 기관아이디 -->
+			<input type="hidden" name="targetCertNo" 	id="targetCertNo" 		value="${schDatamyCert.targetCertNo}"/> <!-- Detail 갈때 인증번호 -->
+
+			<input type="hidden" name="schInstId" 		id="schInstId" 			value="${schDatamyCert.schInstId}"/>	<!-- [검색:인증기관]	-->
+			<input type="hidden" name="schCertNo" 		id="schCertNo" 			value="${schDatamyCert.schCertNo}"/>	<!-- [검색:인증번호]	-->
+			<input type="hidden" name="schMkrNm" 		id="schMkrNm" 			value="${schDatamyCert.schMkrNm}"/>		<!-- [검색:제조업체명]	-->
+			<input type="hidden" name="schMdlNm" 		id="schMdlNm" 			value="${schDatamyCert.schMdlNm}"/>		<!-- [검색:모델명]	-->
+			<input type="hidden" name="schIptrNm" 		id="schIptrNm" 			value="${schDatamyCert.schIptrNm}"/>	<!-- [검색:수입업체명]	-->
+			<input type="hidden" name="schPhotoYN" 		id="schPhotoYN" 		value="${schDatamyCert.schPhotoYN}"/>	<!-- [검색:사진유무]	-->
+			<input type="hidden" name="schCertYmdF" 	id="schCertYmdF" 		value="${schDatamyCert.schCertYmdF}"/>	<!-- [검색:인증일자_시작일]	-->
+			<input type="hidden" name="schCertYmdT" 	id="schCertYmdT" 		value="${schDatamyCert.schCertYmdT}"/>	<!-- [검색:인증일자_끝일]	-->
+			<input type="hidden" name="schSttCd" 		id="schSttCd" 			value="${schDatamyCert.schSttCd}"/>		<!-- [검색:인증상태]	-->
+			<input type="hidden" name="schPrdtClfCd" 	id="schPrdtClfCd" 		value="${schDatamyCert.schPrdtClfCd}"/>	<!-- [검색:제품분류]	-->
+			<input type="hidden" name="schPrdtNm" 		id="schPrdtNm" 			value="${schDatamyCert.schPrdtNm}"/>	<!-- [검색:제품명]	-->
+
+		</form>
+		<!--// 검색 조건	-->
+
+		<!--tit-->
+		<div class="cont-platform-tit">
+			<h2 class="tit">나의 시험인증 정보조회</h2>
+		</div>
+		<!--// tit-->
+
+		<!--서브메뉴-->
+		<ul class="sub-tabs grid3 type02">
+			<li class="on"><a href="/platformSvc/myData/myInfoCert/myCertList">인증</a></li>
+			<li class=""><a href="/platformSvc/myData/myInfoCert/myRprtList">성적서</a></li>
+			<li class=""><a href="/platformSvc/myData/myInfoCert/svcMng">서비스 관리</a></li>
+		</ul>
+
+		<!-- ===== 검색 :::::: 모바일 modal ====== -->
+		<div class="test-sch-md" id="mSchInner">
+			<div class="md-rect">
+				<a href="javascript:void(0);" class="btn-close">닫기</a>
+				<h3 class="md-tit">상세 검색</h3>
+				<div class="sch-wr">
+					<dl class="sch-lst">
+						<dt>인증기관</dt>
+						<dd>
+							<select class="select" name="mSInstId">
+								<option value="">전체</option>
+								<c:forEach items="${coInstList}" var="item">
+									<option value="${item.lsInstId}" ${item.lsInstId eq schDatamyCert.schInstId ? "selected" : ""} >${item.lsInstNm}</option>
+								</c:forEach>
+							</select>
+						</dd>
+						<dt>인증번호</dt>
+						<dd>
+							<input type="text" placeholder="입력하세요" name="mSCertNo" value="${schDatamyCert.schCertNo}"/>
+						</dd>
+						<dt>제조업체</dt>
+						<dd>
+							<input type="text" placeholder="입력하세요" name="mSMkrNm" value="${schDatamyCert.schMkrNm}"/>
+						</dd>
+						<dt>모델명</dt>
+						<dd>
+							<input type="text" placeholder="입력하세요" name="mSMdlNm" value="${schDatamyCert.schMdlNm}"/>
+						</dd>
+						<dt>수입업체</dt>
+						<dd>
+							<input type="text" placeholder="입력하세요" name="mSIptrNm" value="${schDatamyCert.schIptrNm}"/>
+						</dd>
+						<dt>사진유무</dt>
+						<dd>
+							<select class="select" name="mSPhotoYN">
+								<option value="">전체</option>
+								<option value="Y" ${ "Y" eq schDatamyCert.schPhotoYN ? "selected" : ""}>유</option>
+								<option value="N" ${ "N" eq schDatamyCert.schPhotoYN ? "selected" : ""}>무</option>
+							</select>
+						</dd>
+						<dt>인증일자</dt>
+						<dd>
+							<input type="text" id="tblDatepicker01" placeholder="시작일"	readonly="readonly" name="mSCertYmdF" value="${schDatamyCert.schCertYmdF}"/>
+							<input type="text" id="tblDatepicker02" placeholder="종료일"	readonly="readonly" name="mSCertYmdT" value="${schDatamyCert.schCertYmdT}"/>
+						</dd>
+						<dt>인증상태</dt>
+						<dd>
+							<select class="select" name="mSSttCd">
+								<option value="">전체</option>
+								<c:forEach items="${certSttList}" var="item">
+									<option value="${item.lsDtlCd}" ${item.lsDtlCd eq schDatamyCert.schSttCd ? "selected" : ""} >${item.lsDtlCdNm}</option>
+								</c:forEach>
+							</select>
+						</dd>
+						<dt>제품분류</dt>
+						<dd>
+							<select class="select wd30" name="mSPrdtClfCd" id="mSPrdtClfCd" style="width: 100%;">
+								<option value="">전체</option>
+								<c:forEach items="${prdtClfList}" var="item">
+								<option value="${item.lsSttyPrdtClfCd}" ${item.lsSttyPrdtClfCd eq schDatamyCert.schPrdtClfCd ? "selected" : ""} >${item.lsSttyPrdtDtclfNm}</option>
+							</c:forEach>
+							</select>
+						</dd>
+						<dt>제품명</dt>
+						<dd>
+							<input type="text" placeholder="입력하세요" name="mSPrdtNm" value="${schDatamyCert.schPrdtNm}"/>
+						</dd>
+					</dl>
+					<div class="btn-wr">
+						<a href="javascript:void(0);" onclick="fn_resetSearch('m')" class="btn md-b btn-test-reset">초기화</a>
+						<a href="javascript:void(0);" onclick="fn_searchMyCertList('m')" class="btn md-r btn-test-sch">검색</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--// ===== 검색 :::::: 모바일 modal ====== -->
+
+		<!-- ====== 검색 :::::: PC용 ====== -->
+		<div class="mysvc-sch-wr" id="pSchInner">
+
+			<table class="tbl">
+				<tr>
+					<th>인증기관</th>
+					<td>
+						<select class="select" name="pSInstId">
+							<option value="">전체</option>
+							<c:forEach items="${coInstList}" var="item">
+								<option value="${item.lsInstId}" ${item.lsInstId eq schDatamyCert.schInstId ? "selected" : ""} >${item.lsInstNm}</option>
+							</c:forEach>
+						</select>
+					</td>
+					<th>인증번호</th>
+					<td>
+						<input type="text" placeholder="입력하세요" name="pSCertNo" class="searchInput" value="${schDatamyCert.schCertNo}"/>
+					</td>
+					<th>제조업체</th>
+					<td>
+						<input type="text" placeholder="입력하세요" name="pSMkrNm" class="searchInput" value="${schDatamyCert.schMkrNm}"/>
+					</td>
+				</tr>
+				<tr>
+					<th>모델명</th>
+					<td>
+						<input type="text" placeholder="입력하세요" name="pSMdlNm" class="searchInput" value="${schDatamyCert.schMdlNm}"/>
+					</td>
+					<th>수입업체</th>
+					<td>
+						<input type="text" placeholder="입력하세요" name="pSIptrNm" class="searchInput" value="${schDatamyCert.schIptrNm}"/>
+					</td>
+					<th>사진유무</th>
+					<td>
+						<select class="select" name="pSPhotoYN">
+							<option value="">전체</option>
+							<option value="Y" ${ "Y" eq schDatamyCert.schPhotoYN ? "selected" : ""}>유</option>
+							<option value="N" ${ "N" eq schDatamyCert.schPhotoYN ? "selected" : ""}>무</option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th>인증일자</th>
+					<td colspan="3">
+						<input type="text" name="pSCertYmdF" id="tblDatepicker03" placeholder="시작일" readonly="readonly" value="${schDatamyCert.schCertYmdF}"/><span class="wd30">~</span><input type="text" name="pSCertYmdT" id="tblDatepicker04" placeholder="종료일" readonly="readonly" value="${schDatamyCert.schCertYmdT}"/>
+					</td>
+					<th>인증상태</th>
+					<td>
+						<select class="select" name="pSSttCd">
+							<option value="">전체</option>
+							<c:forEach items="${certSttList}" var="item">
+								<option value="${item.lsDtlCd}" ${item.lsDtlCd eq schDatamyCert.schSttCd ? "selected" : ""} >${item.lsDtlCdNm}</option>
+							</c:forEach>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<th>제품분류</th>
+					<td colspan="3">
+						<select class="select wd30" name="pSPrdtClfCd" id="pSPrdtClfCd" style="width: 100%;">
+							<option value="">전체</option>
+							<c:forEach items="${prdtClfList}" var="item">
+								<option value="${item.lsSttyPrdtClfCd}" ${item.lsSttyPrdtClfCd eq schDatamyCert.schPrdtClfCd ? "selected" : ""} >${item.lsSttyPrdtDtclfNm}</option>
+							</c:forEach>
+						</select>
+					</td>
+					<th>제품명</th>
+					<td>
+						<input type="text" placeholder="입력하세요" name="pSPrdtNm" class="searchInput" value="${schDatamyCert.schPrdtNm}"/>
+					</td>
+				</tr>
+			</table>
+			<div class="btn-wr">
+				<a href="javascript:void(0);" onclick="fn_resetSearch('p')" class="btn reset">초기화</a>
+				<a href="javascript:void(0);" onclick="fn_searchMyCertList('p')" class="btn b-sch">검색</a>
+				<a href="javascript:void(0);" class="btn b-dtl-sch">상세검색</a>
+			</div>
+		</div>
+		<!--// ====== 검색 :::::: PC용 ====== -->
+
+		<!--table-->
+		<div class="btn-wr jc-fe">
+			<a href="javascript:void(0)" onclick="fn_downExcelMyCert()" class="btn-down">엑셀 파일 다운로드<i></i></a>
+		</div>
+
+		<!--리스트-->
+		<div class="board-cont" id="board-lst">
+			<table class="test-lst">
+				<caption>나의 시험인증 현황 정보 제공 - 번호, 인증일자, 인증기관, 제품명, 모델명, 인증번호, 인증상태, 인증완료일</caption>
+				<colgroup>
+					<col width="4%">
+					<col width="7%">
+					<col width="17%">
+					<col width="*">
+					<col width="11%">
+					<col width="10%">
+					<col width="9%">
+					<col width="11%">
+					<col width="9%">
+					<col width="9%">
+				</colgroup>
+				<thead>
+					<tr>
+						<th>번호</th>
+						<th>인증일자</th>
+						<th>인증기관</th>
+						<th>제품명</th>
+						<th>모델명</th>
+						<th>인증번호</th>
+						<th>인증상태</th>
+						<th>인증만료일자 <img src="/asset/images/exclamation-mark.png" id="img_cert_info" style="width:15px; cursor:pointer;" alt="인료만료일자"><div class="tooltip-text">인증 만료일자는 인증일자 기준으로 5년 이후입니다.<br />플랫폼에서 자체 관리하는 정보로써, 정확하지 않을 수 있습니다.</div>
+						</th>
+						<th>추가정보 등록여부</th>
+						<th>QR코드 생성여부</th>
+					</tr>
+				</thead>
+				<tbody id="areaMyCert">
+					<!-- 리스트 영역 -->
+				</tbody>
+			</table>
+		</div>
+
+		<div class="btn-wr">
+			<div class="paging_wrap" id="areaMycertPaging">
+			</div>
+			<div class="btn_wrap">
+				<a href="/platformSvc/myData/myDataStat/myDataStatInfo" class="btn">나의 시험인증 현황 바로가기</a>
+			</div>
+		</div>
+
+	</div>
+	<!--// container-->
+
+</div>
+<!-- ===== /container ====== -->

@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.ctnt.notice.mapper.NoticeMapper">
+
+	<!-- 검색 -->
+	<sql id="searchNoticeList">
+		WHERE ${alias}ntt_ty_cd = #{nttTyCd}
+		<if test='searchKeyword != null and searchKeyword != ""'>
+			/* 검색 (제목 + 내용) */
+			AND (${alias}ntt_sj_nm LIKE '%' || #{searchKeyword} || '%' OR ${alias}ntt_cn LIKE '%' || #{searchKeyword} || '%')
+		</if>
+	</sql>
+
+	<!-- 공지사항 목록 조회 -->
+	<select id="selectNoticeList" parameterType="com.katri.web.ctnt.notice.model.NoticeSelectReq" resultType="com.katri.web.ctnt.notice.model.NoticeSelectRes">
+		/* noticeMapper.selectNoticeList (공지사항 목록 조회) */
+
+		SELECT
+			ROW_NUMBER() OVER(ORDER BY tnm.ntt_sn ASC) AS rownum
+			, tnm.ntc_expsr_yn								-- 공지노출여부
+			, tnm.ntt_sn 									-- 게시물 일련 번호
+			, tnm.ntt_sj_nm 								-- 게시물 제목명
+			, tcc.comn_cd_nm 								-- 게시물 분류 이름
+			, TO_CHAR(tnm.crt_dt, 'YYYY-MM-DD') AS crtDt	-- 생성 일시
+		FROM
+			tb_ntt_mng tnm
+		LEFT OUTER JOIN tb_comn_cd tcc
+			ON (tcc.comn_grp_cd = 'PD_NOTICE' AND tcc.use_yn = 'Y' AND tnm.ntt_clf_cd = tcc.comn_cd)
+		<include refid="searchNoticeList">
+			<property name="alias" value="tnm."/>
+		</include>
+		ORDER BY
+			rownum DESC
+		OFFSET #{startRow} LIMIT #{endRow}
+	</select>
+
+	<!-- 공지사항 목록 갯수 조회 -->
+	<select id="selectNoticeCnt" parameterType="com.katri.web.ctnt.notice.model.NoticeSelectReq" resultType="Integer">
+		/* noticeMapper.selectNoticeCnt (공지사항 목록 갯수 조회) */
+
+		SELECT
+			COUNT(tnm.ntt_sn)
+		FROM
+			tb_ntt_mng tnm
+		<include refid="searchNoticeList">
+			<property name="alias" value="tnm."/>
+		</include>
+	</select>
+
+	<!-- 공지사항 글 작성 -->
+	<insert id="insertNotice" parameterType="com.katri.web.ctnt.notice.model.NoticeSaveReq" useGeneratedKeys="true" keyProperty="nttSn">
+		/* noticeMapper.insertNotice (공지사항 글 작성) */
+
+		INSERT INTO
+			tb_ntt_mng
+			(
+				  ntt_ty_cd		-- 게시물 유형 코드
+				, ntt_clf_cd	-- 게시물 분류 코드
+				, ntt_sj_nm		-- 게시물 제목
+				, ntt_cn		-- 게시물 내용
+				, del_yn		-- 삭제여부
+				, crtr_id		-- 생성자 아이디
+			)
+		VALUES
+			(
+				  #{nttTyCd}
+				, #{nttClfCd}
+				, #{nttSjNm}
+				, #{nttCn}
+				, #{delYn}
+				, #{crtrId}
+			)
+	</insert>
+
+	<!--  공지사항 글 수정 -->
+	<update id="updateNotice" parameterType="com.katri.web.ctnt.notice.model.NoticeSaveReq">
+		/* noticeMapper.updateNotice (공지사항 글 수정) */
+
+		UPDATE
+			tb_ntt_mng
+		SET
+			  ntt_clf_cd = #{nttClfCd}	-- 게시물 분류 코드
+			, ntt_sj_nm = #{nttSjNm}	-- 게시물 제목
+			, ntt_cn = #{nttCn}			-- 게시물 내용
+			, del_yn = #{delYn}			--  삭제여부
+			, mdfcn_dt = now()			-- 수정일시
+			, mdfr_id = #{mdfrId}		-- 수정자 아이디
+		WHERE
+			ntt_sn = #{nttSn}
+	</update>
+
+	<!-- 공지 노출 여부 변경 -->
+	<update id="chgNtcExpsrYn"  parameterType="com.katri.web.ctnt.notice.model.NoticeSaveReq" useGeneratedKeys="true" keyProperty="nttSn">
+		/* noticeMapper.chgNtcExpsrYn (공지 노출 여부 변경) */
+
+		UPDATE
+			tb_ntt_mng
+		SET
+			ntc_expsr_yn = #{ntcExpsrYn}
+		WHERE
+			ntt_sn = #{nttSn}
+	</update>
+
+	<!-- 공지 노출 게시글 갯수 -->
+	<select id="selectNtcExpsrYnCnt" parameterType="com.katri.web.ctnt.notice.model.NoticeSelectReq" resultType="Integer">
+		/* noticeMapper.selectNtcExpsrYnCnt (공지 노출 게시글 갯수) */
+
+		SELECT
+			count(ntt_sn)
+		FROM
+			tb_ntt_mng tnm
+		WHERE
+			ntt_ty_cd = #{nttTyCd} AND del_yn = 'N' AND ntc_expsr_yn = 'Y';
+	</select>
+
+	<!-- 공지사항 조회 -->
+	<select id="selectNoticeDetail" parameterType="com.katri.web.ctnt.notice.model.NoticeSelectReq" resultType="com.katri.web.ctnt.notice.model.NoticeSelectRes">
+		/* noticeMapper.selectNoticeDetail (공지사항 조회) */
+
+		SELECT
+			  tnm.ntt_sn		-- 게시글 일련 번호
+			, tnm.ntt_sj_nm		-- 게시글 제목
+			, tnm.ntt_cn		-- 게시글 내용
+			, tnm.ntt_clf_cd	-- 게시글 분류 코드
+			, del_yn			-- 삭제여부
+		FROM
+			tb_ntt_mng tnm
+		WHERE
+			tnm.ntt_sn = #{nttSn}
+	</select>
+
+	<!--  분류 코드 조회 -->
+	<select id="selectNoticeClfCd" resultType="com.katri.web.system.code.model.CodeSelectRes">
+		/* noticeMapper.selectNoticeClfCd (분류 코드 조회) */
+
+		SELECT
+			  tcc.comn_cd
+			, tcc.comn_cd_nm
+		FROM
+			tb_comn_cd tcc
+		LEFT OUTER JOIN tb_comn_grp_cd tcgc
+			ON tcc.comn_grp_cd = tcgc.comn_grp_cd
+		WHERE
+			tcc.comn_grp_cd = 'PD_NOTICE' AND tcgc.use_yn = 'Y'
+		ORDER BY
+			srt_seq ASC
+	</select>
+
+</mapper>

@@ -1,0 +1,175 @@
+package com.katri.web.main.service;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.katri.common.Const;
+import com.katri.common.FileConst;
+import com.katri.common.GlobalExceptionHandler.CustomMessageException;
+import com.katri.common.util.StringUtil;
+import com.katri.web.ctnt.notice.model.NoticeSelectRes;
+import com.katri.web.main.mapper.MainMapper;
+import com.katri.web.main.model.MainSelectReq;
+import com.katri.web.main.model.MainSelectRes;
+
+import io.swagger.annotations.Api;
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(rollbackFor = {Exception.class})
+@Api(tags = {"메인 Service"})
+public class MainService {
+
+	/** 메인 mapper */
+	private final MainMapper mainMapper;
+
+	/*****************************************************
+	 * 메인
+	 * @return mainSelectRes
+	 *****************************************************/
+	public MainSelectRes getMainInfo() {
+		//[[0]].
+		MainSelectRes mainSelectRes = new MainSelectRes();
+
+		//[[1]].
+		mainSelectRes = mainMapper.selectMainInfo();
+
+		return mainSelectRes;
+	}
+
+	/*****************************************************
+	 * [메인] 커뮤니티 -> 게시글 5개 (공지/FAQ/자료실)
+	 * @return List
+	 * @throws CustomMessageException
+	 *****************************************************/
+	public List<NoticeSelectRes> getMainCommunityInfo(String nttTyCd) throws CustomMessageException {
+		//[[0]]. 반환할 정보들
+		List<NoticeSelectRes> mainCommunityList = null;
+		String formatDate					 	= null;
+
+		//[[1]]. 조회
+		mainCommunityList						= mainMapper.selectMainCommunityList(nttTyCd);
+
+		//날짜 포맷팅
+		for(int i=0; i < mainCommunityList.size(); i++) {
+			formatDate	= StringUtil.stringFormatType(mainCommunityList.get(i).getCrtDt(), "date", "YYYY.MM.DD");
+			mainCommunityList.get(i).setCrtDt(formatDate);
+		}
+
+		return mainCommunityList;
+	}
+
+	/*****************************************************
+	 * [메인] 커뮤니티 -> 메인비주얼 노출 공지
+	 * @return List
+	 * @throws CustomMessageException
+	 *****************************************************/
+	public List<NoticeSelectRes> getMainVisualNoticeList(String nttTyCd) throws CustomMessageException {
+		//[[0]]. 반환할 정보들
+		List<NoticeSelectRes> mainVisualNoticeList	= null;
+
+		//[[1]]. 조회
+		mainVisualNoticeList						= mainMapper.selectMainVisualNoticeList(nttTyCd);
+
+		return mainVisualNoticeList;
+	}
+
+	/*****************************************************
+	 * [메인] 메인 비주얼 조회
+	 * @return List
+	 * @throws CustomMessageException
+	 *****************************************************/
+	public List<MainSelectRes> getMainVisualList(MainSelectReq mainSelectReq) /* throws CustomMessageException */{
+		//[[0]]. 반환할 정보들
+		List<MainSelectRes> mainVisualList	= null;
+
+		//[[1]]. 조회
+		mainSelectReq.setSearchPcImg(FileConst.File.FILE_DIV_NM_VISUAL_PC_IMG);
+		mainSelectReq.setSearchMobileImg(FileConst.File.FILE_DIV_NM_VISUAL_MOBILE_IMG);
+		mainSelectReq.setHmpgCptnTyCd(Const.Code.HmpgCptnTypeCd.MAIN_VISUAL);
+
+		mainVisualList	= mainMapper.selectMainVisualList(mainSelectReq);
+
+		//[[3]]. html 태그 변환 (<br> -> 엔터)
+		for(int i=0; i < mainVisualList.size(); i++) {
+			String format1 = StringUtil.convertDBToHtml(mainVisualList.get(i).getLaLblCn());
+			String format2 = StringUtil.convertDBToHtml(mainVisualList.get(i).getSmLblCn());
+
+			mainVisualList.get(i).setLaLblCn(format1);
+			mainVisualList.get(i).setSmLblCn(format2);
+		}
+
+		return mainVisualList;
+	}
+
+	/*****************************************************
+	 * [메인] 팝업존 조회
+	 * @return List
+	 * @throws CustomMessageException
+	 *****************************************************/
+	public List<MainSelectRes> getPopUpZoneList(MainSelectReq mainSelectReq) {
+		//[[0]]. 반환할 정보들
+		List<MainSelectRes> popUpZoneList	= null;
+		//[[1]]. 조회
+		mainSelectReq.setSearchPcImg(FileConst.File.FILE_DIV_NM_POPUP_PC_IMG);
+		mainSelectReq.setSearchMobileImg(FileConst.File.FILE_DIV_NM_POPUP_MOBILE_IMG);
+		mainSelectReq.setHmpgCptnTyCd(Const.Code.HmpgCptnTypeCd.POPUP_ZONE);
+
+		popUpZoneList						= mainMapper.selectPopUpZoneList(mainSelectReq);
+
+		return popUpZoneList;
+	}
+
+	/*****************************************************
+	 *[메인_월별 인증현황_chart] TOP10 법정인증 품목 List
+	 * @return List
+	 * @throws Exception
+	 *****************************************************/
+	public List<MainSelectRes> getMainTopPrdtClfList() throws Exception {
+
+		//[[0]]. 반환할 정보
+		List<MainSelectRes> topPrdtClfList = null;
+
+		//[[1]]. 조회
+		topPrdtClfList	= mainMapper.selectMainTopPrdtClfList();
+
+		return topPrdtClfList;
+	}
+
+	/*****************************************************
+	 * [메인_월별 인증현황_chart] TOP10 법정인증 제품 List
+	 * @return List
+	 * @throws Exception
+	 *****************************************************/
+	public List<MainSelectRes> getMainTopPdctgList() throws Exception {
+
+		//[[0]]. 반환할 정보
+		List<MainSelectRes> topPdctgList = null;
+
+		//[[1]]. 조회
+		topPdctgList	= mainMapper.selectMainTopPdctgList();
+
+		return topPdctgList;
+	}
+
+	/*****************************************************
+	 * [메인_월별 인증현황_chart] TOP10 법정인증 제조국 List
+	 * @return List
+	 * @throws Exception
+	 *****************************************************/
+	public List<MainSelectRes> getMainTopMnftrCustcoNtnList() throws Exception {
+
+		//[[0]]. 반환할 정보
+		List<MainSelectRes> topMnftrCustcoNtnList = null;
+
+		//[[1]]. 조회
+		topMnftrCustcoNtnList	= mainMapper.selectMainTopMnftrCustcoNtnList();
+
+		return topMnftrCustcoNtnList;
+	}
+
+
+}

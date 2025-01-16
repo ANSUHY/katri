@@ -1,0 +1,106 @@
+package com.katri.web.auth.mapper;
+
+import org.apache.ibatis.annotations.Mapper;
+import org.springframework.stereotype.Repository;
+
+import com.katri.common.datasource.MainMapperAnnotation;
+import com.katri.web.auth.model.UserFindSaveReq;
+import com.katri.web.auth.model.UserFindSelectReq;
+import com.katri.web.auth.model.UserFindSelectRes;
+
+@Repository
+@Mapper
+@MainMapperAnnotation
+public interface UserFindMapper {
+
+	/*****************************************************
+	 * 인증번호 발송 이력 저장
+	 * @param userFindSaveReq
+	 * @return int
+	*****************************************************/
+	int insertCertNoSndngHist(UserFindSaveReq userFindSaveReq);
+
+	/*****************************************************
+	 * 가장 최근의 이메일 인증 번호 조회
+	 * @param findUserInfoSelectReq
+	 * @return String
+	*****************************************************/
+	UserFindSelectRes selectCertNoOfEmlAddr(UserFindSelectReq userFindSelectReq);
+
+	/*****************************************************
+	 * 암호화된 이메일로 회원 정보 조회
+	 * @param findSelectReq
+	 * @return UserFindSelectRes
+	*****************************************************/
+	UserFindSelectRes selectFindByEmail(UserFindSelectReq findSelectReq);
+
+	/*****************************************************
+	 * 아이디와 암호화된 이메일로 회원 정보 조회
+	 * @param userFindSelectReq
+	 * @return UserFindSelectRes
+	*****************************************************/
+	UserFindSelectRes selectFindByIdAndEmail(UserFindSelectReq userFindSelectReq);
+
+	/*****************************************************
+	 * 현재 비밀번호 조회
+	 * @param userFindSelectReq
+	 * @return UserFindSelectRes
+	*****************************************************/
+	UserFindSelectRes selectUserPwd(UserFindSelectReq userFindSelectReq);
+
+	/*****************************************************
+	 * 비밀번호 변경
+	 * @param userFindSaveReq
+	 * @return int
+	*****************************************************/
+	int updateUserPwd(UserFindSaveReq userFindSaveReq);
+
+	/*****************************************************
+	 * 비밀번호 변경 시 로그인 시도 횟수 초기화
+	 * @param userFindSaveReq
+	 * @return int
+	*****************************************************/
+	int resetLgnCnt(UserFindSaveReq userFindSaveReq);
+
+	/*****************************************************
+	 * 암호화된 휴대전화번호로 회원조회
+	 * @param userFindSelectReq
+	 * @return
+	*****************************************************/
+	UserFindSelectRes selectFindByMblTelno(UserFindSelectReq userFindSelectReq); //
+
+	/*****************************************************
+	 * [일반 회원] 연계정보 확인값으로 회원정보 조회
+	 * @param userFindSelectReq
+	 * @return
+	*****************************************************/
+	UserFindSelectRes selectFindByCi(UserFindSelectReq userFindSelectReq);
+
+	/*****************************************************
+	 * [일반 회원] 연계정보 확인값과 아이디로 회원정보 조회
+	 * @param userFindSelectReq
+	 * @return
+	*****************************************************/
+	UserFindSelectRes selectFindByCiAndId(UserFindSelectReq userFindSelectReq);
+
+	/*****************************************************
+	 * 인증 메일 정보 조회 (발송 제한 건수, 발송 제한 시간, 인증번호 확인 제한 건수)
+	 * @return
+	*****************************************************/
+	UserFindSelectRes selectCertMailSendChkInfo();
+
+	/*****************************************************
+	 * 현재 계정에 보낸 인증메일 건수
+	 * @param userFindSelectReq
+	 * @return
+	*****************************************************/
+	Integer selectCertMailSendCount(UserFindSelectReq userFindSelectReq);
+
+	/*****************************************************
+	 * 인증 번호 실패 횟수 증가
+	 * @param certFileInfo
+	 * @return
+	*****************************************************/
+	int updateCertNoFailCnt(UserFindSaveReq certFileInfo);
+
+}

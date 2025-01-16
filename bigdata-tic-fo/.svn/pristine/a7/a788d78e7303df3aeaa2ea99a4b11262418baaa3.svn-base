@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.comm.mapper.TermsMapper">
+
+<select id="selectKatriTerms" resultType="com.katri.web.comm.model.TermsSelectRes">
+	/* TermsMapper.selectKatriTerms ( 약관 조회 ) */
+	SELECT
+    	trms_sn
+      , trms_ty_cd
+   	  , trms_cn
+     FROM tb_trms_bas
+	WHERE trms_ty_cd = #{ trmsTyCd }
+	AND use_yn = 'Y'
+	ORDER BY crt_dt DESC
+	LIMIT 1
+</select>
+
+</mapper>

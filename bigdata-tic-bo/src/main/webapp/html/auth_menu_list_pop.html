@@ -1,0 +1,203 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>시험인증 빅데이터 포탈 관리자</title>
+
+<link href="../css/style.css" rel="stylesheet">
+<script src="../js/jquery.min.js"></script>
+<script src="../js/jquery-ui.js"></script>
+<script src="../js/custom.js"></script>
+
+<script>
+
+	$(document).on("click", ".chk_auth_all", function(){
+
+		if( $('.chk_auth_all').is(':checked') ) {
+			$(".chk_auth").prop('checked', true);
+		} else {
+			$(".chk_auth").prop('checked', false);
+		}
+
+	});
+
+	$(document).on("click", ".chk_auth", function(){
+
+		let totalCnt = $(".chk_auth").length;
+		let checkCnt = $(".chk_auth:checked").length;
+
+		if( totalCnt != checkCnt ) {
+			$("#chk_auth_all").prop('checked', false);
+		} else {
+			$("#chk_auth_all").prop('checked', true);
+		}
+
+	});
+
+</script>
+
+</head>
+
+<body class="popup">
+
+	<div id="pop-wrap">
+
+		<h1 class="pop-tit">권한메뉴 설정</h1>
+
+		<div class="pop-contnet">
+			<div class="row-tbl">
+				<table>
+					<colgroup>
+						<col>
+						<col>
+						<col>
+						<col>
+						<col style="width:100px">
+					</colgroup>
+					<thead>
+						<tr>
+							<th>1레벨</th>
+							<th>2레벨</th>
+							<th>3레벨</th>
+							<th>4레벨</th>
+							<th>
+								접속권한 체크
+								<label><input type="checkbox" class="chk_auth_all" id="chk_auth_all"></label>
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>플랫폼 소개</td>
+							<td style="text-align: left;"></td>
+							<td style="text-align: left;"></td>
+							<td style="text-align: left;"></td>
+							<td>
+								<label><input type="checkbox" class="chk_auth"></label>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td style="text-align: left;">시험인증 빅데이터 플랫폼 소개</td>
+							<td style="text-align: left;"></td>
+							<td style="text-align: left;"></td>
+							<td>
+								<label><input type="checkbox" class="chk_auth"></label>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td style="text-align: left;">참여기관 소개</td>
+							<td style="text-align: left;"></td>
+							<td style="text-align: left;"></td>
+							<td>
+								<label><input type="checkbox" class="chk_auth"></label>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td style="text-align: left;"></td>
+							<td style="text-align: left;">KATRI</td>
+							<td style="text-align: left;"></td>
+							<td>
+								<label><input type="checkbox" class="chk_auth"></label>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td style="text-align: left;"></td>
+							<td style="text-align: left;">KATRI</td>
+							<td style="text-align: left;"></td>
+							<td>
+								<label><input type="checkbox" class="chk_auth"></label>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td style="text-align: left;"></td>
+							<td style="text-align: left;">Fiti</td>
+							<td style="text-align: left;"></td>
+							<td>
+								<label><input type="checkbox" class="chk_auth"></label>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td style="text-align: left;"></td>
+							<td style="text-align: left;">KOTITI</td>
+							<td style="text-align: left;"></td>
+							<td>
+								<label><input type="checkbox" class="chk_auth"></label>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td style="text-align: left;"></td>
+							<td style="text-align: left;">Ktl</td>
+							<td style="text-align: left;"></td>
+							<td>
+								<label><input type="checkbox" class="chk_auth"></label>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td style="text-align: left;"></td>
+							<td style="text-align: left;">KTR</td>
+							<td style="text-align: left;"></td>
+							<td>
+								<label><input type="checkbox" class="chk_auth"></label>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td style="text-align: left;"></td>
+							<td style="text-align: left;">KCL</td>
+							<td style="text-align: left;"></td>
+							<td>
+								<label><input type="checkbox" class="chk_auth"></label>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td style="text-align: left;"></td>
+							<td style="text-align: left;">KTC</td>
+							<td style="text-align: left;"></td>
+							<td>
+								<label><input type="checkbox" class="chk_auth"></label>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td style="text-align: left;">시험인증 산업 소개</td>
+							<td style="text-align: left;"></td>
+							<td style="text-align: left;"></td>
+							<td>
+								<label><input type="checkbox" class="chk_auth"></label>
+							</td>
+						</tr>
+						<tr>
+							<td>...</td>
+							<td style="text-align: left;"></td>
+							<td style="text-align: left;"></td>
+							<td style="text-align: left;"></td>
+							<td>
+								<label><input type="checkbox" class="chk_auth"></label>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+
+			<div class="btn-box">
+				<a href="#" class="btn btn-default">취소</a>
+				<a href="#" class="btn btn-blue">저장</a>
+			</div>
+
+		</div><!-- /pop-contnet -->
+		<a href="javascript:self.close();" class="pop-close"><i class="fa fa-times"></i></a>
+	</div><!-- /pop-wrao -->
+
+	</body>
+</html>

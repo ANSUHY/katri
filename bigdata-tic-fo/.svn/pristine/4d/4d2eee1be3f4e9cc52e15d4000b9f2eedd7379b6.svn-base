@@ -1,0 +1,172 @@
+package com.katri.common;
+
+import org.aspectj.lang.annotation.Aspect;
+import org.springframework.stereotype.Component;
+
+import lombok.RequiredArgsConstructor;
+
+/***************************************************
+ * <ul>
+ * <li>업무 그룹명  = 공통 상수 Class 업무</li>
+ * <li>서브 업무명  = 공통 상수 관련</li>
+ * <li>설	 명  = 공통 상수 Class 구현(메세지 아이디, 시스템 구분 등등)</li>
+ * <li>작  성  자 : Lee Han Seong</li>
+ * <li>작  성  일 : 2021. 01. 18.</li>
+ * </ul>
+ * <pre>
+ * ======================================
+ * 변경자/변경일  =
+ * 변경사유/내역  =
+ * ======================================
+ * </pre>
+ ***************************************************/
+@Component
+@Aspect
+@RequiredArgsConstructor
+public class Const {
+
+	/** Agent 정보 */
+	public static class Session {
+		public static final String SERVER_CLS_CD_BO = "BO"; // 서버 구분 코드(관리자)
+		public static final String SERVER_CLS_CD_FO = "FO"; // 서버 구분 코드(프론트)
+	}
+
+	/** Paging 정보 */
+	public static class Paging {
+		public static final int ROW_COUNT = 10; // Paging Row Count
+	}
+
+	/** DB INTERVAL(간격) 정보 */
+	public static class DbInterval {
+		public static final String INR_SEC		= "sec";  //초
+		public static final String INR_MIN		= "min";  //분
+		public static final String INR_HOUR		= "hour"; //시
+		public static final String INR_DAY		= "day";  //날
+		public static final String INR_WEEK 	= "week"; //주
+		public static final String INR_MONTH	= "month";//달
+		public static final String INR_YEAR		= "year"; //년
+	}
+
+	public static class Code {
+
+		/** 장비유형코드 */
+		public static class EquipmentTypeCd {
+			public static final String MOBILE 		= "MOBILE";
+			public static final String PC			= "PC";
+		}
+
+		/** 사이트 유형코드 */
+		public static class SiteTypeCd {
+			public static final String FRONT 	= "front";	 // FRONT
+			public static final String ADMIN	= "admin";	 // ADMIN
+		}
+
+		/** 연계유형코드 */
+		public static class LinkTypeCd {
+			public static final String SELF 	= "self";	 // 페이지 이동
+			public static final String NEW		= "new";	 // 새 창(새 탭)
+		}
+
+		/** 홈페이지구성유형코드 */
+		public static class HmpgCptnTypeCd {
+			public static final String MAIN_VISUAL 	= "HTC001";	 // MAIN VISUAL
+			public static final String POPUP_ZONE	= "HTC002";	 // Popup Zone
+		}
+
+		/** 게시물유형코드 */
+		public static class PostTypeCd {
+			public static final String NOTICE 	= "NOTICE";	 // NOTICE
+			public static final String FAQ		= "FAQ";	 // FAQ
+			public static final String ARCHIVE 	= "ARCHIVE"; // NOTICE
+			public static final String INQUIRY	= "INQUIRY"; // FAQ
+		}
+
+		/** 사용자상태코드 */
+		public static class UserSttCd {
+			public static final String JOIN_APPLY		= "USC011"; // 가입 신청
+			public static final String JOIN_REJECT		= "USC012"; // 가입 반려
+			public static final String NORMAL			= "USC020"; // 정상
+			public static final String DRMNCY			= "USC030"; // 휴면
+			public static final String WITHDRAWAL		= "USC040"; // 탈퇴
+			public static final String WITHDRAWAL_APPLY	= "USC041"; // 탈퇴 신청
+		}
+
+		/** 사용자유형코드 */
+		public static class UserTyCd {
+			public static final String INST_MASTER	= "MTC001"; // 기관 마스터
+			public static final String INST_GENERAL	= "MTC002"; // 기관 일반
+			public static final String ENT_MASTER	= "MTC003"; // 기업 마스터
+			public static final String ENT_GENERAL	= "MTC004"; // 기업 일반
+			public static final String GENERAL		= "MTC005"; // 일반
+		}
+
+		/** 이메일템플릿코드 */
+		public static class MailTemplateCd {
+			public static final String SEND_EMAIL_AUTH_NUMBER 				= "EMT01"; // 이메일인증번호발송
+			public static final String MEM_REGI_COMP_GENERAL 				= "EMT02"; // 개인회원가입완료
+			public static final String MEM_JOIN_COMP_INST_ENT_GENERAL 		= "EMT03"; // 기업/기관일반회원가입승인완료
+			public static final String MEM_JOIN_COMP_ENT_MASTER 			= "EMT04"; // 기업마스터회원가입승인완료
+			public static final String MEM_REGI_REJECT 						= "EMT05"; // 회원가입반려
+			public static final String MEM_JOIN_APPLY_COMP_ENT_GENERAL 		= "EMT06"; // 기업일반회원가입승인요청
+			public static final String MEM_JOIN_APPLY_COMP_INST_GENERAL 	= "EMT07"; // 기관일반회원가입승인요청
+			public static final String MEM_JOIN_APPLY_COMP_ENT_MASTER 		= "EMT08"; // 기업마스터회원가입승인요청
+			public static final String WRITE_INQUIRY 						= "EMT09"; // 1:1문의작성
+			public static final String WRITE_INQUIRY_ANSWER 				= "EMT10"; // 1:1문의답변
+			public static final String BEFORE_30_DAYS_MEM_DRMNCY 			= "EMT11"; // 휴면회원전환30일전
+			public static final String MEM_WITHDRAWAL_APPLY 				= "EMT12"; // 회원탈퇴신청
+			public static final String MEM_WITHDRAWAL_COMP 					= "EMT13"; // 회원탈퇴완료
+			public static final String MEM_WITHDRAWAL_APPLY_ENT_MASTER		= "EMT14"; // 기업마스터회원탈퇴신청
+			public static final String MEM_WITHDRAWAL_REJECT_ENT_MASTER		= "EMT17"; // 기업마스터회원탈퇴반려
+			public static final String MEM_WITHDRAWAL_FORCE_INST_ENT_GENERAL = "EMT18"; // 기관/기업일반회원강제탈퇴
+			public static final String NOTI_INST_ENT_GRP_CLCT_AGRE			= "EMT19"; // 기업그룹수집동의여부
+		}
+
+		/** 메뉴구성코드 */
+		public static class MenuCompositionCode {
+			public static final String INFO_TEST_CERT_BIC_DATA	= "MCC001"; //	플랫폼 소개 > 시험인증 빅데이터 플랫폼 소개
+			public static final String INFO_PARTICI_KATRI		= "MCC002"; //	플랫폼 소개 > 참여기관 소개 > KATRI
+			public static final String INFO_PARTICI_KTL			= "MCC003"; //	플랫폼 소개 > 참여기관 소개 > KTL
+			public static final String INFO_PARTICI_KTR			= "MCC004"; //	플랫폼 소개 > 참여기관 소개 > KTR
+			public static final String INFO_PARTICI_KCL			= "MCC005"; //	플랫폼 소개 > 참여기관 소개 > KCL
+			public static final String INFO_PARTICI_KTC			= "MCC006"; //	플랫폼 소개 > 참여기관 소개 > KTC
+			public static final String INFO_PARTICI_FITI		= "MCC007"; //	플랫폼 소개 > 참여기관 소개 > FITI
+			public static final String INFO_PARTICI_KOTITI		= "MCC008"; //	플랫폼 소개 > 참여기관 소개 > KOTITI
+			public static final String INFO_TEST_CERT_INDUSTRY 	= "MCC009"; //	플랫폼 소개 > 시험인증 산업소개
+			public static final String SERVICE_INTRO_SVC		= "MCC010"; //	플랫폼 서비스 > 내 손안의 시험인증 > 서비스 안내
+			public static final String SERVICE_QR_SERVICE		= "MCC011"; //	플랫폼 서비스 > 인증QR 서비스 안내
+			public static final String CERT_DATA_SELECT			= "MCC012"; //	데이터 활용안내 > 인증데이터 조회
+			public static final String PARTICI_LOUNGE_DATA_VISUAL = "MCC013"; //참여기관 라운지 > 데이터 시각화 환경
+			public static final String PARTICI_LOUNGE_DATA_ANALY= "MCC014"; //	참여기관 라운지 > 데이터 분석 환경
+		}
+
+		/** 약관유형코드 */
+		public static class TemsCode{
+			public static final String MY_DATA_SVC	= "TTC007"; //내 손안의 시험인증 서비스 이용약관
+			public static final String CERT_DATA_CT	= "TTC008"; //시험인증 데이터 수집이용약관
+			public static final String THIRD_OFFER	= "TTC009"; //시험인증 데이터 제3자(제출처) 제공 약관
+		}
+
+		///////////////d아래 기존
+
+		/** 모듈구분코드 */
+		public static class ModuleTypeCd {
+			public static final String MODULE 	= "MTC001";	 // Module
+			public static final String BMS	 	= "MTC002";	 // BMS
+		}
+
+		/** 등록방식코드 */
+		public static class RegTypeCd {
+			public static final String MANUAL 	= "RTC001";	 // Manual
+			public static final String EXCEL 	= "RTC002";	 // Excel
+			public static final String PDA	 	= "RTC003";	 // PDA
+		}
+
+		/** 상태코드 */
+		public static class ProcessTypeCd {
+			public static final String WEAR 	= "PSC001";	 // 입고
+			public static final String PROD	 	= "PSC002";	 // 생산
+			public static final String RELE 	= "PSC003";	 // 출고
+			public static final String INST 	= "PSC004";	 // 설치
+		}
+	}
+}

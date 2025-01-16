@@ -1,0 +1,264 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="c"		uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="cm" 		uri="/WEB-INF/tlds" %>
+<%@ taglib prefix="spring"	uri="http://www.springframework.org/tags" %>
+
+<%@ page import="com.katri.common.Const" %>
+<c:set var="ROW_COUNT" value="<%=Const.Paging.ROW_COUNT%>" />
+
+<script type="text/javascript">
+
+	$(document).ready(function() {
+
+	});
+
+	/*
+	 * 함수명 : fn_certDataDetailInit()
+	 * 설   명 : 초기 작업
+	 */
+	function fn_certDataDetailInit() {
+
+	}
+
+	/*
+	 * 함수명 : fn_goCertDataList
+	 * 설   명 : 리스트 페이지로 이동
+	*/
+	function fn_goCertDataList() {
+
+		$("#frm_certDataList").attr("method", "GET");
+		$("#frm_certDataList").attr("action", "/dataUsageGuide/certDataList");
+		$("#frm_certDataList").submit();
+	}
+
+</script>
+
+<!-- ===== header ====== -->
+<header id="header">
+	<div id="sub-mv" class="sub-data">
+		<div class="inner">
+			<h2>데이터 활용안내</h2>
+			<div class="sub-obj">오브젝트</div>
+		</div>
+	</div>
+</header>
+<!-- ===== /header ====== -->
+
+<!-- ===== container ====== -->
+<div id="container">
+
+	<!--breadcrumb-wr-->
+	<jsp:include page="/WEB-INF/views/layout/breadcrumbWr.jsp">
+		<jsp:param name="menuTopNo" value="01"/>
+		<jsp:param name="menuSubNo" value="0101"/>
+	</jsp:include>
+	<!-- // breadcrumb-wr-->
+
+	<!--container-->
+	<div id="cont" class="cont-myservice dtl-myservice">
+
+		<!-- 검색 조건 -->
+		<form method="get" name="frm_certDataList" 	id="frm_certDataList">
+
+			<input type="hidden" name="rowCount" 		id="rowCount" 			value="${ROW_COUNT * schDatacertData.currPage}"/>
+			<input type="hidden" name="currPage" 		id="currPage"			value="${schDatacertData.currPage}"/>
+
+			<input type="hidden" name="targetInstId" 	id="targetInstId" 		value="${schDatacertData.targetInstId}"/> <!-- Detail 갈때 기관아이디 -->
+			<input type="hidden" name="targetCertNo" 	id="targetCertNo" 		value="${schDatacertData.targetCertNo}"/> <!-- Detail 갈때 인증번호 -->
+
+			<input type="hidden" name="schInstId" 		id="schInstId" 			value="${schDatacertData.schInstId}"/>		<!-- [검색:인증기관]  -->
+			<input type="hidden" name="schCertNo" 		id="schCertNo" 			value="${schDatacertData.schCertNo}"/>		<!-- [검색:인증번호]  -->
+			<input type="hidden" name="schMkrNm" 		id="schMkrNm" 			value="${schDatacertData.schMkrNm}"/>		<!-- [검색:제조업체명]  -->
+			<input type="hidden" name="schMdlNm" 		id="schMdlNm" 			value="${schDatacertData.schMdlNm}"/>		<!-- [검색:모델명]  -->
+			<input type="hidden" name="schIptrNm" 		id="schIptrNm" 			value="${schDatacertData.schIptrNm}"/>		<!-- [검색:수입업체명]  -->
+			<input type="hidden" name="schPhotoYN" 		id="schPhotoYN" 		value="${schDatacertData.schPhotoYN}"/>		<!-- [검색:사진유무]  -->
+			<input type="hidden" name="schCertYmdF" 	id="schCertYmdF" 		value="${schDatacertData.schCertYmdF}"/>	<!-- [검색:인증일자_시작일]  -->
+			<input type="hidden" name="schCertYmdT" 	id="schCertYmdT" 		value="${schDatacertData.schCertYmdT}"/>	<!-- [검색:인증일자_끝일]  -->
+			<input type="hidden" name="schSttCd" 		id="schSttCd" 			value="${schDatacertData.schSttCd}"/>		<!-- [검색:인증상태]  -->
+			<input type="hidden" name="schPrdtClfCd" 	id="schPrdtClfCd" 		value="${schDatacertData.schPrdtClfCd}"/>	<!-- [검색:제품분류]  -->
+			<input type="hidden" name="schPrdtNm" 		id="schPrdtNm" 			value="${schDatacertData.schPrdtNm}"/>		<!-- [검색:제품명]  -->
+
+		</form>
+		<!--// 검색 조건  -->
+
+		<!--tit-->
+		<div class="cont-platform-tit bMg80">
+			<h2 class="tit">인증데이터 상세</h2>
+		</div>
+		<!--// tit-->
+
+		<h3 class="tit">인증 정보</h3>
+
+		<!--리스트-->
+		<div class="svc-info-dtl">
+			<table>
+				<caption>인증정보 상세 - 인증기관, 통합접수번호, 인증번호, 인증구분, 인증일자, 인증상태, 최초인증번호, 인증변경일자, 인증변경사유 내용 포함</caption>
+				<tr>
+					<th>인증번호</th>
+					<td>${certDataDetail.certNo}</td>
+					<th>인증구분</th>
+					<td>${certDataDetail.certDivNm}</td>
+				</tr>
+
+				<tr>
+					<th>인증일자</th>
+					<td>
+						<c:choose>
+							<c:when test="${certDataDetail.certYmd == 0}">
+								00000000
+							</c:when>
+							<c:otherwise>
+								<cm:stringFormat type="date" format="YYYY-MM-DD" value="${certDataDetail.certYmd}" />
+							</c:otherwise>
+						</c:choose>
+					</td>
+					<th>인증상태</th>
+					<td>${certDataDetail.certSttNm}</td>
+				</tr>
+
+				<tr>
+					<th>최초인증번호</th>
+					<td>${certDataDetail.frstCertNo}</td>
+					<th>인증기관</th>
+					<td>${certDataDetail.instNm}(${certDataDetail.instEngNm})</td>
+				</tr>
+
+				<tr>
+					<th>인증변경일자</th>
+					<td><cm:stringFormat type="date" format="YYYY-MM-DD" value="${certDataDetail.certLastChgYmd}" /></td>
+					<th>인증변경사유</th>
+					<td>${certDataDetail.certChgResnCn}</td>
+				</tr>
+			</table>
+		</div>
+
+		<h3 class="tit">제품 정보</h3>
+
+		<!--리스트-->
+		<div class="svc-info-dtl">
+			<table>
+				<caption>제품정보 상세 - 제품명, 브랜드명, 모델명, 규격, 제품분류코드, 제품세분류명, 파생모델명, 비고 내용 포함</caption>
+				<tr>
+					<th>제품명</th>
+					<td>${certDataDetail.prdtNm}</td>
+					<th>모델명</th>
+					<td>${certDataDetail.mdlNm}</td>
+				</tr>
+
+				<tr>
+					<th>브랜드명</th>
+					<td>${certDataDetail.brdNm}</td>
+					<th>규격</th>
+					<td>${certDataDetail.stndNm}</td>
+				</tr>
+
+				<tr>
+					<th>제품분류코드</th>
+					<td>${certDataDetail.sttyPrdtClfCd}</td>
+					<th>제품세분류명</th>
+					<td>${certDataDetail.sttyPrdtClfNm}</td>
+				</tr>
+
+				<tr>
+					<th>파생모델명</th>
+					<td colspan="3">${certDataDetail.drvnMdlNm}</td>
+				</tr>
+
+				<tr>
+					<th>비고</th>
+					<td colspan="3">${certDataDetail.rmkCn}</td>
+				</tr>
+			</table>
+		</div>
+
+		<h3 class="tit">제조업체 정보</h3>
+
+		<!--리스트-->
+		<div class="svc-info-dtl">
+			<table>
+				<caption>제조사 상세 - 제조사, 사업자 등록번호, 제조국, 대표자, 주소, 전화번호 내용 포함</caption>
+				<tr>
+					<th>제조업체</th>
+					<td>${certDataDetail.mnftrCustcoNm}</td>
+					<th>사업자 등록번호</th>
+					<td>${certDataDetail.mnftrCustcoBrno}</td>
+				</tr>
+
+				<tr>
+					<th>전화번호</th>
+					<td>${certDataDetail.mnftrCustcoTelno}</td>
+					<th>대표자</th>
+					<td>${certDataDetail.mnftrCustcoRprsvNm}</td>
+				</tr>
+
+				<tr>
+					<th>제조국</th>
+					<td colspan="3">${certDataDetail.mnftrCustcoNtnNm}</td>
+				</tr>
+
+				<tr>
+					<th>주소</th>
+					<td colspan="3">${certDataDetail.mnftrCustcoAddr}</td>
+				</tr>
+			</table>
+		</div>
+
+		<h3 class="tit">수입업체 정보</h3>
+
+		<!--리스트-->
+		<div class="svc-info-dtl">
+			<table>
+				<caption>수입업체 상세 - 수입업체, 사업자 등록번호, 전화번호, 대표자, 주소 내용 포함</caption>
+				<tr>
+					<th>수입업체</th>
+					<td>${certDataDetail.incmCustcoNm}</td>
+					<th>사업자 등록번호</th>
+					<td>${certDataDetail.incmCustcoBrno}</td>
+				</tr>
+
+				<tr>
+					<th>전화번호</th>
+					<td>${certDataDetail.incmCustcoTelno}</td>
+					<th>대표자</th>
+					<td>${certDataDetail.incmCustcoRprsvNm}</td>
+				</tr>
+
+				<tr>
+					<th>주소</th>
+					<td colspan="3">${certDataDetail.incmCustcoAddr}</td>
+				</tr>
+			</table>
+		</div>
+
+		<h3 class="tit bBr">제품 사진</h3>
+		<div class="dtl-photo" style="display:block; text-align:center;">
+			<c:if test="${! empty certDataDetail.imgNameList}">
+				<c:forEach items="${certDataDetail.imgNameList}" var="item">
+					<img src="/images/${certDataDetail.instEngNmLower}/cert/${certDataDetail.certNo}/${item}" alt="${item}" onerror="this.src='/asset/images/cert_no_image.png'" style="margin-bottom:10px;">
+				</c:forEach>
+			</c:if>
+			<c:if test="${empty certDataDetail.imgNameList}">
+				해당 사진이 없습니다.
+			</c:if>
+		</div>
+
+		<h3 class="tit bBr">
+			추가 정보
+		</h3>
+		<div class="dtl-inr">
+			<c:if test="${ certDataDetail.certAditInfoCn ne '' && ! empty certDataDetail.certAditInfoCn }">
+				<a href="${certDataDetail.certAditInfoCn}" target="_blank" >${certDataDetail.certAditInfoCn}</a>
+			</c:if>
+			<c:if test="${ certDataDetail.certAditInfoCn eq '' || empty certDataDetail.certAditInfoCn }">
+				추가 정보가 없습니다.
+			</c:if>
+		</div>
+
+		<div class="btn-wr" style="justify-content:center;">
+				<a href="javascript:void(0)" onclick="fn_goCertDataList()" class="btn">목록</a>
+		</div>
+	</div>
+	<!--// container-->
+
+</div>
+<!-- ===== /container ====== -->

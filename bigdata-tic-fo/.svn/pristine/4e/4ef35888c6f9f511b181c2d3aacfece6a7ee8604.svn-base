@@ -1,0 +1,121 @@
+package com.katri.web.platformSvc.myData.model;
+
+import com.katri.common.model.Common;
+
+import io.swagger.annotations.ApiModel;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@Data
+@EqualsAndHashCode(callSuper=false)
+@ApiModel(description = "[플랫폼 서비스] > [내 손안의 시험인증]의 데이터 조회 Request")
+public class MyDataSelectReq extends Common {
+
+	//=====================  검색 조건 시작
+	/** 검색 메뉴구성코드 */
+	private String searchMenuCptnCd;
+
+	/** 검색 정보제공동의여부 */
+	private String searchInfoPvsnAgreYn;
+
+	/** 검색 [검색:인증기관] [검색:시험기관] */
+	private String schInstId;
+
+	/** 검색 [검색:인증번호] */
+	private String schCertNo;
+
+	/** 검색 [검색:제조업체명] */
+	private String schMkrNm;
+
+	/** 검색 [검색:모델명] */
+	private String schMdlNm;
+
+	/** 검색 [검색:수입업체명] */
+	private String schIptrNm;
+
+	/** 검색 [검색:사진유무] */
+	private String schPhotoYN;
+
+	/** 검색 [검색:인증일자_시작일] */
+	private String schCertYmdF;
+
+	/** 검색 [검색:인증일자_끝일] */
+	private String schCertYmdT;
+
+	/** 검색 [검색:인증상태] */
+	private String schSttCd;
+
+	/** 검색 [검색:제품분류] */
+	private String schPrdtClfCd;
+
+	/** 검색 [검색:제품명] */
+	private String schPrdtNm;
+
+	/** 검색 [검색:입장구분] */
+	private String schEDivi;
+
+	/** 검색 [검색:성적서 번호] */
+	private String schRprtNo;
+
+	/** 검색 [검색:제품분류_대] */
+	private String schStdLgclfCd;
+
+	/** 검색 [검색:제품분류_중] */
+	private String schStdMlclfCd;
+
+	/** 검색 [검색:품목명] */
+	private String schPdctgNm;
+
+	/** 검색 [검색:발급일자_시작일] */
+	private String schRprtYmdF;
+
+	/** 검색 [검색:발급일자_끝일] */
+	private String schRprtYmdT;
+
+	/** 검색 [검색:종합판정] */
+	private String schJgmtCd;
+
+	//===================== // 검색 조건 끝
+
+	/** [미리보기] 시 받은 내용 */
+	private String previewMenuCptnCn;
+
+	/** 제출회사공개여부 필요한지(쿼리에 넘겨서 쓰임) */
+	private String needSbmsnCoRlsAgreYn;
+
+	/** 로그인 사용자 기업그룹일련번호(JAVA에서 조회해서 넣어줌) */
+	private Integer entGrpSn;
+
+	/** TAGET 기관아이디 */
+	private String targetInstId;
+
+	/** TAGET 기관접수번호 */
+	private String targetCertNo;
+
+	/** TAGET 성적서번호 */
+	private String targetInstRcptNo;
+
+	/** TAGET 인증번호 */
+	private String targetRprtNo;
+
+	/** TAGET 기관품목코드 */
+	private String targetInstPdctgCd;
+
+	/** TAGET 기관시료번호 */
+	private String targetInstSampleNo;
+
+	/** TAGET 기관시험항목코드 */
+	private String targetInstTestItemCd;
+
+	//===================== 제품사진 display 관련 데이터
+	/** 기관명(영문)_소문자 */
+	private String instEngNmLower;
+
+	/** 인증번호 */
+	private String certNo;
+
+	/** imgName(파일명) */
+	private String imgName;
+	//=======================// 제품사진 display 관련 데이터 데이터 끝
+
+}

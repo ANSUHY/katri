@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.dataUsageGuide.mapper.CertDataMapper">
+
+	<!-- SQL : [인증데이터 조회] 리스트 WHERE -->
+	<sql id="sqlWhereCertDataList">
+		/*  SQL : [인증데이터 조회] 리스트 WHERE */
+		<where>
+			<if test='schInstId != null and schInstId != ""'>
+				AND (UPPER(${alias_cert}inst_id) = #{schInstId}) 					/* [검색:인증기관] */
+			</if>
+			<if test='schCertNo != null and schCertNo != ""'>
+				AND (${alias_cert}cert_no LIKE '%' || #{schCertNo} || '%')			/* [검색:인증번호] */
+			</if>
+			<if test='schMkrNm != null and schMkrNm != ""'>
+				AND (${alias_cert}mnftr_custco_nm LIKE '%' || #{schMkrNm} || '%')	/* [검색:제조업체명] */
+			</if>
+			<if test='schMdlNm != null and schMdlNm != ""'>
+				AND (${alias_cert}mdl_nm LIKE '%' || #{schMdlNm} || '%')			/* [검색:모델명] */
+			</if>
+			<if test='schIptrNm != null and schIptrNm != ""'>
+				AND (${alias_cert}incm_custco_nm LIKE '%' || #{schIptrNm} || '%')	/* [검색:수입업체명] */
+			</if>
+			<if test='schPhotoYN != null and schPhotoYN != ""'>
+				<choose>
+					<when test='schPhotoYN == "Y"'>
+						AND EXISTS 						/* [검색:사진유무:Y] */
+					</when>
+					<otherwise>
+						AND NOT EXISTS 					/* [검색:사진유무:N] */
+					</otherwise>
+				</choose>
+				(	SELECT img.file_nm
+					FROM pt_rf_cert_img_txn img
+					WHERE img.inst_id = ${alias_cert}inst_id
+						AND img.cert_no = ${alias_cert}cert_no
+				)
+			</if>
+			<if test='schCertYmdF != null and schCertYmdF != ""'>
+				AND (${alias_cert}cert_ymd <![CDATA[>=]]> TO_CHAR(TO_DATE(#{schCertYmdF}, 'YYYY-MM-DD'), 'YYYYMMDD') ) /* [검색:인증일자_시작일] */
+			</if>
+			<if test='schCertYmdT != null and schCertYmdT != ""'>
+				AND (${alias_cert}cert_ymd <![CDATA[<=]]> TO_CHAR(TO_DATE(#{schCertYmdT}, 'YYYY-MM-DD'), 'YYYYMMDD') ) /* [검색:인증일자_끝일] */
+			</if>
+			<if test='schSttCd != null and schSttCd != ""'>
+				AND (${alias_cert}cert_stt_cd = #{schSttCd}) 						/* [검색:인증상태] */
+			</if>
+			<if test='schPrdtClfCd != null and schPrdtClfCd != ""'>
+				AND (${alias_cert}stty_prdt_clf_cd = #{schPrdtClfCd}) 				/* [검색:제품분류] */
+			</if>
+			<if test='schPrdtNm != null and schPrdtNm != ""'>
+				AND (${alias_cert}prdt_nm LIKE '%' || #{schPrdtNm} || '%') 			/* [검색:제품명] */
+			</if>
+		</where>
+	</sql>
+
+	<!-- [인증데이터 조회] 리스트 개수 조회 -->
+	<select id="selectCertDataCount" parameterType="com.katri.web.dataUsageGuide.model.CertDataSelectReq" resultType="int">
+		/* CertDataMapper.selectCertDataCount ([인증데이터 조회] 리스트 개수 조회) */
+
+		SELECT
+			count(ppcb.cert_no) as count
+		FROM pt_pr_cert_bas ppcb
+		<include refid='sqlWhereCertDataList'>
+			<property name="alias_cert" value="ppcb."/>
+		</include>
+	</select>
+
+	<!-- [인증데이터 조회] 리스트 조회 -->
+	<select id="selectCertDataList" parameterType="com.katri.web.dataUsageGuide.model.CertDataSelectReq" resultType="com.katri.web.dataUsageGuide.model.CertDataSelectRes">
+		/* CertDataMapper.selectCertDataList ([인증데이터 조회] 리스트 조회) */
+
+		SELECT
+			(row_number() over(order by ppcb.cert_ymd, ppcb.clct_file_ymd DESC)) as rownum
+			, UPPER(ppcb.inst_id) AS inst_id --기관아이디
+			, (SELECT CONCAT (pcib.inst_nm, '(' , pcib.inst_eng_nm, ')' ) FROM pt_co_inst_bas pcib WHERE pcib.use_yn ='Y' AND pcib.inst_id = ppcb.inst_id LIMIT 1) AS inst_ko_eng_nm --기관명(국문, 영문)
+			, ppcb.mdl_nm 					--모델명
+			, ppcb.prdt_nm 					--제품명
+			, ppcb.cert_stt_cd				--인증상태코드
+			, (SELECT pcicdc.dtl_cd_nm FROM pt_co_intgr_comn_dtl_cd pcicdc WHERE pcicdc.use_yn ='Y' AND pcicdc.grp_cd='ATC007' AND pcicdc.dtl_cd = ppcb.cert_stt_cd LIMIT 1) AS cert_stt_nm --인증상태명
+			, ppcb.cert_no					--인증번호
+			, ppcb.inst_cert_idntfc_val		--통합접수번호
+			, ppcb.cert_ymd					--인증일자
+		FROM pt_pr_cert_bas ppcb
+		<include refid='sqlWhereCertDataList'>
+			<property name="alias_cert" value="ppcb."/>
+		</include>
+		ORDER BY rownum desc
+		OFFSET #{startRow} LIMIT #{endRow};
+	</select>
+
+	<!-- [인증데이터 조회] 상세 조회 -->
+	<select id="selectCertDataDetail" parameterType="com.katri.web.dataUsageGuide.model.CertDataSelectReq" resultType="com.katri.web.dataUsageGuide.model.CertDataSelectRes">
+		/* CertDataMapper.selectCertDataDetail ([인증데이터 조회] 상세 조회) */
+
+		SELECT
+			UPPER(ppcb.inst_id) AS inst_id 	--기관아이디
+			, (SELECT pcib.inst_nm FROM pt_co_inst_bas pcib WHERE pcib.use_yn ='Y' AND pcib.inst_id = ppcb.inst_id LIMIT 1) AS inst_nm --기관명(국문)
+			, (SELECT pcib.inst_eng_nm FROM pt_co_inst_bas pcib WHERE pcib.use_yn ='Y' AND pcib.inst_id = ppcb.inst_id LIMIT 1) AS inst_eng_nm --기관명(영문)
+			, ppcb.cert_no					--인증번호
+			, ppcb.inst_cert_idntfc_val		--기관인증식별값
+			, ppcb.cert_div_cd				--인증구분코드
+			, (SELECT pcicdc.dtl_cd_nm FROM pt_co_intgr_comn_dtl_cd pcicdc WHERE pcicdc.use_yn ='Y' AND pcicdc.grp_cd='ATC006' AND pcicdc.dtl_cd = ppcb.cert_div_cd LIMIT 1) AS cert_div_nm --인증구분명
+			, ppcb.cert_stt_cd				--인증상태코드
+			, (SELECT pcicdc.dtl_cd_nm FROM pt_co_intgr_comn_dtl_cd pcicdc WHERE pcicdc.use_yn ='Y' AND pcicdc.grp_cd='ATC007' AND pcicdc.dtl_cd = ppcb.cert_stt_cd LIMIT 1) AS cert_stt_nm --인증상태명
+			, ppcb.cert_ymd					--인증일자
+			, ppcb.cert_last_chg_ymd		--인증최종변경일자
+			, ppcb.cert_chg_resn_cn			--인증변경사유내용
+			, ppcb.frst_cert_no				--최초인증번호
+			, ppcb.prdt_nm					--제품명
+			, ppcb.brd_nm					--브랜드명
+			, ppcb.mdl_nm					--모델명
+			, ppcb.drvn_mdl_nm				--파생모델명
+			, ppcb.stty_prdt_clf_cd			--법정제품분류코드
+			, (SELECT pcspcc.stty_prdt_dtclf_nm FROM pt_co_stty_prdt_clf_cd pcspcc WHERE pcspcc.use_yn ='Y' AND pcspcc.stty_prdt_clf_cd = ppcb.stty_prdt_clf_cd LIMIT 1) AS stty_prdt_clf_nm --법정제품분류명
+			, ppcb.stty_prdt_dtclf_nm		--법정제품세분류명
+			, ppcb.stty_prdt_dtclf_nm		--법정제품세분류명
+			, ppcb.stnd_nm					--규격명
+			, ppcb.rmk_cn					--비고내용
+			, ppcb.incm_mnftr_div_cd		--수입제조구분코드
+
+			, ppcb.mnftr_custco_nm			--제조고객회사명
+			, ppcb.mnftr_custco_brno		--제조고객회사사업자등록번호
+			, ppcb.mnftr_custco_ntn_nm		--제조고객회사국가명
+			, ppcb.mnftr_custco_rprsv_nm	--제조고객회사대표자명
+			, ppcb.mnftr_custco_zip			--제조고객회사우편번호
+			, ppcb.mnftr_custco_addr		--제조고객회사주소
+			, ppcb.mnftr_custco_telno		--제조고객회사전화번호
+
+			, ppcb.incm_custco_nm			--수입고객회사명
+			, ppcb.incm_custco_brno			--수입고객회사사업자등록번호
+			, ppcb.incm_custco_rprsv_nm		--수입고객회사대표자명
+			, ppcb.incm_custco_zip			--수입고객회사우편번호
+			, ppcb.incm_custco_addr			--수입고객회사주소
+			, ppcb.incm_custco_telno		--수입고객회사전화번호
+
+			, (SELECT tcaim.adit_info_cn FROM tb_cert_adit_info_mng tcaim WHERE tcaim.inst_id = ppcb.inst_id AND tcaim.cert_no = ppcb.cert_no LIMIT 1) AS cert_adit_info_cn --추가정보내용
+
+		FROM pt_pr_cert_bas ppcb
+		WHERE UPPER(ppcb.inst_id) = #{targetInstId} AND ppcb.cert_no = #{targetCertNo}
+		LIMIT 1
+	</select>
+
+	<!-- [인증데이터 조회] 이미지 리스트 조회 -->
+	<select id="selectCertDataImgList" parameterType="com.katri.web.dataUsageGuide.model.CertDataSelectReq" resultType="String">
+		/* CertDataMapper.selectCertDataImgList ([인증데이터 조회] 이미지 리스트 조회) */
+
+		SELECT
+			prcit.cert_img_file_nm --인증이미지파일명
+		FROM pt_rf_cert_img_txn prcit
+		WHERE UPPER(prcit.inst_id) = #{targetInstId} AND prcit.cert_no = #{targetCertNo}
+		ORDER BY prcit.file_nm
+	</select>
+
+	<!-- [인증데이터 조회] [##인증기관##] 리스트 조회 -->
+	<select id="selectCoInstList" resultType="com.katri.web.dataUsageGuide.model.CertDataSelectRes">
+		/* CertDataMapper.selectCoInstList ([인증데이터 조회] [##인증기관##] 리스트 조회) */
+
+		SELECT
+			pcib.inst_id AS ls_inst_id 		--기관아이디
+			, pcib.inst_nm AS ls_inst_nm 	--기관명
+		FROM pt_co_inst_bas pcib
+		WHERE pcib.use_yn = 'Y'
+			AND pcib.inst_id != 'T000' /* 공통기관 제외 */
+		ORDER BY pcib.inst_id ASC
+	</select>
+
+	<!-- [인증데이터 조회] [##통합공통상세코드##] 리스트 조회 -->
+	<select id="selectPtComnDtlCdList" parameterType="String" resultType="com.katri.web.dataUsageGuide.model.CertDataSelectRes">
+		/* CertDataMapper.selectPtComnDtlCdList ([인증데이터 조회] [##통합공통상세코드##] 리스트 조회) */
+
+		SELECT
+			pcicdc.dtl_cd AS ls_dtl_cd			--디테일코드
+			, pcicdc.dtl_cd_nm AS ls_dtl_cd_nm	--디테일코드명
+		FROM pt_co_intgr_comn_dtl_cd pcicdc
+		WHERE pcicdc.use_yn = 'Y'
+			AND pcicdc.grp_cd = #{grpCd}
+		ORDER BY pcicdc.srt_seq ASC
+	</select>
+
+	<!-- [인증데이터 조회] [##CO_법정제품분류##] 리스트 조회 -->
+	<select id="selectPtCoSttyPrdtClfCdList" resultType="com.katri.web.dataUsageGuide.model.CertDataSelectRes">
+		/* CertDataMapper.selectPtCoSttyPrdtClfCdList ([인증데이터 조회] [##CO_법정제품분류##] 리스트 조회) */
+
+		SELECT
+			pcspcc.stty_prdt_clf_cd AS ls_stty_prdt_clf_cd			--법정제품분류코드
+			, pcspcc.stty_prdt_dtclf_nm AS ls_stty_prdt_dtclf_nm	--법정제품세분류명
+		FROM pt_co_stty_prdt_clf_cd pcspcc
+		WHERE pcspcc.use_yn = 'Y'
+		ORDER BY pcspcc.stty_prdt_clf_cd ASC
+	</select>
+
+	<!-- [인증데이터 조회] [##설명문장##] 페이지에 맞는 데이터 조회 -->
+	<select id="selectExplanMenuCptnCnData" resultType="String">
+		/* CertDataMapper.selectExplanMenuCptnCnData ([인증데이터 조회] [##설명문장##] 페이지에 맞는 데이터 조회) */
+
+		SELECT
+			tmcm.menu_cptn_cn
+		FROM tb_menu_cptn_mng tmcm
+		WHERE tmcm.use_yn = 'Y'
+			AND tmcm.menu_cptn_cd = 'MCC012'
+		ORDER BY tmcm.crt_dt DESC
+		LIMIT 1
+	</select>
+
+</mapper>

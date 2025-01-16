@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.ctnt.menuCptn.mapper.MenuCptnMapper">
+
+	<!-- SQL : 메뉴구성관리 리스트 WHERE -->
+	<sql id="sqlWhereMenuCptnList">
+		/* SQL : 메뉴구성관리 리스트 WHERE */
+
+		<trim prefix="WHERE" prefixOverrides="AND">
+			<if test="(searchMenuCptnCd != null) and (searchMenuCptnCd != '')">
+				AND (${alias_menuCptn}menu_cptn_cd = #{searchMenuCptnCd}) /* [검색 조건] 메뉴구성코드 */
+			</if>
+		</trim>
+	</sql>
+
+	<!-- 메뉴구성관리 리스트 개수 조회 -->
+	<select id="selectMenuCptnListCount" parameterType="com.katri.web.ctnt.menuCptn.model.MenuCptnSelectReq" resultType="int">
+		/* MenuCptnMapper.selectMenuCptnListCount (메뉴구성관리 리스트 개수 조회) */
+
+		SELECT
+			count(tmcm.menu_cptn_sn) as count
+		FROM tb_menu_cptn_mng tmcm
+		<include refid='sqlWhereMenuCptnList'>
+			<property name="alias_menuCptn" value="tmcm."/>
+		</include>
+	</select>
+
+	<!-- 메뉴구성관리 리스트 조회 -->
+	<select id="selectMenuCptnList" parameterType="com.katri.web.ctnt.menuCptn.model.MenuCptnSelectReq" resultType="com.katri.web.ctnt.menuCptn.model.MenuCptnSelectRes">
+		/* MenuCptnMapper.selectMenuCptnList (메뉴구성관리 리스트 조회) */
+
+		SELECT
+			m_tmcm.*
+			, coalesce(null, tcc.comn_cd_nm, '') AS menu_cptn_cd_nm
+		FROM (SELECT
+				(row_number() over(order by tmcm.menu_cptn_sn ASC)) as rownum
+				, tmcm.menu_cptn_sn
+				, tmcm.menu_cptn_cd
+				, tmcm.menu_cptn_nm
+				, tmcm.use_yn
+				, tmcm.crt_dt
+			FROM tb_menu_cptn_mng tmcm
+			<include refid='sqlWhereMenuCptnList'>
+				<property name="alias_menuCptn" value="tmcm."/>
+			</include>
+			) m_tmcm
+		/* 공통코드 : MCC : 메뉴구성코드 */
+		LEFT OUTER JOIN tb_comn_cd tcc
+			ON (tcc.comn_cd = m_tmcm.menu_cptn_cd AND tcc.comn_grp_cd='MCC' AND tcc.use_yn ='Y')
+		ORDER BY rownum desc
+	</select>
+
+	<!-- menuCptn 상세 조회 -->
+	<select id="selectMenuCptnDetail" resultType="com.katri.web.ctnt.menuCptn.model.MenuCptnSelectRes">
+		/* MenuCptnMapper.selectMenuCptnDetail (menuCptn 상세 조회) */
+
+		SELECT
+			tmcm.menu_cptn_sn
+			, tmcm.menu_cptn_cd
+			, coalesce(null, tcc.comn_cd_nm, '') AS menu_cptn_cd_nm
+			, tmcm.menu_cptn_nm
+			, tmcm.menu_cptn_cn
+		FROM tb_menu_cptn_mng tmcm
+		/* 공통코드 : MCC : 메뉴구성코드 */
+		LEFT OUTER JOIN tb_comn_cd tcc
+			ON (tcc.comn_cd = tmcm.menu_cptn_cd AND tcc.comn_grp_cd='MCC' AND tcc.use_yn ='Y')
+		WHERE tmcm.menu_cptn_sn = #{menuCptnSn}
+	</select>
+
+	<!-- menuCptn USE_YN = '넘어온타입' 로 수정 -->
+	<update id="updateChgMenuCptnUseYN" parameterType="com.katri.web.ctnt.menuCptn.model.MenuCptnSaveReq">
+		/* MenuCptnMapper.updateChgMenuCptnUseYN (menuCptn USE_YN = '넘어온타입' 로 수정) */
+
+		UPDATE tb_menu_cptn_mng
+		SET
+			use_yn 		= #{chgUseYn}
+			, mdfr_id	= #{mdfrId}
+			, mdfcn_dt	= now()
+		<trim prefix="WHERE" prefixOverrides="AND">
+			<if test="(chgUseYMenuCptnSn != null) and (! chgUseYMenuCptnSn.equals(''))">
+				AND menu_cptn_sn = #{chgUseYMenuCptnSn}
+			</if>
+			<if test="(chgUseYMenuCptnCd != null) and (chgUseYMenuCptnCd != '')">
+				AND menu_cptn_cd = #{chgUseYMenuCptnCd}
+			</if>
+		</trim>
+	</update>
+
+	<!-- menuCptn 등록 -->
+	<insert id="insertMenuCptn" parameterType="com.katri.web.ctnt.menuCptn.model.MenuCptnSaveReq" useGeneratedKeys="true" keyProperty="menuCptnSn">
+		/* MenuCptnMapper.insertMenuCptn (menuCptn 등록) */
+
+		INSERT INTO tb_menu_cptn_mng (
+			menu_cptn_cd
+			, menu_cptn_nm
+			, menu_cptn_cn
+			, use_yn
+			, crtr_id
+			, crt_dt
+		) VALUES (
+			#{menuCptnCd}
+			, #{menuCptnNm}
+			, #{menuCptnCn}
+			, 'N'
+			, #{crtrId}
+			, now()
+		)
+	</insert>
+
+	<!-- menuCptn 수정 -->
+	<update id="updateMenuCptn" parameterType="com.katri.web.ctnt.menuCptn.model.MenuCptnSaveReq">
+		/* MenuCptnMapper.updateMenuCptn (menuCptn 수정) */
+
+		UPDATE tb_menu_cptn_mng
+		SET
+			menu_cptn_nm 	= #{menuCptnNm}
+			, menu_cptn_cn 	= #{menuCptnCn}
+			, mdfr_id		= #{mdfrId}
+			, mdfcn_dt		= now()
+		WHERE menu_cptn_sn 	= #{menuCptnSn}
+			AND menu_cptn_cd = #{menuCptnCd}
+	</update>
+
+</mapper>

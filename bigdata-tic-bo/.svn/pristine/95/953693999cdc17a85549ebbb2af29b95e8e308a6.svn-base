@@ -1,0 +1,572 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>시험인증 빅데이터 포탈 관리자</title>
+
+<link href="../css/style.css" rel="stylesheet">
+<script src="../js/jquery.min.js"></script>
+<script src="../js/jquery-ui.js"></script>
+<script src="../js/custom.js"></script>
+
+<script>
+
+	$(document).ready(function() {
+		// 페이지 첫 로드 시, front 메뉴 show
+		fn_frontShow();
+	});
+
+	function fn_frontShow() {
+		$("#tabFrontArea").show();
+		$("#tabBackArea").hide();
+
+		$("#tabFront").addClass('on');
+		$("#tabBack").removeClass('on');
+	}
+
+	function fn_backShow() {
+		$("#tabBackArea").show();
+		$("#tabFrontArea").hide();
+
+		$("#tabBack").addClass('on');
+		$("#tabFront").removeClass('on');
+	}
+
+</script>
+
+</head>
+
+<body>
+
+<div id="wrap">
+
+    <div id="header">
+		<h1 class="h1Tit" style="font-size:16px; line-height:15px; padding-top:2px;"><a href="#">시험인증 빅데이터<br />포탈 관리자</a></h1>
+		<div id="gnb-wrap">
+			<ul id="gnb">
+				<li class="gnb1"><a href="javascript:void(0);" class="d1">시스템 관리</a>
+					<div class="deth2">
+						<ul>
+							<li><a href="#">코드 관리</a></li>
+							<li><a href="#">메뉴 관리</a></li>
+							<li><a href="#">접속권한 관리</a></li>
+							<li><a href="#">관리자 관리</a></li>
+						</ul>
+					</div>
+				</li>
+				<li class="gnb2"><a href="#" class="d1">회원 관리</a>
+					<div class="deth2">
+						<ul>
+							<li><a href="#">코드그룹 조회</a></li>
+							<li><a href="#">코드그룹 등록</a></li>
+							<li><a href="#">코드그룹 수정</a></li>
+							<li><a href="#">공통코드 조회</a></li>
+							<li><a href="#">공통코드 등록</a></li>
+							<li><a href="#">공통코드 수정</a></li>
+						</ul>
+					</div>
+				</li>
+				<li class="gnb3"><a href="#" class="d1">약관 관리</a>
+					<div class="deth2">
+						<ul>
+							<li><a href="#">회원정보조회 (PSK 직원)</a></li>
+							<li><a href="#">회원정보조회 (협력사)</a></li>
+						</ul>
+					</div>
+				</li>
+				<li class="gnb4"><a href="#" class="d1">콘텐츠 관리</a>
+					<div class="deth2">
+						<ul>
+							<li><a href="#">관리자 정보 등록</a></li>
+							<li><a href="#">관리자 정보 수정</a></li>
+						</ul>
+					</div>
+				</li>
+				<li class="gnb5"><a href="#" class="d1">메인화면 관리</a></li>
+				<li class="gnb6"><a href="#" class="d1">검색 관리</a></li>
+			</ul>
+		</div>
+		<div class="utill">
+			<a href="#" class="btn btn-white"><i class="fa fa-sign-out"></i> 로그아웃</a>
+		</div>
+	</div><!-- /header -->
+
+	<div id="container">
+
+		<div class="titArea">
+			<div class="location">
+				<span class="ic-home"><i></i></span><span>시스템 관리</span> <em>메뉴 관리</em>
+			</div>
+		</div>
+
+		<div class="div-tab">
+			<ul>
+				<li id="tabFront" class="on"><a href="#" onclick="fn_frontShow()">Frontend</a></li>
+				<li id="tabBack"><a href="#" onclick="fn_backShow()">Backoffice</a></li>
+			</ul>
+		</div>
+
+		<div class="btn-box bot r">
+			<div class="left">
+				<h2 class="pop-tit2" style="margin-top: 0px;">메뉴 정보</h2>
+			</div>
+			<a href="#" class="btn btn-default">신규입력</a>
+			<a href="#" class="btn btn-blue">저장</a>
+		</div>
+
+		<!-- Frontend Area -->
+		<div id="tabFrontArea">
+			<div class="rows">
+				<div class="rows-col5" style="padding: 10px;">
+					<div class="row-tbl">
+						<table>
+							<colgroup>
+								<col style="width:100px">
+								<col style="width:100px">
+								<col style="width:100px">
+							</colgroup>
+							<thead>
+								<tr>
+									<th>
+										<span class="blt_req">*</span>&nbsp;상위메뉴 선택
+									</th>
+									<td colspan="2">
+										&nbsp;&nbsp;1레벨
+										<select class="select" style="width: 150px;">
+											<option value="">선택</option>
+										</select>
+										&nbsp;&nbsp;2레벨
+										<select class="select" style="width: 150px;">
+											<option value="">선택</option>
+										</select>
+										&nbsp;&nbsp;3레벨
+										<select class="select" style="width: 150px;">
+											<option value="">선택</option>
+										</select>
+										&nbsp;&nbsp;4레벨
+										<select class="select" style="width: 150px;">
+											<option value="">선택</option>
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<th>
+										<span class="blt_req">*</span>&nbsp;메뉴명
+									</th>
+									<th>
+										메뉴 URL
+									</th>
+									<th>
+										<span class="blt_req">*</span>&nbsp;사용여부
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>
+										<input type="text" class="input block" style="padding: 10px;">
+									</td>
+									<td>
+										<input type="text" class="input block" style="padding: 10px;">
+									</td>
+									<td>
+										<label><input type="radio" name="useYn"> Y</label>
+										<label><input type="radio" name="useYn"> N</label>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+
+			<div class="btn-box bot r" style="margin-top: 20px;">
+				<div class="left">
+					<h2 class="pop-tit2" style="margin-top: 0px;">메뉴 목록</h2>
+				</div>
+				<label><input type="checkbox">&nbsp;사용중인 코드만 보기</label>
+				<a href="#" class="btn btn-blue">순서저장</a>
+			</div>
+
+
+			<div class="rows">
+
+				<div class="rows-col5" style="padding: 10px;">
+
+					<div class="row-tbl scroll" style="height:150px;">
+						<table>
+							<colgroup>
+								<col>
+								<col style="width:150px;">
+								<col style="width:100px;">
+							</colgroup>
+							<thead>
+								<tr>
+									<th>1레벨</th>
+									<th>사용여부</th>
+									<th>순서</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td colspan="3">No Data.</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div><!-- /row-col5 -->
+
+				<div class="rows-col5" style="padding: 10px;">
+
+					<div class="row-tbl scroll" style="height:150px;">
+						<table>
+							<colgroup>
+								<col>
+								<col style="width:150px;">
+								<col style="width:100px;">
+							</colgroup>
+							<thead>
+								<tr>
+									<th>2레벨</th>
+									<th>사용여부</th>
+									<th>순서</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>가나다</td>
+									<td>Y</td>
+									<td>
+										<button>▲</button>
+										<button>▼</button>
+									</td>
+								</tr>
+								<tr>
+									<td>가나다</td>
+									<td>Y</td>
+									<td>
+										<button>▲</button>
+										<button>▼</button>
+									</td>
+								</tr>
+								<tr>
+									<td>가나다</td>
+									<td>Y</td>
+									<td>
+										<button>▲</button>
+										<button>▼</button>
+									</td>
+								</tr>
+								<tr>
+									<td>가나다</td>
+									<td>Y</td>
+									<td>
+										<button>▲</button>
+										<button>▼</button>
+									</td>
+								</tr>
+								<tr>
+									<td>가나다</td>
+									<td>Y</td>
+									<td>
+										<button>▲</button>
+										<button>▼</button>
+									</td>
+								</tr>
+								<tr>
+									<td>가나다</td>
+									<td>Y</td>
+									<td>
+										<button>▲</button>
+										<button>▼</button>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div><!-- /row-col5 -->
+			</div>
+			<div class="rows">
+
+				<div class="rows-col5" style="padding: 10px;">
+
+					<div class="row-tbl scroll" style="height:150px; margin-top: 10px;">
+						<table>
+							<colgroup>
+								<col>
+								<col style="width:150px;">
+								<col style="width:100px;">
+							</colgroup>
+							<thead>
+								<tr>
+									<th>3레벨</th>
+									<th>사용여부</th>
+									<th>순서</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td colspan="3">No Data.</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div><!-- /row-col5 -->
+
+				<div class="rows-col5" style="padding: 10px;">
+
+					<div class="row-tbl scroll" style="height:150px; margin-top: 10px;">
+						<table>
+							<colgroup>
+								<col>
+								<col style="width:150px;">
+								<col style="width:100px;">
+							</colgroup>
+							<thead>
+								<tr>
+									<th>4레벨</th>
+									<th>사용여부</th>
+									<th>순서</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>가나다</td>
+									<td>Y</td>
+									<td>
+										<button>▲</button>
+										<button>▼</button>
+									</td>
+								</tr>
+								<tr>
+									<td>가나다</td>
+									<td>Y</td>
+									<td>
+										<button>▲</button>
+										<button>▼</button>
+									</td>
+								</tr>
+								<tr>
+									<td>가나다</td>
+									<td>Y</td>
+									<td>
+										<button>▲</button>
+										<button>▼</button>
+									</td>
+								</tr>
+								<tr>
+									<td>가나다</td>
+									<td>Y</td>
+									<td>
+										<button>▲</button>
+										<button>▼</button>
+									</td>
+								</tr>
+								<tr>
+									<td>가나다</td>
+									<td>Y</td>
+									<td>
+										<button>▲</button>
+										<button>▼</button>
+									</td>
+								</tr>
+								<tr>
+									<td>가나다</td>
+									<td>Y</td>
+									<td>
+										<button>▲</button>
+										<button>▼</button>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div><!-- /row-col5 -->
+			</div>
+		</div>
+		<!-- // Frontend Area -->
+
+		<!-- Backoffice Area -->
+		<div id="tabBackArea">
+			<div class="rows">
+				<div class="rows-col5" style="padding: 10px;">
+					<div class="row-tbl">
+						<table>
+							<colgroup>
+								<col style="width:100px">
+								<col style="width:100px">
+								<col style="width:100px">
+							</colgroup>
+							<thead>
+								<tr>
+									<th>
+										<span class="blt_req">*</span>&nbsp;상위메뉴 선택
+									</th>
+									<td colspan="2">
+										&nbsp;&nbsp;1레벨
+										<select class="select" style="width: 150px;">
+											<option value="">선택</option>
+										</select>
+										&nbsp;&nbsp;2레벨
+										<select class="select" style="width: 150px;">
+											<option value="">선택</option>
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<th>
+										<span class="blt_req">*</span>&nbsp;메뉴명
+									</th>
+									<th>
+										메뉴 URL
+									</th>
+									<th>
+										<span class="blt_req">*</span>&nbsp;사용여부
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>
+										<input type="text" class="input block" style="padding: 10px;">
+									</td>
+									<td>
+										<input type="text" class="input block" style="padding: 10px;">
+									</td>
+									<td>
+										<label><input type="radio">Y</label>
+										<label><input type="radio">N</label>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+
+			<div class="btn-box bot r" style="margin-top: 20px;">
+				<div class="left">
+					<h2 class="pop-tit2" style="margin-top: 0px;">메뉴 목록</h2>
+				</div>
+				<label><input type="checkbox">&nbsp;사용중인 코드만 보기</label>
+				<a href="#" class="btn btn-blue">순서저장</a>
+			</div>
+
+
+			<div class="rows">
+
+				<div class="rows-col5" style="padding: 10px;">
+
+					<div class="row-tbl scroll" style="height:150px;">
+						<table>
+							<colgroup>
+								<col>
+								<col style="width:150px;">
+								<col style="width:100px;">
+							</colgroup>
+							<thead>
+								<tr>
+									<th>1레벨</th>
+									<th>사용여부</th>
+									<th>순서</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td colspan="3">No Data.</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div><!-- /row-col5 -->
+
+				<div class="rows-col5" style="padding: 10px;">
+
+					<div class="row-tbl scroll" style="height:150px;">
+						<table>
+							<colgroup>
+								<col>
+								<col style="width:150px;">
+								<col style="width:100px;">
+							</colgroup>
+							<thead>
+								<tr>
+									<th>2레벨</th>
+									<th>사용여부</th>
+									<th>순서</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>가나다</td>
+									<td>Y</td>
+									<td>
+										<button>▲</button>
+										<button>▼</button>
+									</td>
+								</tr>
+								<tr>
+									<td>가나다</td>
+									<td>Y</td>
+									<td>
+										<button>▲</button>
+										<button>▼</button>
+									</td>
+								</tr>
+								<tr>
+									<td>가나다</td>
+									<td>Y</td>
+									<td>
+										<button>▲</button>
+										<button>▼</button>
+									</td>
+								</tr>
+								<tr>
+									<td>가나다</td>
+									<td>Y</td>
+									<td>
+										<button>▲</button>
+										<button>▼</button>
+									</td>
+								</tr>
+								<tr>
+									<td>가나다</td>
+									<td>Y</td>
+									<td>
+										<button>▲</button>
+										<button>▼</button>
+									</td>
+								</tr>
+								<tr>
+									<td>가나다</td>
+									<td>Y</td>
+									<td>
+										<button>▲</button>
+										<button>▼</button>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div><!-- /row-col5 -->
+			</div>
+
+		</div>
+		<!-- // Backoffice Area -->
+
+	</div><!-- /container -->
+
+	<div id="footer">
+		Copyright © KATRi Inc. 2022.
+	</div><!-- /footer -->
+
+</div><!-- /wrap -->
+
+<script>
+	gnb('1','1');
+</script>
+
+</body>
+</html>

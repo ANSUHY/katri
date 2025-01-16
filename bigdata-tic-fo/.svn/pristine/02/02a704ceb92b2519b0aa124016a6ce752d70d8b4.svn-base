@@ -1,0 +1,657 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="c"		uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="cm" 		uri="/WEB-INF/tlds" %>
+<%@ taglib prefix="spring"	uri="http://www.springframework.org/tags" %>
+
+<%@ page import="com.katri.common.Const" %>
+<c:set var="ROW_COUNT" value="<%=Const.Paging.ROW_COUNT%>" />
+
+<!-- select2 css 수정 -->
+<style>
+	.select2-container .select2-selection--single{
+		height: var(--w-40);
+		color : var(--grey-767);
+		font-size : var(--font-size-14);
+	}
+	.md-rect .select2-container .select2-selection--single{
+		margin-bottom : var(--w-10);
+	}
+	.select2-container--default .select2-selection--single .select2-selection__rendered {
+		line-height: var(--w-40);
+	}
+	.select2-container--default .select2-selection--single .select2-selection__arrow {
+		height: var(--w-40);
+		line-height: var(--w-40);
+	}
+	.select2-container--default .select2-search--dropdown .select2-search__field {
+		height: 35px;
+	}
+</style>
+
+<script type="text/javascript">
+
+	/* 진입인지(데이터가 없을때 문장여부 결정지음) */
+	let isItYN = false;
+
+	/* 디테일 갔다가 [유지할 페이지 임시로 담은 페이지값] 변수 */
+	let tempPage = "0";
+
+	/* 뒤로가기 시 스크롤 이동을 위한 초기화 */
+	window.onpageshow = function(event){
+		if(event.persisted || (window.performance && window.performance.navigation.type == 2)){
+			$("#targetInstId").val("");
+			$("#targetInstRcptNo").val("");
+			$("#targetRprtNo").val("");
+		}
+	}
+
+	$(document).ready(function() {
+
+		/* 초기 작업 */
+		fn_myRprtListInit();
+
+		/* data 가져오기 _ 모바일이나 PC둘다 초기 셋팅은 같게 해놓음 */
+		fn_searchMyRprtList('p');
+
+	});
+
+	/*
+	 * 함수명 : fn_myRprtListInit()
+	 * 설	 명 : 초기 작업
+	 */
+	function fn_myRprtListInit() {
+
+		//====== 진입여부 TRUE로 바꿔주기
+		isItYN = true;
+
+		//====== [제품분류_대],[제품분류_중]  select2 적용
+		$("select[id$='StdLgclfCd']").select2();
+		$("select[id$='SStdMlclfCd']").select2(); //select2 디자인때문에
+
+		//====== [제품분류_대],[제품분류_중] 검색 유지해줘야하는 값이 있으면 [제품분류_중]셋팅 및 유지 하기
+		if( !fn_emptyCheck( $("#schStdLgclfCd").val() ) ){
+
+			// 선택한 [제품분류_대]에 대한 [제품분류_중] 리스트 가져오기
+			fn_getStdMlclfCdList( "m" ,  $("#schStdLgclfCd").val()); //모바일
+			fn_getStdMlclfCdList( "p",  $("#schStdLgclfCd").val()); //pc
+
+			if( !fn_emptyCheck( $("#schStdMlclfCd").val() )){
+
+				//[제품분류_중] 값셋팅
+				$("select[id$='SStdMlclfCd']").val($("#schStdMlclfCd").val());
+
+				//[제품분류_중] select2 적용
+				$("select[id$='SStdMlclfCd']").select2();
+
+			}
+
+		}
+
+		//====== PC 검색어 엔터 처리
+		$(document).on("keydown", ".searchInput", function(key) {
+			if(key.keyCode==13)
+				fn_searchMyRprtList('p');
+		});
+
+		//====== [제품분류_대] 바뀌면 [제품분류_중] select박스 다시 셋팅
+		$(document).on("change", "select[id$='SStdLgclfCd']", function() {
+
+			let schType = $(this).attr("id").replace("SStdLgclfCd", ""); //m(모바일), p(PC)
+
+			/* [제품분류_중] 비우고 disabled 처리 */
+			$("#" + schType + "SStdMlclfCd").html('<option value="">전체</option>');
+			$("#" + schType + "SStdMlclfCd").attr("disabled", "disabled");
+
+			/* [제품분류_중] 리스트 가져와서 셋팅 */
+			if( $(this).val() != "" &&  $(this).val() != null ){
+				fn_getStdMlclfCdList( schType , $(this).val());
+			}
+
+		});
+
+	}
+
+	/*
+	 * 함수명 : fn_searchMyRprtList(schType)
+	 * 설	 명 : 검색할 경우(더보기x_더보기는 따로있음)
+	 * @param schType : m(모바일), p(PC)
+	*/
+	function fn_searchMyRprtList(schType) {
+
+		/* -- 0. html셋팅	----- */
+		// html 비우기
+		$("#areaMyRprt").html("");
+
+		/* -- 1. 유효성 검사 ----- */
+
+		/* -- 2. frm에 데이터 셋팅	----- */
+		// 2-1. 페이지 && Paging Row Count 셋팅
+		let currPage = $("#frm_myRprtList #currPage").val();
+		let rowCount = $("#frm_myRprtList #rowCount").val();
+		if( currPage !== "0" && rowCount != ${ROW_COUNT} ){ //detail 갔다가 유지해야할때
+			//[유지할 페이지 임시로 담은 페이지값]	변수에 담기
+			tempPage = currPage;
+			$("#frm_myRprtList #currPage").val(1);
+		} else {
+			$("#frm_myRprtList #currPage").val(1);
+			$("#frm_myRprtList #rowCount").val(${ROW_COUNT});
+		}
+
+		// 2-2. 검색조건 셋팅
+		let inputList	= $("#" + schType + "SchInner").find("input:text");//input태그 리스트
+		let selectList 	= $("#" + schType + "SchInner").find("select"); //select태그 리스트
+		/* 2-2-1. inupt태그 리스트 */
+		for (let i = 0 ; i < inputList.length ; i++) {
+			let name = $(inputList[i]).attr('name');
+			name = name.substr(2);	//mS, pS빼기
+			$("#frm_myRprtList #sch" +name).val($(inputList[i]).val());
+		}
+		/* 2-2-2. select태그 리스트 */
+		for (let i = 0 ; i < selectList.length ; i++) {
+			let name = $(selectList[i]).attr('name');
+			name = name.substr(2);	//mS, pS빼기
+			$("#frm_myRprtList #sch"+name).val($(selectList[i]).val());
+		}
+		/* 2-2-3. radio값 셋팅_입장구분 */
+		let edivi = $("#" + schType + "SchInner").find(":radio[name='"+ schType +"SEDivi']:checked").val();
+		$("#frm_myRprtList #schEDivi").val(edivi);
+
+		/* -- 3. data 가져오기 ----- */
+		fn_getMyRprtList();
+
+	}
+
+	/*
+	 * 함수명 : fn_moreMyRprtList()
+	 * 설	 명 : 더보기(검색X_검색은 따로있음)
+	*/
+	function fn_moreMyRprtList() {
+
+		/* -- 1. 유효성 검사 ----- */
+
+		/* -- 2. frm에 데이터 셋팅 ----- */
+		// 2-1. 페이지 셋팅
+		let nowPage = $("#frm_myRprtList #currPage").val();
+		nowPage = (nowPage === "" || nowPage === "0" ?	1 : nowPage);
+		$("#frm_myRprtList #currPage").val(parseInt(parseInt(nowPage) + 1));
+		// 2-2. Paging Row Count 셋팅
+		$("#frm_myRprtList #rowCount").val(${ROW_COUNT});
+
+		/* -- 3. data 가져오기 ----- */
+		fn_getMyRprtList();
+
+	}
+
+	/*
+	 * 함수명 : fn_getMyRprtList()
+	 * 설	 명 : myRprtList data 가져오기
+	*/
+	function fn_getMyRprtList() {
+
+		/* 페이지 셋팅 */
+		if($("#frm_myRprtList #currPage").val() === "" || $("#frm_myRprtList #currPage").val() === "0" ){
+			$("#frm_myRprtList #currPage").val(1);
+		}
+
+		/* Paging Row Count 셋팅 */
+		if($("#frm_myRprtList #rowCount").val() === "" || $("#frm_myRprtList #rowCount").val() === "0" ){
+			$("#frm_myRprtList #rowCount").val(${ROW_COUNT});
+		}
+
+		/* 리스트 가져오기 */
+		$.blockUI();
+		$.ajax({
+			url	 		: "/platformSvc/myData/myInfoCert/getMyRprtList"
+			, type 		: "GET"
+			, dataType 	: "json"
+			, data 		: $("#frm_myRprtList").serialize()
+			, success 	: function(jsonData, textStatus, jqXHR) {
+				$.unblockUI();
+
+				/* myRprtList data 가져오고 난후 */
+				fn_afterGetMyRprtList(jsonData);
+
+			}
+		});
+
+	}
+
+	/*
+	 * 함수명 : fn_afterGetMyRprtList(jsonData)
+	 * 설	 명 : myRprtList data 가져오고 난후
+	*/
+	function fn_afterGetMyRprtList(jsonData){
+
+		/* html 셋팅 */
+		let html = '';
+		if(jsonData.resultCode === 200){
+
+			if(jsonData.data.list !== null && jsonData.data.list.length > 0){ /* 데이터가 있을 경우 */
+
+				// 1. 리스트 html 만들기
+				$.each(jsonData.data.list, function(index, data){
+					html += fn_returnMyRprtListHtml(data);
+				})
+
+				// 2. 더보기 버튼 제어
+				let totCnt = jsonData.data.totCnt; //검색 전체 게시글수
+				let currPage = parseInt($("#currPage").val());
+				let rowCount = parseInt($("#rowCount").val());
+				if(totCnt <= parseInt(currPage * rowCount) ){
+					$("#btnMoreMyRprt").hide();
+				} else {
+					$("#btnMoreMyRprt").show();
+				}
+
+			} else { /* 데이터가 없을 경우 */
+
+				//진입 여부에 따라 메시지 셋팅
+				let noDataMsg = "";
+				if(isItYN){
+					noDataMsg = "<spring:message code='result-message.messages.rprt.data.message.no.data'/>"; // 등록된 성적서 정보가 없습니다.
+				} else {
+					noDataMsg = "<spring:message code='result-message.messages.rprt.data.message.no.search'/>"; // 검색 결과가 없습니다.
+				}
+
+				// 리스트 html 만들기
+				html += '<tr><td colspan="8" class="no-data">' + noDataMsg + '</td></tr>';
+
+				// 더보기 버튼 없애기
+				$("#btnMoreMyRprt").hide();
+
+			}
+
+			//3. 리스트 뿌리기
+			$("#areaMyRprt").append(html);
+
+		} else {
+			alert(jsonData.resultMessage);
+		}
+
+		/* 진입여부 FALSE로 바꿔주기 */
+		if(isItYN){
+			isItYN = false;
+		}
+
+		/* [유지할 페이지 임시로 담은 페이지값] 다시 셋팅 */
+		if(tempPage !== "0"){
+			$("#frm_myRprtList #currPage").val(tempPage);
+			$("#frm_myRprtList #rowCount").val(${ROW_COUNT});
+
+			tempPage = "0";
+		}
+
+		/* 스크롤 이동 */
+		if ( (!fn_emptyCheck($("#targetInstId").val())) && (!fn_emptyCheck($("#targetInstRcptNo").val()))  && (!fn_emptyCheck($("#targetRprtNo").val())) ) {
+			fn_moveScrollMyRprt( $("#targetInstId").val(), $("#targetInstRcptNo").val() , $("#targetRprtNo").val() );
+		}
+
+	}
+
+	/*
+	 * 함수명 : fn_returnMyRprtListHtml
+	 * 설	 명 : List html생성
+	*/
+	function fn_returnMyRprtListHtml(data){
+		let returnHtml = "";
+
+		/* 1. html생성*/
+		returnHtml += '<tr class="board-tr" style="cursor:pointer;" id="myRprtTr_' + data.instId + '_' + data.instRcptNo + '_' + data.rprtNo + '" onclick="fn_goMyRprtDetail(\'' + data.instId + '\', \'' + data.instRcptNo + '\', \'' + data.rprtNo + '\')">';
+		returnHtml += '		<td>' + data.rownum + '</td>';
+		returnHtml += '		<td>' + data.rprtIssuYmdFmt + '</td>';
+		returnHtml += '		<td>' + data.rprtNo + '</td>';
+		returnHtml += '		<td>' + data.instKoEngNm + '</td>';
+		returnHtml += '		<td>' + data.stdLgclfNm + '</td>';
+		returnHtml += '		<td>' + data.stdMlclfNm + '</td>';
+		returnHtml += '		<td>' + data.instPdctgNm + '</td>';
+		returnHtml += '		<td>' + data.intgrGnrlzJgmtRsltNm + '</td>';
+		returnHtml += '</tr>';
+
+		return returnHtml;
+	}
+
+	/*
+	 * 함수명 : fn_moveScrollMyRprt
+	 * 설	 명 : 스크롤 처리
+	*/
+	function fn_moveScrollMyRprt(instId, instRcptNo, rprtNo) {
+
+		if ( (!fn_emptyCheck(instId)) && (!fn_emptyCheck(instRcptNo)) && (!fn_emptyCheck(rprtNo)) ) {
+			if(document.getElementById("myRprtTr_" + instId + '_' + instRcptNo + '_' + rprtNo ) !== null){
+				document.getElementById("myRprtTr_" + instId + '_' + instRcptNo + '_' + rprtNo).scrollIntoView({behavior: "smooth", block: "center"});
+			}
+			$("#targetInstId").val("");
+			$("#targetInstRcptNo").val("");
+			$("#targetRprtNo").val("");
+		}
+
+	}
+
+	/*
+	 * 함수명 : fn_resetSearch(schType)
+	 * 설	 명 : 검색 조건 초기화
+	 * @param schType : m(모바일), p(PC)
+	 */
+	function fn_resetSearch(schType) {
+
+		let inputList	= $("#" + schType + "SchInner").find("input:text");//input태그 리스트
+		let selectList 	= $("#" + schType + "SchInner").find("select"); //select태그 리스트
+
+		for (var i = 0 ; i < inputList.length ; i++) {
+			$(inputList[i]).val("");
+		}
+		for (var i = 0 ; i < selectList.length ; i++) {
+			$(selectList[i]).val("");
+		}
+
+		/* radio값 리셋_입장구분:전체 */
+		$("#" + schType + "SchInner").find(":radio[name='"+ schType +"SEDivi'][value='']").prop('checked', true);
+
+		/* select2 리셋 */
+		$("#" + schType + "SStdLgclfCd").trigger("change");
+
+	}
+
+	/*
+	 * 함수명 : fn_getStdMlclfCdList(upStdLgclfCd)
+	 * 설	 명 : 선택한 [제품분류_대]에 대한 [제품분류_중] 리스트 가져오기
+	 * @param schType : m(모바일), p(PC)
+	 * @param upStdLgclfCd : 찾을 기준이 되는 표준대분류코드
+	 */
+	function fn_getStdMlclfCdList(schType, upStdLgclfCd){
+
+		/* 리스트 가져오기 */
+		$.ajax({
+			url	 		: "/platformSvc/myData/myInfoCert/getStdMlclfCdList"
+			, type 		: "GET"
+			, dataType 	: "json"
+			, async		: false //이거씀으로 인해 blockUI 못함
+			, data 		: {"upStdLgclfCd" : upStdLgclfCd}
+			, success 	: function(jsonData, textStatus, jqXHR) {
+
+				// [제품분류_중] select박스 html 만들기
+				let html = "";
+				html += '<option value="">전체</option>';
+				$.each(jsonData.data, function(index, data){
+					html += '<option value="' + data.lsStdMlclfCd + '">' + data.lsStdMlclfNm + '</option>';
+				})
+
+				// [제품분류_중] select박스 html 넣기
+				$("#" + schType + "SStdMlclfCd").html(html);
+
+				// [제품분류_중] 활성화 시키기
+				$("#" + schType + "SStdMlclfCd").removeAttr("disabled");
+
+				//[제품분류_중] select2 적용
+				$("#" + schType + "SStdMlclfCd").select2();
+
+			}
+		});
+
+	}
+
+	/*
+	 * 함수명 : fn_goMyRprtDetail
+	 * 설	 명 : 상세 페이지로 이동
+	*/
+	function fn_goMyRprtDetail(instId, instRcptNo, rprtNo) {
+
+		$("#frm_myRprtList #targetInstId").val(instId);
+		$("#frm_myRprtList #targetInstRcptNo").val(instRcptNo);
+		$("#frm_myRprtList #targetRprtNo").val(rprtNo);
+		$("#frm_myRprtList").attr("method", "GET");
+		$("#frm_myRprtList").attr("action", "/platformSvc/myData/myInfoCert/myRprtDetail");
+		$("#frm_myRprtList").submit();
+	}
+
+	/*
+	 * 함수명 : fn_downExcelMyRprt()
+	 * 설	 명 : 엑셀다운로드(아래 리스트대로_검색조건 바꾸고 해도 리스트대로나옴)
+	*/
+	function fn_downExcelMyRprt() {
+		$("#frm_myRprtList").attr("action", "/platformSvc/myData/myInfoCert/downExcelMyRprtList");
+		$("#frm_myRprtList").attr("method", "GET");
+		$("#frm_myRprtList").submit();
+	}
+
+
+</script>
+
+<!-- ===== header ====== -->
+<header id="header">
+	<div id="sub-mv" class="sub-myservice">
+		<div class="inner">
+			<h2>플랫폼 서비스</h2>
+			<div class="sub-obj">오브젝트</div>
+		</div>
+	</div>
+</header>
+<!-- ===== /header ====== -->
+
+<!-- ===== container ====== -->
+<div id="container">
+
+	<!--breadcrumb-wr-->
+	<jsp:include page="/WEB-INF/views/layout/breadcrumbWr.jsp">
+		<jsp:param name="menuTopNo" value="02"/>
+		<jsp:param name="menuSubNo" value="0201"/>
+	</jsp:include>
+	<!-- // breadcrumb-wr-->
+
+	<!--container-->
+	<div id="cont" class="cont-myservice board-myservice">
+
+		<!-- 검색 조건 -->
+		<form action="" method="get" name="frm_myRprtList" 	id="frm_myRprtList">
+
+			<input type="hidden" name="rowCount" 		id="rowCount" 			value="${schDatamyRprt.rowCount}">
+			<input type="hidden" name="currPage" 		id="currPage"			value="${schDatamyRprt.currPage}">
+
+			<input type="hidden" name="targetInstId" 	id="targetInstId" 		value="${schDatamyRprt.targetInstId}"/> <!-- Detail 갈때 기관아이디 -->
+			<input type="hidden" name="targetInstRcptNo" id="targetInstRcptNo" 	value="${schDatamyRprt.targetInstRcptNo}"/> <!-- Detail 갈때 기관접수번호 -->
+			<input type="hidden" name="targetRprtNo" 	id="targetRprtNo" 		value="${schDatamyRprt.targetRprtNo}"/> <!-- Detail 갈때 성적서번호 -->
+
+			<input type="hidden" name="schEDivi" 		id="schEDivi" 			value="${schDatamyRprt.schEDivi}">		<!-- [검색:입장구분]	-->
+			<input type="hidden" name="schInstId" 		id="schInstId" 			value="${schDatamyRprt.schInstId}">		<!-- [검색:시험기관]	-->
+			<input type="hidden" name="schRprtNo" 		id="schRprtNo" 			value="${schDatamyRprt.schRprtNo}">		<!-- [검색:성적서 번호]	-->
+			<input type="hidden" name="schStdLgclfCd" 	id="schStdLgclfCd" 		value="${schDatamyRprt.schStdLgclfCd}">	<!-- [검색:제품분류_대]	-->
+			<input type="hidden" name="schStdMlclfCd" 	id="schStdMlclfCd" 		value="${schDatamyRprt.schStdMlclfCd}">	<!-- [검색:제품분류_중]	-->
+			<input type="hidden" name="schPdctgNm" 		id="schPdctgNm" 		value="${schDatamyRprt.schPdctgNm}">	<!-- [검색:품목명]	-->
+			<input type="hidden" name="schRprtYmdF" 	id="schRprtYmdF" 		value="${schDatamyRprt.schRprtYmdF}">	<!-- [검색:발급일자_시작일]	-->
+			<input type="hidden" name="schRprtYmdT" 	id="schRprtYmdT" 		value="${schDatamyRprt.schRprtYmdT}">	<!-- [검색:발급일자_끝일]	-->
+			<input type="hidden" name="schJgmtCd" 		id="schJgmtCd" 			value="${schDatamyRprt.schJgmtCd}">		<!-- [검색:종합판정]	-->
+
+		</form>
+		<!--// 검색 조건	-->
+
+		<!--tit-->
+		<div class="cont-platform-tit">
+			<h2 class="tit">나의 시험인증 정보조회</h2>
+		</div>
+		<!--// tit-->
+
+		<!--서브메뉴-->
+		<ul class="sub-tabs grid3 type02">
+			<li class=""><a href="/platformSvc/myData/myInfoCert/myCertList">인증</a></li>
+			<li class="on"><a href="/platformSvc/myData/myInfoCert/myRprtList">성적서</a></li>
+			<li class=""><a href="/platformSvc/myData/myInfoCert/svcMng">서비스 관리</a></li>
+		</ul>
+
+		<!-- ===== 검색 :::::: 모바일 modal ====== -->
+		<div class="test-sch-md" id="mSchInner">
+			<div class="md-rect">
+				<a href="javascript:void(0);" class="btn-close">닫기</a>
+				<h3 class="md-tit">상세 검색</h3>
+				<div class="sch-wr">
+					<dl class="sch-lst">
+						<dt>입장구분</dt>
+						<dd>
+							<label for="mSEDivi1"><input type="radio" id="mSEDivi1" name="mSEDivi" value="" ${"" eq schDatamyRprt.schEDivi || empty schDatamyRprt.schEDivi? "checked" : ""}><span>전체</span></label>
+							<label for="mSEDivi2"><input type="radio" id="mSEDivi2" name="mSEDivi" value="appli" ${"appli" eq schDatamyRprt.schEDivi? "checked" : ""}><span>신청</span></label>
+							<label for="mSEDivi3"><input type="radio" id="mSEDivi3" name="mSEDivi" value="subm" ${"subm" eq schDatamyRprt.schEDivi? "checked" : ""}><span>제출</span></label>
+						</dd>
+						<dt>시험기관</dt>
+						<dd>
+							<select class="select" name="mSInstId">
+								<option value="">전체</option>
+								<c:forEach items="${coInstList}" var="item">
+									<option value="${item.lsInstId}" ${item.lsInstId eq schDatamyRprt.schInstId ? "selected" : ""} >${item.lsInstNm}</option>
+								</c:forEach>
+							</select>
+						</dd>
+						<dt>성적서 번호</dt>
+						<dd>
+							<input type="text" placeholder="입력하세요" name="mSRprtNo" class="searchInput" value="${schDatamyRprt.schRprtNo}">
+						</dd>
+						<dt>제품분류</dt>
+						<dd>
+							<select class="select wd50" name="mSStdLgclfCd" id="mSStdLgclfCd" style="width: 100%;">
+								<option value="">전체</option>
+								<c:forEach items="${stdLgclfList}" var="item">
+									<option value="${item.lsStdLgclfCd}" ${item.lsStdLgclfCd eq schDatamyRprt.schStdLgclfCd ? "selected" : ""} >${item.lsStdLgclfNm}</option>
+								</c:forEach>
+							</select>
+							<select class="select wd50" name="mSStdMlclfCd" id="mSStdMlclfCd" style="width: 100%;" disabled>
+									<option value="">전체</option>
+							</select>
+						</dd>
+						<dt>품목명</dt>
+						<dd>
+							<input type="text" placeholder="입력하세요" name="mSPdctgNm" class="searchInput" value="${schDatamyRprt.schPdctgNm}" >
+						</dd>
+						<dt>발급일자</dt>
+						<dd>
+							<input type="text" name="mSRprtYmdF" id="tblDatepicker01" placeholder="시작일" readonly="readonly" value="${schDatamyRprt.schRprtYmdF}" >
+							<input type="text" name="mSRprtYmdT" id="tblDatepicker02" placeholder="종료일" readonly="readonly" value="${schDatamyRprt.schRprtYmdT}" >
+						</dd>
+						<dt>종합판정</dt>
+						<dd>
+							<select class="select" name="mSJgmtCd">
+								<option value="">전체</option>
+								<c:forEach items="${jgmtRsltList}" var="item">
+									<option value="${item.lsDtlCd}" ${item.lsDtlCd eq schDatamyRprt.schJgmtCd ? "selected" : ""} >${item.lsDtlCdNm}</option>
+								</c:forEach>
+							</select>
+						</dd>
+					</dl>
+					<div class="btn-wr">
+						<a href="javascript:void(0);" onclick="fn_resetSearch('m')" class="btn md-b btn-test-reset">초기화</a>
+						<a href="javascript:void(0);" onclick="fn_searchMyRprtList('m')" class="btn md-r btn-test-sch">검색</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--// ===== 검색 :::::: 모바일 modal ====== -->
+
+		<!-- ====== 검색 :::::: PC용 ====== -->
+		<div class="mysvc-sch-wr" id="pSchInner">
+
+			<table summary="" class="tbl">
+				<tr>
+					<th>입장구분</th>
+					<td>
+						<label for="pSEDivi1"><input type="radio" id="pSEDivi1" name="pSEDivi" value="" ${"" eq schDatamyRprt.schEDivi || empty schDatamyRprt.schEDivi? "checked" : ""}><span>전체</span></label>
+						<label for="pSEDivi2"><input type="radio" id="pSEDivi2" name="pSEDivi" value="appli" ${"appli" eq schDatamyRprt.schEDivi? "checked" : ""}><span>신청</span></label>
+						<label for="pSEDivi3"><input type="radio" id="pSEDivi3" name="pSEDivi" value="subm" ${"subm" eq schDatamyRprt.schEDivi? "checked" : ""}><span>제출</span></label>
+					</td>
+					<th>시험기관</th>
+					<td>
+						<select class="select" name="pSInstId">
+							<option value="">전체</option>
+							<c:forEach items="${coInstList}" var="item">
+								<option value="${item.lsInstId}" ${item.lsInstId eq schDatamyRprt.schInstId ? "selected" : ""} >${item.lsInstNm}</option>
+							</c:forEach>
+						</select>
+					</td>
+					<th>성적서 번호</th>
+					<td>
+						<input type="text" placeholder="입력하세요" name="pSRprtNo" class="searchInput" value="${schDatamyRprt.schRprtNo}">
+					</td>
+				</tr>
+				<tr>
+					<th>제품분류</th>
+					<td colspan="3">
+						<select class="select wd50" name="pSStdLgclfCd" id="pSStdLgclfCd">
+							<option value="">전체</option>
+							<c:forEach items="${stdLgclfList}" var="item">
+								<option value="${item.lsStdLgclfCd}" ${item.lsStdLgclfCd eq schDatamyRprt.schStdLgclfCd ? "selected" : ""} >${item.lsStdLgclfNm}</option>
+							</c:forEach>
+						</select>
+						<select class="select wd50" name="pSStdMlclfCd" id="pSStdMlclfCd" disabled>
+							<option value="">전체</option>
+						</select>
+					</td>
+					<th>품목명</th>
+					<td>
+						<input type="text" placeholder="입력하세요" name="pSPdctgNm" class="searchInput" value="${schDatamyRprt.schPdctgNm}" >
+					</td>
+				</tr>
+				<tr>
+					<th>발급일자</th>
+					<td colspan="3">
+						<input type="text" name="pSRprtYmdF" id="tblDatepicker03" placeholder="시작일" readonly="readonly" value="${schDatamyRprt.schRprtYmdF}" ><span class="wd30">~</span><input type="text" name="pSRprtYmdT" id="tblDatepicker04" placeholder="종료일" readonly="readonly" value="${schDatamyRprt.schRprtYmdT}" >
+					</td>
+					<th>종합판정</th>
+					<td>
+						<select class="select" name="pSJgmtCd">
+							<option value="">전체</option>
+							<c:forEach items="${jgmtRsltList}" var="item">
+								<option value="${item.lsDtlCd}" ${item.lsDtlCd eq schDatamyRprt.schJgmtCd ? "selected" : ""} >${item.lsDtlCdNm}</option>
+							</c:forEach>
+						</select>
+					</td>
+				</tr>
+			</table>
+			<div class="btn-wr">
+				<a href="javascript:void(0);" onclick="fn_resetSearch('p')" class="btn reset">초기화</a>
+				<a href="javascript:void(0);" onclick="fn_searchMyRprtList('p')" class="btn b-sch">검색</a>
+				<a href="javascript:void(0);" class="btn b-dtl-sch">상세검색</a>
+			</div>
+		</div>
+		<!--// ====== 검색 :::::: PC용 ====== -->
+
+		<!--table-->
+		<div class="btn-wr jc-fe">
+			<a href="javascript:void(0)" onclick="fn_downExcelMyRprt()" class="btn-down">엑셀 파일 다운로드<i></i></a>
+		</div>
+
+		<!--리스트-->
+		<div class="board-cont" id="board-lst">
+			<table summary="나의 시험인증 현황 정보 제공 - 번호, 발급일자, 성적서번호, 시험기관, 제품대분류, 제품중분류, 품목명, 종합판정" class="test-lst01">
+				<colgroup>
+					<col width="5%">
+					<col width="8%">
+					<col width="15%">
+					<col width="*">
+					<col width="11%">
+					<col width="13%">
+					<col width="15%">
+					<col width="10%">
+				</colgroup>
+				<thead>
+					<tr>
+						<th>번호</th>
+						<th>발급일자</th>
+						<th>성적서 번호</th>
+						<th>시험기관</th>
+						<th>제품대분류</th>
+						<th>제품중분류</th>
+						<th>품목명</th>
+						<th>종합판정</th>
+					</tr>
+				</thead>
+				<tbody id="areaMyRprt">
+					<!-- 리스트 영역 -->
+				</tbody>
+			</table>
+		</div>
+		<div class="btn-wr">
+			<a href="javascript:void(0)" class="btn cancel btn-more" id="btnMoreMyRprt" onclick="fn_moreMyRprtList()">더보기<i></i></a>
+			<a href="/platformSvc/myData/myDataStat/myDataStatInfo" class="btn">나의 시험인증 현황 바로가기</a>
+		</div>
+
+	</div>
+	<!--// container-->
+
+</div>
+<!-- ===== /container ====== -->

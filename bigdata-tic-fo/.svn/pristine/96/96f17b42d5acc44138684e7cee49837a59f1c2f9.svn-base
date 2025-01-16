@@ -1,0 +1,403 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="c"		uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="cm" 		uri="/WEB-INF/tlds" %>
+<%@ taglib prefix="spring"  uri="http://www.springframework.org/tags" %>
+
+<script type="text/javascript">
+
+	$(document).ready(function() {
+
+		/* 초기 작업 */
+		fn_popSvcApplInit();
+
+	});
+
+	/*
+	 * 함수명 : fn_popSvcApplInit()
+	 * 설   명 : 초기 작업
+	 */
+	function fn_popSvcApplInit() {
+
+		// ==========전체체크 체크====================
+		fn_popSvcChkAllCheck("chkSvcTerms", "N");
+		fn_popSvcChkAllCheck("chkClctAgre", "N");
+
+		// ==========[제3자 제공 동의] 체크====================
+		fn_popSvcChkOfferCheck();
+
+		// ==========ACTION에 의한 처리====================
+		/* check박스 눌렸을때 전체선택 체크 _ 이용약관 동의 */
+		$(document).on("click", "#frm_popSvcApplReg input[id^='chkSvcTerms']", function(){
+			if($(this).attr("id").indexOf("_all") !== -1){ //all이 체크되었을때
+				fn_popSvcChkAllCheck("chkSvcTerms", "Y");
+			} else {
+				fn_popSvcChkAllCheck("chkSvcTerms", "N");
+			}
+		});
+
+		/* check박스 눌렸을때 전체선택 체크 _ 수집대상 기관 */
+		$(document).on("click", "#frm_popSvcApplReg input[id^='chkClctAgre']", function(){
+			if($(this).attr("id").indexOf("_all") !== -1){ //all이 체크되었을때
+				fn_popSvcChkAllCheck("chkClctAgre", "Y");
+			} else {
+				fn_popSvcChkAllCheck("chkClctAgre", "N");
+			}
+		});
+
+		/* [제3자 제공 동의] 의 체크여부에 따라 [제출처 제공 대상기관 선택] 보이고 안보이고*/
+		$(document).on("click", "#frm_popSvcApplReg input[id='chkOfferTerms_c_offer']", function(){
+			fn_popSvcChkOfferCheck();
+		});
+
+	}
+
+	/*
+	 * 함수명 : fn_popSvcChkAllCheck()
+	 * 설   명 : 전체선택에 따른 설정
+	 * @param checkIdPre : 체크할 체크박스 아이디의 Prefix
+	 * @param inputAllYN : 전체 선택에 대한 아래 INPUT 변경인지
+	 */
+	function fn_popSvcChkAllCheck(checkIdPre, inputAllYN){
+
+		let inputAll 	= $("input[id='" + checkIdPre + "_all']");		//전체체크input
+		let inputChk 	= $("input[id^='" + checkIdPre + "_c_']"); 		//체크input
+		let inputChkChk = $("input[id^='" + checkIdPre + "_c_']:checked");//체크input 중 선택된것들
+
+		/* 전체 선택에 대한 아래 input 선택 */
+		if(inputAllYN === "Y"){
+			if(inputAll.prop("checked")) {
+				inputChk.prop("checked",true);
+			} else {
+				inputChk.prop("checked",false);
+			};
+		}
+
+		/* 아래 input 선택에 따른 전체 선택 */
+		if(inputAllYN !== "Y"){
+			if(inputChk.length == inputChkChk.length ){
+				inputAll.prop("checked",true);
+			} else {
+				inputAll.prop("checked",false);
+			}
+		}
+
+	}
+
+	 /*
+	 * 함수명 : fn_popSvcChkOfferCheck()
+	 * 설   명 : [제3자 제공 동의]에 따른 설정
+	 */
+	function fn_popSvcChkOfferCheck(){
+
+		if( $("input[id='chkOfferTerms_c_offer']").is(":checked") ){ //체크되어있으면 밑에 [제출처 제공 대상기관 선택] 제출처 보이기
+			$("#titleSbmsnCoRls").show();
+			$("#ulSbmsnCoRls").show();
+		} else {
+			$("#titleSbmsnCoRls").hide();
+			$("#ulSbmsnCoRls").hide();
+		}
+	}
+
+	 /*
+	 * 함수명 : fn_popSvcNextPopClctAgre()
+	 * 설   명 : [이용약관 동의 & 수집대상 기관 선택] pop에서 [[다음]] 눌렸을때
+	 */
+	function fn_popSvcNextPopClctAgre(){
+
+		// ==========유효성 체크====================
+		if (!fn_popSvcValiClctAgre()) {
+			return;
+		}
+
+		// =========[수집대상 기관 선택] 에서 선택된 값으로 [제출처 제공 대상기관 선택] 값 셋팅
+		$("input[id^='chkClctAgre_c_']").each(function (index, element) {
+
+			if( $(this).is(":checked") ){
+				/* [수집대상 기관 선택]에서 선택되었으면 [제출처 제공 대상기관 선택] 선택하기 */
+				$("input[id^='chkSbmsnCoRls_c_'][value="+$(this).val()+"]").prop("checked",true);
+				$("input[id^='chkSbmsnCoRls_c_'][value="+$(this).val()+"]").removeAttr("disabled");
+				$("input[id^='chkSbmsnCoRls_c_'][value="+$(this).val()+"]").removeAttr("readonly");
+				$("input[id^='chkSbmsnCoRls_c_'][value="+$(this).val()+"]").closest("label").attr("style", "cursor:pointer");
+			} else {
+				/* [수집대상 기관 선택]에서 선택안되었으면 [제출처 제공 대상기관 선택] 비활성처리 하기  */
+				$("input[id^='chkSbmsnCoRls_c_'][value="+$(this).val()+"]").prop("checked",false);
+				$("input[id^='chkSbmsnCoRls_c_'][value="+$(this).val()+"]").attr("disabled", "disabled");
+				$("input[id^='chkSbmsnCoRls_c_'][value="+$(this).val()+"]").attr("readonly", "readonly");
+				$("input[id^='chkSbmsnCoRls_c_'][value="+$(this).val()+"]").closest("label").attr("style", "cursor:default");
+			}
+
+		})
+
+		// =========pop 다음창으로 넘기기
+		$('#divPopSvcClctAgre').removeClass('active');
+		$('#divPopSvcSbmsnCoRls').addClass('active');
+
+	}
+
+	/*
+	 * 함수명 : fn_popSvcValiClctAgre()
+	 * 설   명 : [이용약관 동의 & 수집대상 기관 선택] 유효성 검사
+	*/
+	function fn_popSvcValiClctAgre(){
+
+		let isValid = true;
+
+		/* 필수약관 : "내 손안의 시험인증 서비스 이용약관" CHECK */
+		if( ! $("#chkSvcTerms_c_mydata").is(":checked") ) {
+			alert("<spring:message code='result-message.messages.common.message.required.checked.data' arguments='내 손안의 시험인증 서비스 이용약관'/>"); // '{0} : 필수 체크 사항입니다.'
+			$("#chkSvcTerms_c_mydata").focus();
+			isValid = false;
+			return false;
+		}
+
+		/* 필수약관 : "시험인증 데이터 수집·이용 약관" CHECK */
+		if( ! $("#chkSvcTerms_c_cert").is(":checked") ) {
+			alert("<spring:message code='result-message.messages.common.message.required.checked.data' arguments='시험인증 데이터 수집·이용 약관'/>"); // '{0} : 필수 체크 사항입니다.'
+			$("#chkSvcTerms_c_cert").focus();
+			isValid = false;
+			return false;
+		}
+
+		/* 수집대상 기관 선택이 하나라도 되어있야함 CHECK */
+		if( $("input[id^='chkClctAgre_c_']:checked").length === 0){
+			alert("<spring:message code='result-message.messages.my.data.message.required.clct.agre'/>"); // '수집 대상 기관을 선택해주세요.'
+			isValid = false;
+			return false;
+		}
+
+		return isValid;
+
+	}
+
+	/*
+	 * 함수명 : fn_popSvcSaveSvcAppl()
+	 * 설   명 : [[확인]] 눌렀을때 서비스 신청하기
+	 */
+	function fn_popSvcSaveSvcAppl(){
+
+		// ==========유효성 체크====================
+		if (!fn_popSvcValiClctAgre()) {
+			return;
+		}
+
+		$.blockUI();
+		// ==========데이터 전송====================
+		$.ajax({
+
+			url 		: "/platformSvc/myData/saveSvcAppl"
+			, method 	: "POST"
+			, dataType 	: "json"
+			, async 	: true
+			, data 		: $("#frm_popSvcApplReg").serialize()
+			, success 	: function(result) {
+
+				$.unblockUI();
+
+				if (result.resultCode === 200) {
+
+					// pop 다음창으로 넘기기
+					$('#divPopSvcSbmsnCoRls').removeClass('active');
+					$('#divPopSvcSuccess').addClass('active');
+
+				} else {
+					alert(result.resultMessage);
+				}
+
+			}
+
+		});
+
+	}
+
+</script>
+
+<form action="" method="post" name="frm_popSvcApplReg" id="frm_popSvcApplReg">
+
+	<c:set var="img_T001"	value="/asset/images/svc-ofc-01.png" />
+	<c:set var="img_T003"	value="/asset/images/svc-ofc-02.png" />
+	<c:set var="img_T005"	value="/asset/images/svc-ofc-03.png" />
+	<c:set var="img_T006"	value="/asset/images/svc-ofc-04.png" />
+	<c:set var="img_T007"	value="/asset/images/svc-ofc-05.png" />
+	<c:set var="img_T002"	value="/asset/images/svc-ofc-06.png" />
+	<c:set var="img_T004"	value="/asset/images/svc-ofc-07.png" />
+
+	<c:set var="img_src"	value="" />
+
+	<!-- ===== 서비스 신청하기 modal ====== -->
+	<div class="svc-submit-md" id="divPopSvcClctAgre">
+		<div class="md-rect">
+			<a href="javascript:void(0);" class="btn-close">닫기</a>
+
+			<h3 class="md-tit">이용약관 동의</h3>
+
+			<div class="svc-wr">
+				<div class="agree-all-chk"><label for="chkSvcTerms_all"><input type="checkbox" id="chkSvcTerms_all"><span>약관 전체 동의</span></label></div>
+				<ul class="chk-ul">
+					<li class="agree-f">
+						<label for="chkSvcTerms_c_mydata">
+							<input type="checkbox" id="chkSvcTerms_c_mydata"	name="chkMydataTemrsSn" value="${termsMyDataSvc.trmsSn}">
+							<span>"내 손안의 시험인증 서비스 이용약관" 약관에 동의합니다. <strong>(필수)</strong></span>
+						</label>
+						<i></i>
+					</li>
+					<li class="agree-c">
+						<div style="overflow-y: auto; height:200px;">
+							${termsMyDataSvc.trmsCnUnescape}
+						</div>
+					</li>
+					<li class="agree-f">
+						<label for="chkSvcTerms_c_cert">
+							<input type="checkbox" id="chkSvcTerms_c_cert" 		name="chkCertTemrsSn" value="${termsCertSvc.trmsSn}">
+							<span>“시험인증 데이터 수집·이용 약관” 약관에 동의합니다. <strong>(필수)</strong></span>
+						</label>
+						<i></i>
+					</li>
+					<li class="agree-c">
+						<div style="overflow-y: auto; height:200px; ">
+							${termsCertSvc.trmsCnUnescape}
+						</div>
+					</li>
+				</ul>
+
+				<h3 class="md-tit">수집대상 기관 선택</h3>
+				<div class="office-all-chk"><label for="chkClctAgre_all"><input type="checkbox" id="chkClctAgre_all"><span>전체 선택</span></label></div>
+				<ul class="office-chk-ul" id="ulClctAgre">
+
+					<c:forEach items="${svcNoConnInstList}" var="item">
+
+						<!-- img주소 셋팅 -->
+						<c:choose>
+							<c:when test="${item.instId == 'T001'}">
+								<c:set var="img_src"	value="${img_T001}" />
+							</c:when>
+							<c:when test="${item.instId == 'T002'}">
+								<c:set var="img_src"	value="${img_T002}" />
+							</c:when>
+							<c:when test="${item.instId == 'T003'}">
+								<c:set var="img_src"	value="${img_T003}" />
+							</c:when>
+							<c:when test="${item.instId == 'T004'}">
+								<c:set var="img_src"	value="${img_T004}" />
+							</c:when>
+							<c:when test="${item.instId == 'T005'}">
+								<c:set var="img_src"	value="${img_T005}" />
+							</c:when>
+							<c:when test="${item.instId == 'T006'}">
+								<c:set var="img_src"	value="${img_T006}" />
+							</c:when>
+							<c:when test="${item.instId == 'T007'}">
+								<c:set var="img_src"	value="${img_T007}" />
+							</c:when>
+						</c:choose>
+						<!--// img주소 셋팅 -->
+
+						<li>
+							<label for="chkClctAgre_c_${item.instId}">
+								<input type="checkbox" id="chkClctAgre_c_${item.instId}"	name="arrChkClctAgreInstId"		value="${item.instId}"/>
+								<div class="img"><img src="${img_src}"></div>
+								<span>${item.instNm}</span>
+							</label>
+						</li>
+
+					</c:forEach>
+
+				</ul>
+
+				<div class="btn-wr"><a href="javascript:void(0);" onclick="fn_popSvcNextPopClctAgre()" id="btnNextPopClctAgre" class="btn md01">다음</a></div>
+
+			</div>
+		</div>
+	</div>
+	<!--// ===== 서비스 신청하기 modal ====== -->
+
+	<!-- ===== 제3자 제공 동의 modal ====== -->
+	<div class="svc-submit-md01" id="divPopSvcSbmsnCoRls">
+		<div class="md-rect">
+			<a href="javascript:void(0);" class="btn-close">닫기</a>
+
+			<h3 class="md-tit">제3자 제공 동의</h3>
+
+			<div class="svc-wr">
+				<ul class="chk-ul">
+					<li class="agree-f">
+						<label for="chk-11">
+							<input type="checkbox" id="chkOfferTerms_c_offer" name="chkOfferTemrsSn" value="${termThirdOffer.trmsSn}">
+							<span>"시험인증 데이터 제3자(제출처) 제공 약관" 약관에 동의합니다. <strong>(선택)</strong></span>
+						</label><i></i>
+					</li>
+					<li class="agree-c">
+						<div style="overflow-y: auto; height:200px; ">
+							${termThirdOffer.trmsCnUnescape}
+						</div>
+					</li>
+				</ul>
+				<h3 class="md-tit" id="titleSbmsnCoRls" style="display: none;">제출처 제공 대상기관 선택</h3>
+				<ul class="office-chk-ul" id="ulSbmsnCoRls" style="display: none;">
+
+					<c:forEach items="${svcNoConnInstList}" var="item">
+
+						<!-- img주소 셋팅 -->
+						<c:choose>
+							<c:when test="${item.instId == 'T001'}">
+								<c:set var="img_src"	value="${img_T001}" />
+							</c:when>
+							<c:when test="${item.instId == 'T002'}">
+								<c:set var="img_src"	value="${img_T002}" />
+							</c:when>
+							<c:when test="${item.instId == 'T003'}">
+								<c:set var="img_src"	value="${img_T003}" />
+							</c:when>
+							<c:when test="${item.instId == 'T004'}">
+								<c:set var="img_src"	value="${img_T004}" />
+							</c:when>
+							<c:when test="${item.instId == 'T005'}">
+								<c:set var="img_src"	value="${img_T005}" />
+							</c:when>
+							<c:when test="${item.instId == 'T006'}">
+								<c:set var="img_src"	value="${img_T006}" />
+							</c:when>
+							<c:when test="${item.instId == 'T007'}">
+								<c:set var="img_src"	value="${img_T007}" />
+							</c:when>
+						</c:choose>
+						<!--// img주소 셋팅 -->
+
+						<li>
+							<label for="chkSbmsnCoRls_c_${item.instId}">
+								<input type="checkbox" id="chkSbmsnCoRls_c_${item.instId}"	name="arrChkSbmsnCoRlsInstId"		value="${item.instId}"/>
+								<div class="img"><img src="${img_src}"></div>
+								<span>${item.instNm}</span>
+							</label>
+						</li>
+
+					</c:forEach>
+
+				</ul>
+
+				<div class="btn-wr"><a href="javascript:void(0);" onclick="fn_popSvcSaveSvcAppl()" id="btnSaveSvcAppl" class="btn md01">확인</a></div>
+
+			</div>
+
+		</div>
+	</div>
+	<!--// ===== 제3자 제공 동의 modal ====== -->
+
+</form>
+
+<!-- ===== 신청완료 modal ====== -->
+<div class="svc-end-md" id="divPopSvcSuccess">
+	<div class="md-rect">
+		<h3 class="md-tit">신청 완료</h3>
+		<div class="end-wr">
+			<h4 class="tit">내손안의 시험인증 서비스에<br class="mo-block"> 가입 완료되었습니다.</h4>
+			<p>[내손안의 시험인증] 메뉴에서<br class="mo-block"> [나의 시험인증 현황],<br class="pc-block">[나의 시험인증 정보조회]<br class="mo-block"> 서비스를 이용해 주세요.</p>
+			<p>가입 이후 발급된 성적서부터 서비스 제공이 가능합니다.<br>(기관별 성적서의 수집일은 <br class="mo-block">시험인증 기관별 상이함)</p>
+		</div>
+		<div class="btn-wr">
+			<a href="/platformSvc/myData/myDataStat/myDataStatInfo" class="btn md01">나의 시험인증 현황</a>
+			<a href="/platformSvc/myData/myInfoCert/myCertList" class="btn md01">나의 시험인증 정보조회</a>
+		</div>
+	</div>
+</div>
+<!--// ===== 신청완료 modal ====== -->
+

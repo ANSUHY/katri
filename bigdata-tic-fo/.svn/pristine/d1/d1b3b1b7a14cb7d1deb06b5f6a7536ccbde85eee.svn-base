@@ -1,0 +1,160 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c"		uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="spring"	uri="http://www.springframework.org/tags"%>
+
+<script type="text/javascript">
+
+	$(document).ready(function() {
+
+
+	});
+
+	/*
+	 * 함수명 : fn_goList()
+	 * 설   명 : 리스트로 돌아가기
+	*/
+	function fn_goList() {
+		$("#frm_boardList").attr("method", "get");
+		$("#frm_boardList").attr("action", "/board/boardList");
+		$("#frm_boardList").submit();
+	}
+
+ 	/*
+	 * 함수명 : fn_goReg()
+	 * 설   명 : 수정 페이지 로가기
+	*/
+	function fn_goReg() {
+		$("#frm_boardList").attr("method", "get");
+		$("#frm_boardList").attr("action", "/board/boardReg");
+		$("#frm_boardList").submit();
+	}
+
+	/*
+	 * 함수명 : fn_deleteBoard()
+	 * 설   명 : board 삭제
+	*/
+	function fn_deleteBoard() {
+
+		if(confirm("<spring:message code='result-message.messages.common.message.data.delete'/>")) { // 삭제 하시겠습니까?
+			$.ajax({
+				url				: "/board/deleteBoard"
+				, method		: "DELETE"
+				, async			: false
+				, data			: {"boardNo" : $("#targetBoardNo").val()}
+				, success		: function(result) {
+
+					if (result.resultCode == "200") {
+						location.href='/board/boardList';
+					} else {
+						alert(result.resultMessage);
+					}
+
+				}
+			});
+		}
+	}
+
+
+</script>
+
+<div id="container">
+	<div class="subVisual"><span>boardDetail</span></div>
+
+	<section>
+		<div class="contentsInner">
+
+			<!-- register st-->
+			<div class="register">
+
+				<form action="" method="get" name="frm_boardList" id="frm_boardList">
+					<input type="hidden" name="targetBoardNo" 		id="targetBoardNo" 		value="${boardSearchData.targetBoardNo}"/> 	<!-- 디테일갈경우 targetBoardNo -->
+
+					<input type="hidden" name="currPage" 			id="currPage" 			value="${boardSearchData.currPage}"/> 		<!-- 페이지 no -->
+
+					<input type="hidden" name="searchType" 			id="searchType" 		value="${boardSearchData.searchType}"/>		<!-- 검색조건 -->
+					<input type="hidden" name="searchKeyword" 		id="searchKeyword" 		value="${boardSearchData.searchKeyword}"/>	<!-- 검색어 -->
+					<input type="hidden" name="searchBoardType" 	id="searchBoardType" 	value="${boardSearchData.searchBoardType}"/><!-- 검색 BOARD TYPE -->
+					<c:forEach items="${boardSearchData.searchArrBoardType}" var="item" varStatus="status">
+						<input type="hidden" name="searchArrBoardType" 	id="searchArrBoardType_${status.index}" value="${item}"/>		<!-- 검색 BOARD TYPE ARR -->
+					</c:forEach>
+				</form>
+
+				<table class="detail_type type01">
+					<colgroup>
+						<col width="14%">
+						<col width="*">
+					</colgroup>
+
+					<tbody>
+
+						<!-- board 타입 -->
+						<tr>
+							<th><span>board 타입</span></th>
+							<td>
+								<pre>${boardDetail.typeNm}</pre>
+							</td>
+						</tr>
+
+						<!-- 제목 -->
+						<tr>
+							<th><span>제목</span></th>
+							<td>
+								${boardDetail.title}
+							</td>
+						</tr>
+
+						<!-- 내용 -->
+						<tr>
+							<th><span>내용</span></th>
+							<td>
+								<pre>${boardDetail.cont}</pre>
+							</td>
+						</tr>
+
+						<!-- 파일_img -->
+						<c:if test="${boardDetail.listFileImg.size() > 0}">
+						<tr>
+							<th>파일_img</th>
+							<td>
+								<c:forEach items="${boardDetail.listFileImg}" var="item">
+									<div>
+										<a href="/file/downloadFile?encodeFileSn=${item.encodeFileSn}" class="btn file flex">
+											${item.orgnlFileNm}
+										</a>
+									</div>
+								</c:forEach>
+							</td>
+						</tr>
+						</c:if>
+
+						<!-- 파일_file -->
+						<c:if test="${boardDetail.listFileFile.size() > 0}">
+						<tr>
+							<th>파일_file</th>
+							<td>
+								<c:forEach items="${boardDetail.listFileFile}" var="item">
+									<div>
+										<a href="/file/downloadFile?encodeFileSn=${item.encodeFileSn}" class="btn file flex">
+											${item.orgnlFileNm}
+										</a>
+									</div>
+								</c:forEach>
+							</td>
+						</tr>
+						</c:if>
+
+					</tbody>
+				</table>
+
+				<div class="buttonframe block mt20">
+					<button class="button_type membe_quit mr10" onclick="fn_goReg()">수정</button>
+					<button class="button_type membe_quit mr10" onclick="fn_deleteBoard()">삭제</button>
+					<button class="button_type list ab_r" onclick="fn_goList();">목록</button>
+				</div>
+
+			</div>
+			<!-- //register ed-->
+
+		</div>
+	</section>
+</div>

@@ -1,0 +1,886 @@
+<?xml version='1.0' encoding='UTF-8'?><wsdl:definitions name="NeoOrgWsImplService" targetNamespace="http://service.org.ss.branch.neo.hanwha/" xmlns:ns1="http://cxf.apache.org/bindings/xformat" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://service.org.ss.branch.neo.hanwha/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <wsdl:types>
+<xsd:schema attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://vo.org.ss.branch.neo.hanwha" xmlns:tns="http://vo.org.ss.branch.neo.hanwha" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:complexType name="ArrayOfOrgCodeVO">
+    <xsd:sequence>
+      <xsd:element maxOccurs="unbounded" minOccurs="0" name="OrgCodeVO" nillable="true" type="tns:OrgCodeVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="ArrayOfOrgUserVO">
+    <xsd:sequence>
+      <xsd:element maxOccurs="unbounded" minOccurs="0" name="OrgUserVO" nillable="true" type="tns:OrgUserVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="OrgUserVO">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="activeYn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="cellPhoneNo" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="chargeWork" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="companyId" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="companyName" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="companyNameEn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="defaultDeptYn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="deptCode" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="deptFullPath" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="deptId" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="deptName" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="deptNameEn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="email" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="employeeNo" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="faxNo" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="femaleYn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="hrYn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="ipPhoneNo" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="jobClassId" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="jobClassName" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="jobClassNameEn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="jobClassOrder" type="xsd:int"/>
+      <xsd:element minOccurs="0" name="jobDutyId" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="jobDutyName" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="jobFunctionId" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="jobFunctionName" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="jobFunctionOrder" type="xsd:int"/>
+      <xsd:element minOccurs="0" name="jobPositionId" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="jobPositionName" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="jobPositionNameEn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="jobPositionOrder" type="xsd:int"/>
+      <xsd:element minOccurs="0" name="joinDate" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="language" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="lastLoginDate" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="msnYn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="officePhoneNo" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="passwordExpireDate" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="securityLevel" type="xsd:int"/>
+      <xsd:element minOccurs="0" name="userExpireDate" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="userId" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="userKey" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="userName" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="userNameEn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="webYn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="workPlace" nillable="true" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="ArrayOfOrgDeptVO">
+    <xsd:sequence>
+      <xsd:element maxOccurs="unbounded" minOccurs="0" name="OrgDeptVO" nillable="true" type="tns:OrgDeptVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="OrgDeptVO">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="abbreviation" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="activeYn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="childIncYn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="companyId" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="companyName" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="companyNameEn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="deptCode" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="deptId" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="deptName" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="deptNameEn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="managerId" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="parentDeptId" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="parentDeptName" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="parentDeptNameEn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="sortNo" type="xsd:int"/>
+      <xsd:element minOccurs="0" name="subManagerId" nillable="true" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="OrgCodeVO">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="activeYn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="codeId" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="codeName" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="codeNameEn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="codeType" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="companyName" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="companyNameEn" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="companyid" nillable="true" type="xsd:string"/>
+      <xsd:element minOccurs="0" name="sortNo" type="xsd:int"/>
+    </xsd:sequence>
+  </xsd:complexType>
+</xsd:schema>
+<xsd:schema attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://service.org.ss.branch.neo.hanwha/" xmlns:ns0="http://vo.org.ss.branch.neo.hanwha" xmlns:tns="http://service.org.ss.branch.neo.hanwha/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:import namespace="http://vo.org.ss.branch.neo.hanwha"/>
+  <xsd:complexType name="ArrayOfString">
+    <xsd:sequence>
+      <xsd:element maxOccurs="unbounded" minOccurs="0" name="string" nillable="true" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchDeptByDeptIdIncludeChild" type="tns:searchDeptByDeptIdIncludeChild"/>
+  <xsd:complexType name="searchDeptByDeptIdIncludeChild">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="deptId" nillable="true" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchDeptByDeptIdIncludeChildResponse" type="tns:searchDeptByDeptIdIncludeChildResponse"/>
+  <xsd:complexType name="searchDeptByDeptIdIncludeChildResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgDeptVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchDefaultUserByUserId" type="tns:searchDefaultUserByUserId"/>
+  <xsd:complexType name="searchDefaultUserByUserId">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="userId" nillable="true" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchDefaultUserByUserIdResponse" type="tns:searchDefaultUserByUserIdResponse"/>
+  <xsd:complexType name="searchDefaultUserByUserIdResponse">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="return" type="ns0:OrgUserVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchDeptByDeptName" type="tns:searchDeptByDeptName"/>
+  <xsd:complexType name="searchDeptByDeptName">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="deptName" nillable="true" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchDeptByDeptNameResponse" type="tns:searchDeptByDeptNameResponse"/>
+  <xsd:complexType name="searchDeptByDeptNameResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgDeptVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="getOrgClassList" type="tns:getOrgClassList"/>
+  <xsd:complexType name="getOrgClassList">
+    <xsd:sequence/>
+  </xsd:complexType>
+  <xsd:element name="getOrgClassListResponse" type="tns:getOrgClassListResponse"/>
+  <xsd:complexType name="getOrgClassListResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgCodeVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByOrgFunctionId" type="tns:searchUserByOrgFunctionId"/>
+  <xsd:complexType name="searchUserByOrgFunctionId">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="orgFunctionId" nillable="true" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByOrgFunctionIdResponse" type="tns:searchUserByOrgFunctionIdResponse"/>
+  <xsd:complexType name="searchUserByOrgFunctionIdResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgUserVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByUserKey" type="tns:searchUserByUserKey"/>
+  <xsd:complexType name="searchUserByUserKey">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="userKey" nillable="true" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByUserKeyResponse" type="tns:searchUserByUserKeyResponse"/>
+  <xsd:complexType name="searchUserByUserKeyResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgUserVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByOrgClassId" type="tns:searchUserByOrgClassId"/>
+  <xsd:complexType name="searchUserByOrgClassId">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="orgClassId" nillable="true" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByOrgClassIdResponse" type="tns:searchUserByOrgClassIdResponse"/>
+  <xsd:complexType name="searchUserByOrgClassIdResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgUserVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchDeptByCompanyIdForPaging" type="tns:searchDeptByCompanyIdForPaging"/>
+  <xsd:complexType name="searchDeptByCompanyIdForPaging">
+    <xsd:sequence>
+      <xsd:element name="pageNo" type="xsd:int"/>
+      <xsd:element name="pageSize" type="xsd:int"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchDeptByCompanyIdForPagingResponse" type="tns:searchDeptByCompanyIdForPagingResponse"/>
+  <xsd:complexType name="searchDeptByCompanyIdForPagingResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgDeptVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchDeptByCompanyId" type="tns:searchDeptByCompanyId"/>
+  <xsd:complexType name="searchDeptByCompanyId">
+    <xsd:sequence/>
+  </xsd:complexType>
+  <xsd:element name="searchDeptByCompanyIdResponse" type="tns:searchDeptByCompanyIdResponse"/>
+  <xsd:complexType name="searchDeptByCompanyIdResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgDeptVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByEmpolyeeNo" type="tns:searchUserByEmpolyeeNo"/>
+  <xsd:complexType name="searchUserByEmpolyeeNo">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="employeeNo" nillable="true" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByEmpolyeeNoResponse" type="tns:searchUserByEmpolyeeNoResponse"/>
+  <xsd:complexType name="searchUserByEmpolyeeNoResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgUserVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByDeptIdForPaging" type="tns:searchUserByDeptIdForPaging"/>
+  <xsd:complexType name="searchUserByDeptIdForPaging">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="deptId" nillable="true" type="xsd:string"/>
+      <xsd:element name="pageNo" type="xsd:int"/>
+      <xsd:element name="pageSize" type="xsd:int"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByDeptIdForPagingResponse" type="tns:searchUserByDeptIdForPagingResponse"/>
+  <xsd:complexType name="searchUserByDeptIdForPagingResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgUserVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByMailList" type="tns:searchUserByMailList"/>
+  <xsd:complexType name="searchUserByMailList">
+    <xsd:sequence>
+      <xsd:element name="email" nillable="true" type="tns:ArrayOfString"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByMailListResponse" type="tns:searchUserByMailListResponse"/>
+  <xsd:complexType name="searchUserByMailListResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgUserVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="getOrgPositionList" type="tns:getOrgPositionList"/>
+  <xsd:complexType name="getOrgPositionList">
+    <xsd:sequence/>
+  </xsd:complexType>
+  <xsd:element name="getOrgPositionListResponse" type="tns:getOrgPositionListResponse"/>
+  <xsd:complexType name="getOrgPositionListResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgCodeVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByOrgPositionId" type="tns:searchUserByOrgPositionId"/>
+  <xsd:complexType name="searchUserByOrgPositionId">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="orgPositionId" nillable="true" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByOrgPositionIdResponse" type="tns:searchUserByOrgPositionIdResponse"/>
+  <xsd:complexType name="searchUserByOrgPositionIdResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgUserVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByDeptId" type="tns:searchUserByDeptId"/>
+  <xsd:complexType name="searchUserByDeptId">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="deptId" nillable="true" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByDeptIdResponse" type="tns:searchUserByDeptIdResponse"/>
+  <xsd:complexType name="searchUserByDeptIdResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgUserVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchDeptByDeptId" type="tns:searchDeptByDeptId"/>
+  <xsd:complexType name="searchDeptByDeptId">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="deptId" nillable="true" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchDeptByDeptIdResponse" type="tns:searchDeptByDeptIdResponse"/>
+  <xsd:complexType name="searchDeptByDeptIdResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgDeptVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByUserIdList" type="tns:searchUserByUserIdList"/>
+  <xsd:complexType name="searchUserByUserIdList">
+    <xsd:sequence>
+      <xsd:element name="userId" nillable="true" type="tns:ArrayOfString"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByUserIdListResponse" type="tns:searchUserByUserIdListResponse"/>
+  <xsd:complexType name="searchUserByUserIdListResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgUserVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByMail" type="tns:searchUserByMail"/>
+  <xsd:complexType name="searchUserByMail">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="email" nillable="true" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByMailResponse" type="tns:searchUserByMailResponse"/>
+  <xsd:complexType name="searchUserByMailResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgUserVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByUserName" type="tns:searchUserByUserName"/>
+  <xsd:complexType name="searchUserByUserName">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="userName" nillable="true" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByUserNameResponse" type="tns:searchUserByUserNameResponse"/>
+  <xsd:complexType name="searchUserByUserNameResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgUserVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByUserId" type="tns:searchUserByUserId"/>
+  <xsd:complexType name="searchUserByUserId">
+    <xsd:sequence>
+      <xsd:element minOccurs="0" name="userId" nillable="true" type="xsd:string"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByUserIdResponse" type="tns:searchUserByUserIdResponse"/>
+  <xsd:complexType name="searchUserByUserIdResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgUserVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByUserKeyList" type="tns:searchUserByUserKeyList"/>
+  <xsd:complexType name="searchUserByUserKeyList">
+    <xsd:sequence>
+      <xsd:element name="userKey" nillable="true" type="tns:ArrayOfString"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="searchUserByUserKeyListResponse" type="tns:searchUserByUserKeyListResponse"/>
+  <xsd:complexType name="searchUserByUserKeyListResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgUserVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:element name="getOrgFunctionList" type="tns:getOrgFunctionList"/>
+  <xsd:complexType name="getOrgFunctionList">
+    <xsd:sequence/>
+  </xsd:complexType>
+  <xsd:element name="getOrgFunctionListResponse" type="tns:getOrgFunctionListResponse"/>
+  <xsd:complexType name="getOrgFunctionListResponse">
+    <xsd:sequence>
+      <xsd:element name="return" nillable="true" type="ns0:ArrayOfOrgCodeVO"/>
+    </xsd:sequence>
+  </xsd:complexType>
+</xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="getOrgFunctionList">
+    <wsdl:part element="tns:getOrgFunctionList" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByEmpolyeeNoResponse">
+    <wsdl:part element="tns:searchUserByEmpolyeeNoResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByMailListResponse">
+    <wsdl:part element="tns:searchUserByMailListResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getOrgFunctionListResponse">
+    <wsdl:part element="tns:getOrgFunctionListResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchDeptByCompanyId">
+    <wsdl:part element="tns:searchDeptByCompanyId" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByUserNameResponse">
+    <wsdl:part element="tns:searchUserByUserNameResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByUserKeyResponse">
+    <wsdl:part element="tns:searchUserByUserKeyResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByDeptIdForPagingResponse">
+    <wsdl:part element="tns:searchUserByDeptIdForPagingResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByUserIdResponse">
+    <wsdl:part element="tns:searchUserByUserIdResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByOrgPositionId">
+    <wsdl:part element="tns:searchUserByOrgPositionId" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getOrgPositionList">
+    <wsdl:part element="tns:getOrgPositionList" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByOrgClassIdResponse">
+    <wsdl:part element="tns:searchUserByOrgClassIdResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getOrgClassList">
+    <wsdl:part element="tns:getOrgClassList" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByUserKeyList">
+    <wsdl:part element="tns:searchUserByUserKeyList" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByMail">
+    <wsdl:part element="tns:searchUserByMail" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByOrgFunctionId">
+    <wsdl:part element="tns:searchUserByOrgFunctionId" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByUserId">
+    <wsdl:part element="tns:searchUserByUserId" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByOrgClassId">
+    <wsdl:part element="tns:searchUserByOrgClassId" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getOrgPositionListResponse">
+    <wsdl:part element="tns:getOrgPositionListResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByUserKey">
+    <wsdl:part element="tns:searchUserByUserKey" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchDeptByCompanyIdForPagingResponse">
+    <wsdl:part element="tns:searchDeptByCompanyIdForPagingResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByMailList">
+    <wsdl:part element="tns:searchUserByMailList" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByUserKeyListResponse">
+    <wsdl:part element="tns:searchUserByUserKeyListResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchDeptByCompanyIdResponse">
+    <wsdl:part element="tns:searchDeptByCompanyIdResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByOrgPositionIdResponse">
+    <wsdl:part element="tns:searchUserByOrgPositionIdResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchDeptByDeptIdIncludeChildResponse">
+    <wsdl:part element="tns:searchDeptByDeptIdIncludeChildResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchDeptByDeptIdIncludeChild">
+    <wsdl:part element="tns:searchDeptByDeptIdIncludeChild" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByUserIdList">
+    <wsdl:part element="tns:searchUserByUserIdList" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByMailResponse">
+    <wsdl:part element="tns:searchUserByMailResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchDefaultUserByUserId">
+    <wsdl:part element="tns:searchDefaultUserByUserId" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchDeptByDeptId">
+    <wsdl:part element="tns:searchDeptByDeptId" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByDeptId">
+    <wsdl:part element="tns:searchUserByDeptId" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchDefaultUserByUserIdResponse">
+    <wsdl:part element="tns:searchDefaultUserByUserIdResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchDeptByCompanyIdForPaging">
+    <wsdl:part element="tns:searchDeptByCompanyIdForPaging" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByUserName">
+    <wsdl:part element="tns:searchUserByUserName" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByOrgFunctionIdResponse">
+    <wsdl:part element="tns:searchUserByOrgFunctionIdResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByUserIdListResponse">
+    <wsdl:part element="tns:searchUserByUserIdListResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchDeptByDeptName">
+    <wsdl:part element="tns:searchDeptByDeptName" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getOrgClassListResponse">
+    <wsdl:part element="tns:getOrgClassListResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchDeptByDeptNameResponse">
+    <wsdl:part element="tns:searchDeptByDeptNameResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchDeptByDeptIdResponse">
+    <wsdl:part element="tns:searchDeptByDeptIdResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByEmpolyeeNo">
+    <wsdl:part element="tns:searchUserByEmpolyeeNo" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByDeptIdForPaging">
+    <wsdl:part element="tns:searchUserByDeptIdForPaging" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="searchUserByDeptIdResponse">
+    <wsdl:part element="tns:searchUserByDeptIdResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="NeoOrgWs">
+    <wsdl:operation name="searchDeptByDeptIdIncludeChild">
+      <wsdl:input message="tns:searchDeptByDeptIdIncludeChild" name="searchDeptByDeptIdIncludeChild">
+    </wsdl:input>
+      <wsdl:output message="tns:searchDeptByDeptIdIncludeChildResponse" name="searchDeptByDeptIdIncludeChildResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchDefaultUserByUserId">
+      <wsdl:input message="tns:searchDefaultUserByUserId" name="searchDefaultUserByUserId">
+    </wsdl:input>
+      <wsdl:output message="tns:searchDefaultUserByUserIdResponse" name="searchDefaultUserByUserIdResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchDeptByDeptName">
+      <wsdl:input message="tns:searchDeptByDeptName" name="searchDeptByDeptName">
+    </wsdl:input>
+      <wsdl:output message="tns:searchDeptByDeptNameResponse" name="searchDeptByDeptNameResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getOrgClassList">
+      <wsdl:input message="tns:getOrgClassList" name="getOrgClassList">
+    </wsdl:input>
+      <wsdl:output message="tns:getOrgClassListResponse" name="getOrgClassListResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByOrgFunctionId">
+      <wsdl:input message="tns:searchUserByOrgFunctionId" name="searchUserByOrgFunctionId">
+    </wsdl:input>
+      <wsdl:output message="tns:searchUserByOrgFunctionIdResponse" name="searchUserByOrgFunctionIdResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByUserKey">
+      <wsdl:input message="tns:searchUserByUserKey" name="searchUserByUserKey">
+    </wsdl:input>
+      <wsdl:output message="tns:searchUserByUserKeyResponse" name="searchUserByUserKeyResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByOrgClassId">
+      <wsdl:input message="tns:searchUserByOrgClassId" name="searchUserByOrgClassId">
+    </wsdl:input>
+      <wsdl:output message="tns:searchUserByOrgClassIdResponse" name="searchUserByOrgClassIdResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchDeptByCompanyIdForPaging">
+      <wsdl:input message="tns:searchDeptByCompanyIdForPaging" name="searchDeptByCompanyIdForPaging">
+    </wsdl:input>
+      <wsdl:output message="tns:searchDeptByCompanyIdForPagingResponse" name="searchDeptByCompanyIdForPagingResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchDeptByCompanyId">
+      <wsdl:input message="tns:searchDeptByCompanyId" name="searchDeptByCompanyId">
+    </wsdl:input>
+      <wsdl:output message="tns:searchDeptByCompanyIdResponse" name="searchDeptByCompanyIdResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByEmpolyeeNo">
+      <wsdl:input message="tns:searchUserByEmpolyeeNo" name="searchUserByEmpolyeeNo">
+    </wsdl:input>
+      <wsdl:output message="tns:searchUserByEmpolyeeNoResponse" name="searchUserByEmpolyeeNoResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByDeptIdForPaging">
+      <wsdl:input message="tns:searchUserByDeptIdForPaging" name="searchUserByDeptIdForPaging">
+    </wsdl:input>
+      <wsdl:output message="tns:searchUserByDeptIdForPagingResponse" name="searchUserByDeptIdForPagingResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByMailList">
+      <wsdl:input message="tns:searchUserByMailList" name="searchUserByMailList">
+    </wsdl:input>
+      <wsdl:output message="tns:searchUserByMailListResponse" name="searchUserByMailListResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getOrgPositionList">
+      <wsdl:input message="tns:getOrgPositionList" name="getOrgPositionList">
+    </wsdl:input>
+      <wsdl:output message="tns:getOrgPositionListResponse" name="getOrgPositionListResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByOrgPositionId">
+      <wsdl:input message="tns:searchUserByOrgPositionId" name="searchUserByOrgPositionId">
+    </wsdl:input>
+      <wsdl:output message="tns:searchUserByOrgPositionIdResponse" name="searchUserByOrgPositionIdResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByDeptId">
+      <wsdl:input message="tns:searchUserByDeptId" name="searchUserByDeptId">
+    </wsdl:input>
+      <wsdl:output message="tns:searchUserByDeptIdResponse" name="searchUserByDeptIdResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchDeptByDeptId">
+      <wsdl:input message="tns:searchDeptByDeptId" name="searchDeptByDeptId">
+    </wsdl:input>
+      <wsdl:output message="tns:searchDeptByDeptIdResponse" name="searchDeptByDeptIdResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByUserIdList">
+      <wsdl:input message="tns:searchUserByUserIdList" name="searchUserByUserIdList">
+    </wsdl:input>
+      <wsdl:output message="tns:searchUserByUserIdListResponse" name="searchUserByUserIdListResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByMail">
+      <wsdl:input message="tns:searchUserByMail" name="searchUserByMail">
+    </wsdl:input>
+      <wsdl:output message="tns:searchUserByMailResponse" name="searchUserByMailResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByUserName">
+      <wsdl:input message="tns:searchUserByUserName" name="searchUserByUserName">
+    </wsdl:input>
+      <wsdl:output message="tns:searchUserByUserNameResponse" name="searchUserByUserNameResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByUserId">
+      <wsdl:input message="tns:searchUserByUserId" name="searchUserByUserId">
+    </wsdl:input>
+      <wsdl:output message="tns:searchUserByUserIdResponse" name="searchUserByUserIdResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByUserKeyList">
+      <wsdl:input message="tns:searchUserByUserKeyList" name="searchUserByUserKeyList">
+    </wsdl:input>
+      <wsdl:output message="tns:searchUserByUserKeyListResponse" name="searchUserByUserKeyListResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getOrgFunctionList">
+      <wsdl:input message="tns:getOrgFunctionList" name="getOrgFunctionList">
+    </wsdl:input>
+      <wsdl:output message="tns:getOrgFunctionListResponse" name="getOrgFunctionListResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="NeoOrgWsImplServiceSoapBinding" type="tns:NeoOrgWs">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="searchDeptByDeptIdIncludeChild">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchDeptByDeptIdIncludeChild">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchDeptByDeptIdIncludeChildResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchDefaultUserByUserId">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchDefaultUserByUserId">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchDefaultUserByUserIdResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchDeptByDeptName">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchDeptByDeptName">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchDeptByDeptNameResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getOrgClassList">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="getOrgClassList">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getOrgClassListResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByOrgFunctionId">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchUserByOrgFunctionId">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchUserByOrgFunctionIdResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByOrgClassId">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchUserByOrgClassId">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchUserByOrgClassIdResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByUserKey">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchUserByUserKey">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchUserByUserKeyResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchDeptByCompanyId">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchDeptByCompanyId">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchDeptByCompanyIdResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchDeptByCompanyIdForPaging">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchDeptByCompanyIdForPaging">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchDeptByCompanyIdForPagingResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByEmpolyeeNo">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchUserByEmpolyeeNo">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchUserByEmpolyeeNoResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByDeptIdForPaging">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchUserByDeptIdForPaging">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchUserByDeptIdForPagingResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getOrgPositionList">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="getOrgPositionList">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getOrgPositionListResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByMailList">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchUserByMailList">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchUserByMailListResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByOrgPositionId">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchUserByOrgPositionId">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchUserByOrgPositionIdResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByDeptId">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchUserByDeptId">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchUserByDeptIdResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchDeptByDeptId">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchDeptByDeptId">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchDeptByDeptIdResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByUserIdList">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchUserByUserIdList">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchUserByUserIdListResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByMail">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchUserByMail">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchUserByMailResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByUserName">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchUserByUserName">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchUserByUserNameResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByUserId">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchUserByUserId">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchUserByUserIdResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="searchUserByUserKeyList">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="searchUserByUserKeyList">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="searchUserByUserKeyListResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="getOrgFunctionList">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="getOrgFunctionList">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getOrgFunctionListResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="NeoOrgWsImplService">
+    <wsdl:port binding="tns:NeoOrgWsImplServiceSoapBinding" name="NeoOrgWsImplPort">
+      <soap:address location="http://hqcdev.circle.hanwha.com/api/ss/org"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

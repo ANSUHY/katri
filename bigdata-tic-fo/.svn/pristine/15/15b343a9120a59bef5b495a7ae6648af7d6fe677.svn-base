@@ -1,0 +1,572 @@
+package com.katri.web.mypage.infoMng.controller;
+
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.springframework.context.MessageSource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.katri.common.Const;
+import com.katri.common.GlobalExceptionHandler.CustomMessageException;
+import com.katri.common.model.ResponseDto;
+import com.katri.common.util.CommonUtil;
+import com.katri.common.util.EncryptUtil;
+import com.katri.common.util.SessionUtil;
+import com.katri.common.util.StringUtil;
+import com.katri.web.auth.model.LoginReq;
+import com.katri.web.auth.model.LoginRes;
+import com.katri.web.auth.service.LoginService;
+import com.katri.web.comm.service.CommService;
+import com.katri.web.comm.service.NiceService;
+import com.katri.web.mypage.infoMng.model.InfoMngPrdtSelectRes;
+import com.katri.web.mypage.infoMng.model.InfoMngSaveReq;
+import com.katri.web.mypage.infoMng.model.InfoMngSaveRes;
+import com.katri.web.mypage.infoMng.model.InfoMngSelectReq;
+import com.katri.web.mypage.infoMng.model.InfoMngSelectRes;
+import com.katri.web.mypage.infoMng.service.InfoMngService;
+
+import io.swagger.annotations.Api;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Controller
+@RequiredArgsConstructor
+@Api(tags = {"infoMng Controller"})
+@RequestMapping(value = "/mypage/infoMng")
+@Slf4j
+public class InfoMngController {
+
+	/** 공통 Service */
+	private final CommService commService;
+
+	/** Login Service */
+	private final LoginService loginService;
+
+	/** InfoMng Service */
+	private final InfoMngService infoMngService;
+
+	/** NICE Service */
+	private final NiceService niceService;
+
+	/** 메시지 Component */
+	private final MessageSource messageSource;
+
+	/*****************************************************
+	 * [회원/기업/기관 정보 관리] > 비밀번호 재확인 페이지 이동
+	 * @param model
+	 * @return String
+	*****************************************************/
+	@GetMapping(value = {"/infoMngPwdChk"})
+	public String infoMngPwdChk(Model model) throws Exception {
+
+		LoginReq loginReq					= new LoginReq();
+		LoginRes loginRes					= new LoginRes();
+
+		// [0]. 현재 로그인한 계정 정보 셋팅
+ 		loginReq.setLoginId(SessionUtil.getLoginUserId());
+		loginRes = loginService.selectLoginDetail(loginReq);
+
+		model.addAttribute("userInfoData", loginRes);
+
+		return "mypage/infoMng/infoMngPwdChk";
+
+	}
+
+	/*****************************************************
+	 * [회원/기업/기관 정보 관리] > 비밀번호 같은지 확인
+	 * @param model
+	 * @return String
+	 *****************************************************/
+	@PostMapping(value = {"/infoMngUserInfoCheckPwd"})
+	public ResponseEntity<ResponseDto> infoMngMdfcn(Model model, @ModelAttribute InfoMngSelectReq infoMngSelectReq) throws Exception {
+
+		String 			msg 			= messageSource.getMessage("result-message.messages.pwd.message.checked.data", null, SessionUtil.getLocale()); // '비밀번호를 확인하시기 바랍니다.'
+		Integer 		resultCode 		= HttpStatus.BAD_REQUEST.value();
+		boolean			bReturn			= false;
+
+		LoginReq loginReq					= new LoginReq();
+		LoginRes loginRes					= new LoginRes();
+
+		try {
+
+			// [0]. 현재 로그인한 계정 정보 셋팅
+			loginReq.setLoginId(SessionUtil.getLoginUserId());
+			loginRes = loginService.selectLoginDetail(loginReq);
+
+			// [1]. 비밀번호 동일한지 검사
+			bReturn = infoMngService.infoMngUserPwdCheck(infoMngSelectReq, loginRes);
+
+			// [2]. 값 셋팅
+			if( bReturn ) {
+				resultCode = HttpStatus.OK.value();
+				model.addAttribute("userInfoData", loginRes);
+			}
+
+		} catch(CustomMessageException e) {
+
+			// 값 셋팅
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			msg 		= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+
+		} catch(Exception e) {
+
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(bReturn)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+
+	}
+
+	/*****************************************************
+	 * [회원/기업/기관 정보 관리] > 유형 별 회원 정보 수정 페이지 이동
+	 * @param model
+	 * @param infoMngPageNm
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@PostMapping(value = {"/infoMngMdfcn"})
+	public String infoMngMdfcn(@ModelAttribute InfoMngSelectReq infoMngSelectReq, HttpSession session, HttpServletResponse response, Model model ) throws Exception {
+
+		/* 뒤로가기 방지 */
+		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
+		response.setHeader("Pragma", "no-cache"); // HTTP 1.0.
+		response.setHeader("Expires", "0"); // Proxies.
+
+		LoginReq loginReq					= new LoginReq();
+		LoginRes loginRes					= new LoginRes();
+
+		// [0]. 현재 로그인한 계정 정보 셋팅 및 페이지 값 셋팅
+ 		loginReq.setLoginId(SessionUtil.getLoginUserId());
+		loginRes = loginService.selectLoginDetail(loginReq);
+
+		String strUserTyCd 		= loginRes.getUserTyCd();
+		String infoMngPageNm	= "";
+
+		if( Const.Code.UserTyCd.INST_MASTER.equals( strUserTyCd ) ) {
+			infoMngPageNm = "/mypage/infoMng/infoMngInstMasterMdfcn";
+		} else if ( Const.Code.UserTyCd.INST_GENERAL.equals( strUserTyCd ) ) {
+			infoMngPageNm = "/mypage/infoMng/infoMngInstGnrlMdfcn";
+		} else if ( Const.Code.UserTyCd.ENT_MASTER.equals( strUserTyCd ) ) {
+			infoMngPageNm = "/mypage/infoMng/infoMngEntMasterMdfcn";
+		} else if ( Const.Code.UserTyCd.ENT_GENERAL.equals( strUserTyCd ) ) {
+			infoMngPageNm = "/mypage/infoMng/infoMngEntGnrlMdfcn";
+		} else {
+			infoMngPageNm = "/mypage/infoMng/infoMngGnrlMdfcn";
+		}
+
+		// [1]. 로그인 계정 > 회원 상세 정보 조회 후 셋팅
+		infoMngSelectReq.setTargetUserId( loginRes.getUserId() );
+		infoMngSelectReq.setTargetUserTyCd( loginRes.getUserTyCd() );
+
+		InfoMngSelectRes infoMngSelectRes = new InfoMngSelectRes();
+		infoMngSelectRes = infoMngService.getInfoMngUserBasDetail(infoMngSelectReq);
+
+		String encUserPwdChk = StringUtil.nvl(EncryptUtil.encryptSha256( infoMngSelectReq.getChkUserPwd(), loginRes.getUserId() ));
+		String encUserPwd	 = loginRes.getUserPwd();
+
+		// [1_1]. 비밀번호 재검사 - 우회 방지
+		if( !encUserPwdChk.equals(encUserPwd) ) {
+			// 비밀번호 확인
+			CommonUtil.alertMsgBack(response, messageSource.getMessage("result-message.messages.pwd.message.checked.data", null, SessionUtil.getLocale()));
+		}
+
+		// [2]. 조회 정보 셋팅
+		model.addAttribute("userInfoData", infoMngSelectRes);
+
+		// [3]. 관심키워드 목록 셋팅
+		List<InfoMngPrdtSelectRes> lstPrdt = infoMngService.getStdLgclfCdList();
+		if( lstPrdt != null ) {
+			model.addAttribute( "lstPrdt", lstPrdt );
+		}
+
+		// [4]. NICE 업체정보를 암호화 한 데이터 세팅
+		String passEncData = niceService.getNiceData(session);
+		model.addAttribute("passEncData", passEncData);
+
+		// [5]. URL 모델 셋팅
+		model.addAttribute("returnUrl", infoMngPageNm);
+
+		return infoMngPageNm;
+
+	}
+
+	/*****************************************************
+	 * [회원/기업/기관 정보 관리] > 비밀번호 변경 저장
+	 * @param request
+	 * @param infoMngSaveReq
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@PostMapping(value = {"/saveUserPwdChg"})
+	public ResponseEntity<ResponseDto> saveUserPwdChg( HttpServletRequest request, @ModelAttribute InfoMngSaveReq infoMngSaveReq ) throws Exception {
+
+		// [[0]]. 반환할 정보들
+		String 			msg 			= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer 		resultCode 		= HttpStatus.BAD_REQUEST.value();
+		InfoMngSaveRes	infoMngSaveRes	= new InfoMngSaveRes();
+
+		try {
+
+			// [[1]]. 저장 시작
+			String strUserId = infoMngSaveReq.getTargetUserId();
+
+			if( !"".equals(strUserId) && strUserId.equals(SessionUtil.getLoginUserId()) ) {
+
+				/* 수정자 셋팅 */
+				infoMngSaveReq.setMdfrId( strUserId );
+
+				/* 비밀번호 변경 시작 */
+				infoMngSaveRes = infoMngService.saveUserPwdChg(infoMngSaveReq);
+
+			}
+
+			// [[2]]. 성공 여부에 따른 메시지 셋팅 */
+			if( "".equals( infoMngSaveRes.getUserId() ) ) {
+				resultCode = HttpStatus.BAD_REQUEST.value();
+				msg = messageSource.getMessage("result-message.messages.common.message.save.error", null, SessionUtil.getLocale()); // 저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+			} else {
+				resultCode = HttpStatus.OK.value();
+				msg = messageSource.getMessage("result-message.messages.pwd.message.save.success", null, SessionUtil.getLocale()); 	// 비밀번호가 변경되었습니다.
+			}
+
+		} catch(CustomMessageException e) {
+
+			// 값 셋팅
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			msg 		= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+
+		} catch(Exception e) {
+
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(infoMngSaveRes)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+	/*****************************************************
+	 * [회원/기업/기관 정보 관리] > 회원 탈퇴 신청 페이지 이동
+	 * @param model
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@GetMapping(value = {"/infoMngWhdwlApply"})
+	public String infoMngWhdwlApply(Model model) throws Exception {
+
+		LoginReq loginReq					= new LoginReq();
+		LoginRes loginRes					= new LoginRes();
+
+		// [0]. 현재 로그인한 계정 정보 셋팅
+ 		loginReq.setLoginId(SessionUtil.getLoginUserId());
+		loginRes = loginService.selectLoginDetail(loginReq);
+
+		model.addAttribute("userInfoData", loginRes);
+
+		return "mypage/infoMng/infoMngWhdwlApply";
+
+	}
+
+	/*****************************************************
+	 * [회원/기업/기관 정보 관리] > 회원 탈퇴 완료 페이지 이동
+	 * @param model
+	 * @return
+	 * @throws Exception
+	 *****************************************************/
+	@PostMapping(value = {"/infoMngWhdwlCmptn"})
+	public String infoMngWhdwlCmptn(Model model, @ModelAttribute InfoMngSelectReq infoMngSelectReq) throws Exception {
+
+		model.addAttribute("userInfoData", infoMngSelectReq);
+
+		return "mypage/infoMng/infoMngWhdwlCmptn";
+
+	}
+
+	/*****************************************************
+	 * [회원/기업/기관 정보 관리] > 회원 수정 정보 저장
+	 * @param request
+	 * @param infoMngSaveReq
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@PostMapping(value = {"/saveUserInfoMdfcn"})
+	public ResponseEntity<ResponseDto> saveUserInfoMdfcn( HttpServletRequest request, @ModelAttribute InfoMngSaveReq infoMngSaveReq, HttpSession session ) throws Exception {
+
+		// [0]. 반환할 정보들
+		String 			msg 			= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer 		resultCode 		= HttpStatus.BAD_REQUEST.value();
+		InfoMngSaveRes	infoMngSaveRes	= new InfoMngSaveRes();
+
+		LoginReq loginReq				= new LoginReq();
+		LoginRes loginRes				= new LoginRes();
+
+		try {
+
+			// [0]. 현재 로그인한 계정 정보 셋팅
+	 		loginReq.setLoginId(SessionUtil.getLoginUserId());
+			loginRes = loginService.selectLoginDetail(loginReq);
+
+			// [1]. 저장 시작
+			String strTargetUserId	= loginRes.getUserId();
+
+			if( !"".equals(strTargetUserId) && strTargetUserId.equals( infoMngSaveReq.getTargetUserId() ) ) {
+
+				/* 수정 대상 아이디 셋팅 */
+				infoMngSaveReq.setTargetUserId(strTargetUserId);
+				infoMngSaveReq.setTargetUserTyCd(loginRes.getUserTyCd());
+				infoMngSaveReq.setMdfrId(strTargetUserId);
+
+				/* 회원 수정 정보 저장 */
+				infoMngSaveRes = infoMngService.saveUserInfoMdfcn(infoMngSaveReq, session);
+
+			}
+
+			// [2]. 성공 여부에 따른 메시지 셋팅 */
+			if( "".equals( infoMngSaveRes.getUserId() ) || infoMngSaveRes.getUserId() == null ) {
+				resultCode = HttpStatus.BAD_REQUEST.value();
+				msg = messageSource.getMessage("result-message.messages.common.message.save.error", null, SessionUtil.getLocale()); // 저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+			} else {
+				resultCode = HttpStatus.OK.value();
+				msg = messageSource.getMessage("result-message.messages.mypage.info.mng.message.mdfcn.success", null, SessionUtil.getLocale()); // 회원정보 수정이 완료되었습니다.
+			}
+
+		} catch(CustomMessageException e) {
+
+			// 값 셋팅
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			msg 		= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+
+		} catch(Exception e) {
+
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(infoMngSaveRes)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+	/*****************************************************
+	 * [회원/기업/기관 정보 관리] > 회원 탈퇴
+	 * @param request
+	 * @param infoMngSaveReq
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@PostMapping(value = {"/saveUserWhdwl"})
+	public ResponseEntity<ResponseDto> saveUserWhdwl( HttpServletRequest request, @ModelAttribute InfoMngSaveReq infoMngSaveReq ) throws Exception {
+
+		// [0]. 반환할 정보들
+		String 			msg 			= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer 		resultCode 		= HttpStatus.BAD_REQUEST.value();
+		InfoMngSaveRes	infoMngSaveRes	= new InfoMngSaveRes();
+
+		LoginReq loginReq				= new LoginReq();
+		LoginRes loginRes				= new LoginRes();
+
+		try {
+
+			// [0]. 현재 로그인한 계정 정보 셋팅
+	 		loginReq.setLoginId(SessionUtil.getLoginUserId());
+			loginRes = loginService.selectLoginDetail(loginReq);
+
+			// [1]. 탈퇴 시작
+			String strTargetUserId	= loginRes.getUserId();
+
+			if( !"".equals(strTargetUserId) && strTargetUserId.equals( infoMngSaveReq.getTargetUserId() ) ) {
+
+				/* 수정 대상 셋팅값 처리 */
+				infoMngSaveReq.setTargetUserId(strTargetUserId);
+				infoMngSaveReq.setTargetUserTyCd(loginRes.getUserTyCd());
+				infoMngSaveReq.setEncptEmlAddrVal(loginRes.getEncptEmlAddrVal());
+				infoMngSaveReq.setMdfrId(strTargetUserId);
+
+				/* 회원 탈퇴 처리 */
+				infoMngSaveRes = infoMngService.saveUserWhdwl( request, infoMngSaveReq );
+
+			}
+
+			// [2]. 성공 여부에 따른 메시지 셋팅 */
+			if( "".equals( infoMngSaveRes.getUserId() ) || infoMngSaveRes.getUserId() == null ) {
+				resultCode = HttpStatus.BAD_REQUEST.value();
+				msg = messageSource.getMessage("result-message.messages.common.message.save.error", null, SessionUtil.getLocale()); // 저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+			} else {
+				resultCode = HttpStatus.OK.value();
+				msg = messageSource.getMessage("result-message.messages.mypage.info.mng.message.whdwl.success", null, SessionUtil.getLocale()); // 탈퇴 처리가 왼료되었습니다.
+			}
+
+		} catch(CustomMessageException e) {
+
+			// 값 셋팅
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			msg 		= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+
+		} catch(Exception e) {
+
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(infoMngSaveRes)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+	/*****************************************************
+	 * [기업] > 기업(마스터) 종속되어 있는 그룹 회원 확인
+	 * @param model
+	 * @param infoMngSelectReq
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@PostMapping(value = {"/getEntMasterGrpUserChk"})
+	public ResponseEntity<ResponseDto> getEntMasterGrpUserChk(Model model, @ModelAttribute InfoMngSelectReq infoMngSelectReq) throws Exception {
+
+		String 			msg 			= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); // 에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer 		resultCode 		= HttpStatus.BAD_REQUEST.value();
+		int				nChkCnt			= 0;
+
+		LoginReq loginReq					= new LoginReq();
+		LoginRes loginRes					= new LoginRes();
+
+		try {
+
+			// [0]. 현재 로그인한 계정 정보 셋팅
+			loginReq.setLoginId(SessionUtil.getLoginUserId());
+			loginRes = loginService.selectLoginDetail(loginReq);
+
+			// [1]. 종속되어 있는 그룹 회원 확인
+			nChkCnt = infoMngService.selctEntMasterGrpUserChk(infoMngSelectReq, loginRes);
+
+			// [2]. 조회 결과 셋팅
+			if( nChkCnt > 0 ) {
+				resultCode = HttpStatus.BAD_REQUEST.value();
+				msg = messageSource.getMessage("result-message.messages.mypage.info.mng.message.ent.grp.user.exist.error", null, SessionUtil.getLocale()); // 종속된 회원이 있어 탈퇴 신청이 불가합니다.
+			} else {
+				resultCode = HttpStatus.OK.value();
+				msg = messageSource.getMessage("result-message.messages.mypage.info.mng.message.whdwl.confirm", null, SessionUtil.getLocale()); // 회원 탈퇴 시 모든 개인정보가 삭제됩니다. 정말로 회원 탈퇴하시겠습니까?
+			}
+
+		} catch(CustomMessageException e) {
+
+			// 값 셋팅
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			msg 		= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+
+		} catch(Exception e) {
+
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(nChkCnt)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+
+	}
+
+	/*****************************************************
+	 * [회원] > 연계 정보 중복 체크
+	 * @param request
+	 * @param joinSelectReq
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@PostMapping(value = {"/userLinkInfoDpcnChk"})
+	public ResponseEntity<ResponseDto> userLinkInfoDpcnChk(HttpServletRequest request, @ModelAttribute InfoMngSelectReq infoMngSelectReq) throws Exception {
+
+		// [[0]]. 반환할 정보들
+		String 			msg 			= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); // 에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer 		resultCode 		= HttpStatus.BAD_REQUEST.value();
+		int 			nDpcnCnt		= 0;
+		boolean			bDpcnYn			= false;
+
+		try {
+
+			// 0_0. 연계 정보 중복 체크
+			nDpcnCnt = infoMngService.getUserLinkInfoDpcnChkCnt(infoMngSelectReq);
+
+			// 0_1. 중복 확인 후 반환값 셋팅
+			if( nDpcnCnt == 0 ) {
+				bDpcnYn = true;
+				resultCode = HttpStatus.OK.value();
+			} else {
+				bDpcnYn = false;
+				resultCode = HttpStatus.OK.value();
+				msg = messageSource.getMessage("result-message.messages.join.message.pass.auth.ci.use.already.tel.no", null, SessionUtil.getLocale()); // 이미 가입된 휴대폰 번호입니다. 가입된 휴대폰 번호로 변경이 불가합니다.
+			}
+
+		} catch(CustomMessageException e) {
+
+			// 값 셋팅
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			msg 		= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+
+		} catch(Exception e) {
+
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(bDpcnYn)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+}

@@ -1,0 +1,284 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="c"		uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="cm" 		uri="/WEB-INF/tlds" %>
+<%@ taglib prefix="spring"	uri="http://www.springframework.org/tags" %>
+
+<script type="text/javascript">
+
+	$(document).ready(function() {
+
+		/* 초기 작업 */
+		fn_svnMngInit();
+
+	});
+
+	/*
+	 * 함수명 : fn_svnMngInit()
+	 * 설   명 : 초기 작업
+	*/
+	function fn_svnMngInit() {
+
+	}
+
+	/*
+	 * 함수명 : fn_callPopSvcAppl()
+	 * 설   명 : 추가 신청 Pop 열기
+	*/
+	function fn_callPopSvcAppl() {
+
+		/* 추가 신청 Pop띄우기 */
+		$('#divPopSvcClctAgre').addClass('active');
+	}
+
+	/*
+	 * 함수명 : fn_callPopSb(instId)
+	 * 설   명 : 제출처 제공 신청 Pop 열기
+	*/
+	function fn_callPopSb(instId) {
+
+		/* 약관 check풀기 */
+		$("#frm_popSbReg input[id='chkPopSbOfferTerms_c_offer']").prop("checked", false);
+		fn_popSbChkOfferCheck();
+
+		/* 데이터 셋팅 (click한 instId만 check해놓도록) */
+		$("#frm_popSbReg input[id^='chkPopSbSbmsnCoRls_c_']").prop("checked",false);
+		$("#frm_popSbReg #chkPopSbSbmsnCoRls_c_"+instId).prop("checked",true);
+
+		/* 제출처 제공 신청 Pop띄우기 */
+		$('#divPopSbSbmsnCoRls').addClass('active');
+
+	}
+
+	/*
+	 * 함수명 : fn_callPopTemrmiSvcAppl(instId)
+	 * 설   명 : 서비스 해지 Pop 열기
+	*/
+	function fn_callPopTemrmiSvcAppl(instId) {
+
+		/* 데이터 셋팅 (click한 기관명 popup에 셋팅) */
+		let isntNm = $("#connInst_"+instId).data("nm");
+		$("#areaPopTemrmiSvcInstNm").text(isntNm);
+		/* 데이터 셋팅 (click한 instId popup에 셋팅) */
+		$("#targetPopTemrmiSvcApplInstId").val(instId);
+
+		/* 서비스 해지 Pop띄우기*/
+		$('#divPopTemrmiSvcAppl').addClass('active');
+	}
+
+	/*
+	 * 함수명 : fn_callPopTemrmiSb(instId)
+	 * 설   명 : 제출처 제공 해지 Pop 열기
+	*/
+	function fn_callPopTemrmiSb(instId) {
+
+		/* 데이터 셋팅 (click한 기관명 popup에 셋팅) */
+		let isntNm = $("#connInst_"+instId).data("nm");
+		$("#areaPopTemrmiSbInstNm").text(isntNm);
+		/* 데이터 셋팅 (click한 instId popup에 셋팅) */
+		$("#targetPopTemrmiSbInstId").val(instId);
+
+		/* 제출처 제공 해지 Pop띄우기 */
+		$('#divPopTemrmiSb').addClass('active');
+
+	}
+
+</script>
+
+<!-- ===== header ====== -->
+<header id="header">
+	<div id="sub-mv" class="sub-myservice">
+		<div class="inner">
+			<h2>플랫폼 서비스</h2>
+			<div class="sub-obj">오브젝트</div>
+		</div>
+	</div>
+</header>
+<!-- ===== /header ====== -->
+
+<!-- ===== container ====== -->
+<div id="container">
+
+	<!--breadcrumb-wr-->
+	<jsp:include page="/WEB-INF/views/layout/breadcrumbWr.jsp">
+		<jsp:param name="menuTopNo" value="02"/>
+		<jsp:param name="menuSubNo" value="0201"/>
+	</jsp:include>
+	<!-- // breadcrumb-wr-->
+
+	<div id="cont" class="cont-myservice">
+
+		<!--tit-->
+		<div class="cont-platform-tit">
+			<h2 class="tit">나의 시험인증 정보조회</h2>
+		</div>
+		<!--// tit-->
+
+		<!--서브메뉴-->
+		<ul class="sub-tabs grid3 type02">
+			<li class=""><a href="/platformSvc/myData/myInfoCert/myCertList">인증</a></li>
+			<li class=""><a href="/platformSvc/myData/myInfoCert/myRprtList">성적서</a></li>
+			<li class="on"><a href="/platformSvc/myData/myInfoCert/svcMng">서비스 관리</a></li>
+		</ul>
+
+		<ul class="chart-list grid2-02">
+
+			<c:set var="img_T001"	value="/asset/images/svc-ofc-01.png" />
+			<c:set var="img_T003"	value="/asset/images/svc-ofc-02.png" />
+			<c:set var="img_T005"	value="/asset/images/svc-ofc-03.png" />
+			<c:set var="img_T006"	value="/asset/images/svc-ofc-04.png" />
+			<c:set var="img_T007"	value="/asset/images/svc-ofc-05.png" />
+			<c:set var="img_T002"	value="/asset/images/svc-ofc-06.png" />
+			<c:set var="img_T004"	value="/asset/images/svc-ofc-07.png" />
+
+			<c:set var="img_src"	value="" />
+
+			<li>
+				<div class="hd"><h5 class="stit">서비스 연결 기관</h5></div>
+				<ul class="bd-ul">
+
+
+					<c:if test="${!empty svcConnInstList}">
+						<c:forEach items="${svcConnInstList}" var="item">
+
+							<!-- img주소 셋팅 -->
+							<c:choose>
+								<c:when test="${item.instId == 'T001'}">
+									<c:set var="img_src"	value="${img_T001}" />
+								</c:when>
+								<c:when test="${item.instId == 'T002'}">
+									<c:set var="img_src"	value="${img_T002}" />
+								</c:when>
+								<c:when test="${item.instId == 'T003'}">
+									<c:set var="img_src"	value="${img_T003}" />
+								</c:when>
+								<c:when test="${item.instId == 'T004'}">
+									<c:set var="img_src"	value="${img_T004}" />
+								</c:when>
+								<c:when test="${item.instId == 'T005'}">
+									<c:set var="img_src"	value="${img_T005}" />
+								</c:when>
+								<c:when test="${item.instId == 'T006'}">
+									<c:set var="img_src"	value="${img_T006}" />
+								</c:when>
+								<c:when test="${item.instId == 'T007'}">
+									<c:set var="img_src"	value="${img_T007}" />
+								</c:when>
+							</c:choose>
+							<!--// img주소 셋팅 -->
+
+							<li id="connInst_${item.instId}" data-nm="${item.instNm}" >
+								<div class="office-name-wr">
+									<div class="img"><img src="${img_src}" alt="${item.instNm}"></div><p>${item.instNm}</p>
+								</div>
+								<div class="office-btn-wr">
+
+									<a href="javascript:void(0);" onclick="fn_callPopTemrmiSvcAppl('${item.instId}')" class="btn cancel btn-svc-cancel">서비스 해지</a>
+
+									<!-- 제출처 제공 -->
+									<c:choose>
+										<c:when test="${item.sbmsnCoRlsAgreYn == 'Y'}">
+											<a href="javascript:void(0);" onclick="fn_callPopTemrmiSb('${item.instId}')" class="btn btn-apl-cancel">제출처 제공 해지</a>
+										</c:when>
+										<c:otherwise>
+											<a href="javascript:void(0);" onclick="fn_callPopSb('${item.instId}')" class="btn">제출처 제공 신청</a>
+										</c:otherwise>
+									</c:choose>
+									<!--// 제출처 제공 -->
+
+								</div>
+							</li>
+						</c:forEach>
+					</c:if>
+
+					<c:if test="${empty svcConnInstList}">
+						<li style="text-align:center;  align-items: center;">
+							<div class="office-name-wr">
+								연결된 서비스 기관이 없습니다.
+							</div>
+						</li>
+					</c:if>
+
+				</ul>
+			</li>
+			<li>
+				<div class="hd">
+					<h5 class="stit">서비스 기관 추가하기</h5>
+					<c:if test="${!empty svcNoConnInstList}">
+						<a href="javascript:void(0);" onclick="fn_callPopSvcAppl()" class="btn btn-plus btn-svc-plus" id="btnCallPopSvcAppl">추가 신청 <i></i></a>
+					</c:if>
+				</div>
+				<ul class="bd-ul">
+
+					<c:if test="${!empty svcNoConnInstList}">
+						<c:forEach items="${svcNoConnInstList}" var="item">
+
+							<!-- img주소 셋팅 -->
+							<c:choose>
+								<c:when test="${item.instId == 'T001'}">
+									<c:set var="img_src"	value="${img_T001}" />
+								</c:when>
+								<c:when test="${item.instId == 'T002'}">
+									<c:set var="img_src"	value="${img_T002}" />
+								</c:when>
+								<c:when test="${item.instId == 'T003'}">
+									<c:set var="img_src"	value="${img_T003}" />
+								</c:when>
+								<c:when test="${item.instId == 'T004'}">
+									<c:set var="img_src"	value="${img_T004}" />
+								</c:when>
+								<c:when test="${item.instId == 'T005'}">
+									<c:set var="img_src"	value="${img_T005}" />
+								</c:when>
+								<c:when test="${item.instId == 'T006'}">
+									<c:set var="img_src"	value="${img_T006}" />
+								</c:when>
+								<c:when test="${item.instId == 'T007'}">
+									<c:set var="img_src"	value="${img_T007}" />
+								</c:when>
+							</c:choose>
+							<!--// img주소 셋팅 -->
+
+							<li>
+								<div class="office-name-wr">
+									<div class="img"><img src="${img_src}" alt="${item.instNm}"></div><p>${item.instNm}</p>
+								</div>
+							</li>
+						</c:forEach>
+					</c:if>
+
+					<c:if test="${empty svcNoConnInstList}">
+						<li style="text-align:center;  align-items: center;">
+							<div class="office-name-wr">
+								모든 기관이 서비스 신청 완료되었습니다.
+							</div>
+						</li>
+					</c:if>
+				</ul>
+			</li>
+		</ul>
+
+		<div class="btn-wr">
+			<a href="/platformSvc/myData/myDataStat/myDataStatInfo" class="btn">나의 시험인증 현황 바로가기</a>
+		</div>
+
+		<!-- 제출처 제공 해지 POPUP -->
+		<jsp:include page="/WEB-INF/views/platformSvc/myData/popTemrmiSbmsn.jsp"/>
+		<!--// 제출처 제공 해지 POPUP -->
+
+		<!-- 서비스 해지 POPUP -->
+		<jsp:include page="/WEB-INF/views/platformSvc/myData/popTemrmiSvcAppl.jsp"/>
+		<!--// 서비스 해지 POPUP -->
+
+		<!-- 제출처 제공 신청 POPUP -->
+		<jsp:include page="/WEB-INF/views/platformSvc/myData/popSbmsn.jsp"/>
+		<!--// 제출처 제공 신청 POPUP -->
+
+		<!-- 추가신청 POPUP -->
+		<jsp:include page="/WEB-INF/views/platformSvc/myData/popSvcAppl.jsp"/>
+		<!--// 추가신청 POPUP -->
+
+	</div>
+	<!--// cont-->
+
+</div>
+<!-- ===== /container ====== -->

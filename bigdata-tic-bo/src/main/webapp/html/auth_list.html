@@ -1,0 +1,262 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>시험인증 빅데이터 포탈 관리자</title>
+
+<link href="../css/style.css" rel="stylesheet">
+<script src="../js/jquery.min.js"></script>
+<script src="../js/jquery-ui.js"></script>
+<script src="../js/custom.js"></script>
+
+<script>
+
+	$(document).ready(function() {
+		// 페이지 첫 로드 시, front 메뉴 show
+		fn_frontShow();
+	});
+
+	function fn_frontShow() {
+		$("#tabFrontArea").show();
+		$("#tabBackArea").hide();
+
+		$("#tabFront").addClass('on');
+		$("#tabBack").removeClass('on');
+	}
+
+	function fn_backShow() {
+		$("#tabBackArea").show();
+		$("#tabFrontArea").hide();
+
+		$("#tabBack").addClass('on');
+		$("#tabFront").removeClass('on');
+	}
+
+</script>
+
+</head>
+
+<body>
+
+<div id="wrap">
+
+    <div id="header">
+		<h1 class="h1Tit" style="font-size:16px; line-height:15px; padding-top:2px;"><a href="#">시험인증 빅데이터<br />포탈 관리자</a></h1>
+		<div id="gnb-wrap">
+			<ul id="gnb">
+				<li class="gnb1"><a href="javascript:void(0);" class="d1">시스템 관리</a>
+					<div class="deth2">
+						<ul>
+							<li><a href="#">코드 관리</a></li>
+							<li><a href="#">메뉴 관리</a></li>
+							<li><a href="#">접속권한 관리</a></li>
+							<li><a href="#">관리자 관리</a></li>
+						</ul>
+					</div>
+				</li>
+				<li class="gnb2"><a href="#" class="d1">회원 관리</a>
+					<div class="deth2">
+						<ul>
+							<li><a href="#">코드그룹 조회</a></li>
+							<li><a href="#">코드그룹 등록</a></li>
+							<li><a href="#">코드그룹 수정</a></li>
+							<li><a href="#">공통코드 조회</a></li>
+							<li><a href="#">공통코드 등록</a></li>
+							<li><a href="#">공통코드 수정</a></li>
+						</ul>
+					</div>
+				</li>
+				<li class="gnb3"><a href="#" class="d1">약관 관리</a>
+					<div class="deth2">
+						<ul>
+							<li><a href="#">회원정보조회 (PSK 직원)</a></li>
+							<li><a href="#">회원정보조회 (협력사)</a></li>
+						</ul>
+					</div>
+				</li>
+				<li class="gnb4"><a href="#" class="d1">콘텐츠 관리</a>
+					<div class="deth2">
+						<ul>
+							<li><a href="#">관리자 정보 등록</a></li>
+							<li><a href="#">관리자 정보 수정</a></li>
+						</ul>
+					</div>
+				</li>
+				<li class="gnb5"><a href="#" class="d1">메인화면 관리</a></li>
+				<li class="gnb6"><a href="#" class="d1">검색 관리</a></li>
+			</ul>
+		</div>
+		<div class="utill">
+			<a href="#" class="btn btn-white"><i class="fa fa-sign-out"></i> 로그아웃</a>
+		</div>
+	</div><!-- /header -->
+
+	<div id="container">
+
+		<div class="titArea">
+			<div class="location">
+				<span class="ic-home"><i></i></span><span>시스템 관리</span><em>접속권한 관리</em>
+			</div>
+		</div>
+
+		<div class="div-tab">
+			<ul>
+				<li id="tabFront" class="on"><a href="#" onclick="fn_frontShow()">Frontend</a></li>
+				<li id="tabBack"><a href="#" onclick="fn_backShow()">Backoffice</a></li>
+			</ul>
+		</div>
+
+		<!-- Frontend Area -->
+		<div id="tabFrontArea">
+
+			<div>
+				<div style="float: left;">
+					<h2 class="pop-tit2">접속권한 목록</h2>
+				</div>
+			</div>
+
+			<div class="row-tbl">
+				<table>
+					<colgroup>
+						<col style="width: 100px;">
+						<col>
+						<col style="width: 200px;">
+						<col style="width: 250px;">
+					</colgroup>
+					<thead>
+						<tr>
+							<th>번호</th>
+							<th>권한그룹</th>
+							<th>사용여부</th>
+							<th>메뉴설정</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>1</td>
+							<td>개인</td>
+							<td>Y</td>
+							<td>
+								<a href="#" class="btn btn-white btn-sm" style="text-decoration:none;">메뉴설정</a>
+							</td>
+						</tr>
+						<tr>
+							<td>2</td>
+							<td>기업 마스터</td>
+							<td>Y</td>
+							<td>
+								<a href="#" class="btn btn-white btn-sm" style="text-decoration:none;">메뉴설정</a>
+							</td>
+						</tr>
+						<tr>
+							<td>3</td>
+							<td>기업 회원</td>
+							<td>Y</td>
+							<td>
+								<a href="#" class="btn btn-white btn-sm" style="text-decoration:none;">메뉴설정</a>
+							</td>
+						</tr>
+						<tr>
+							<td>4</td>
+							<td>기관 마스터</td>
+							<td>Y</td>
+							<td>
+								<a href="#" class="btn btn-white btn-sm" style="text-decoration:none;">메뉴설정</a>
+							</td>
+						</tr>
+						<tr>
+							<td>5</td>
+							<td>기관 회원</td>
+							<td>Y</td>
+							<td>
+								<a href="#" class="btn btn-white btn-sm" style="text-decoration:none;">메뉴설정</a>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<!-- // Frontend Area -->
+
+		<!-- Backoffice Area -->
+		<div id="tabBackArea">
+
+			<div class="btn-box bot r">
+				<div class="left">
+					<h2 class="pop-tit2" style="margin-top: 0px;">접속권한 목록</h2>
+				</div>
+				<a href="#" class="btn btn-blue">추가</a>
+			</div>
+
+			<div class="row-tbl">
+
+				<table>
+					<colgroup>
+						<col style="width: 100px;">
+						<col>
+						<col style="width: 200px;">
+						<col style="width: 250px;">
+					</colgroup>
+					<thead>
+						<tr>
+							<th>번호</th>
+							<th>권한그룹</th>
+							<th>사용여부</th>
+							<th>메뉴설정</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>1</td>
+							<td>포탈 관리자</td>
+							<td>Y</td>
+							<td>
+								<a href="#" class="btn btn-white btn-sm" style="text-decoration:none;">메뉴설정</a>
+							</td>
+						</tr>
+						<tr>
+							<td>2</td>
+							<td>데이터 관리자</td>
+							<td>Y</td>
+							<td>
+								<a href="#" class="btn btn-white btn-sm" style="text-decoration:none;">메뉴설정</a>
+							</td>
+						</tr>
+						<tr>
+							<td>3</td>
+							<td>플랫폼 관리자</td>
+							<td>Y</td>
+							<td>
+								<a href="#" class="btn btn-white btn-sm" style="text-decoration:none;">메뉴설정</a>
+							</td>
+						</tr>
+						<tr>
+							<td>4</td>
+							<td>서브 관리자</td>
+							<td>Y</td>
+							<td>
+								<a href="#" class="btn btn-white btn-sm" style="text-decoration:none;">메뉴설정</a>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<!-- // Backoffice Area -->
+
+	</div><!-- /container -->
+
+	<div id="footer">
+		Copyright © KATRi Inc. 2022.
+	</div><!-- /footer -->
+
+</div><!-- /wrap -->
+
+<script>
+	gnb('1','1');
+</script>
+
+</body>
+</html>

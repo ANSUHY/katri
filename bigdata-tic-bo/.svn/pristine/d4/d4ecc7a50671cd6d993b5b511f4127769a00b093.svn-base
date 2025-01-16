@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.system.menu.mapper.MenuMapper">
+
+	<!-- menu 리스트 조건 sql -->
+	<sql id="sqlWhereMenuList">
+
+		<!-- 사이트 여부 -->
+		WHERE tm.site_ty_cd = #{searchSiteTyCd}
+
+		<!-- 사용 여부 -->
+		<if test="searchUseYn != null and searchUseYn != ''">
+			AND tm.use_yn 	= #{searchUseYn}
+		</if>
+
+		<!-- 메뉴 레벨 값 -->
+		<if test="searchMenuLvlVal != null and searchMenuLvlVal != ''">
+			AND tm.menu_lvl_val = #{searchMenuLvlVal}
+		</if>
+
+		<!-- 상위 메뉴 번호 -->
+		<if test="searchUpMenuSn != null and searchUpMenuSn != ''">
+			AND tm.up_menu_sn = #{searchUpMenuSn}
+		</if>
+
+		<!-- 하위 메뉴 레벨 -->
+		<if test="searchDownMenuLvlVal != null and searchDownMenuLvlVal != ''">
+			AND tm.menu_lvl_val > #{searchDownMenuLvlVal}
+		</if>
+
+	</sql>
+
+	<!-- menu 관리 리스트 개수 조회 -->
+	<select id="selectMenuListCount" parameterType="com.katri.web.system.menu.model.MenuSelectReq" resultType="int">
+		/* MenuMapper.selectMenuListCount ( menu 리스트 개수 조회 ) */
+
+		SELECT	COUNT(tm.menu_sn) as cnt
+		FROM	tb_menu_bas tm
+
+		<include refid="sqlWhereMenuList"/>
+
+	</select>
+
+	<!-- menu 관리 리스트 조회 -->
+	<select id="selectMenuList" parameterType="com.katri.web.system.menu.model.MenuSelectReq" resultType="com.katri.web.system.menu.model.MenuSelectRes">
+		/* MenuMapper.selectMenuList ( menu 리스트 조회 ) */
+
+		SELECT	(row_number() over(order by tm.srt_seq ASC)) as rnum
+				, tm.menu_sn
+				, tm.menu_nm
+				, tm.menu_lvl_val
+				, tm.up_menu_sn
+				, tm.best_menu_sn
+				, tm.all_menu_sn_val
+				, tm.menu_url_addr
+
+				, tm.link_ty_cd
+				, tcc1.comn_cd_nm as link_ty_cd_nm
+				, tcc1.comn_cd_val as link_ty_cd_val
+
+				, tm.site_ty_cd
+				, tcc2.comn_cd_nm as site_ty_cd_nm
+				, tcc2.comn_cd_val as site_ty_cd_val
+
+				, tm.srt_seq
+				, tm.use_yn
+				, tm.crt_dt
+				, tm.crtr_id
+				, tm.mdfcn_dt
+				, tm.mdfr_id
+
+		FROM	tb_menu_bas tm
+
+		/* 연계 유형 코드 */
+		LEFT OUTER JOIN tb_comn_cd tcc1 ON ( tcc1.comn_grp_cd = 'LTC' and tm.link_ty_cd = tcc1.comn_cd and tcc1.use_yn = 'Y')
+
+		/* 사이트 유형 코드 */
+		LEFT OUTER JOIN tb_comn_cd tcc2 ON ( tcc2.comn_grp_cd = 'STC' and tm.site_ty_cd = tcc2.comn_cd and tcc2.use_yn = 'Y')
+
+		<include refid="sqlWhereMenuList"/>
+
+		ORDER BY rnum asc
+
+	</select>
+
+	<!-- menu 관리 상세 조회 -->
+	<select id="selectMenuDetail" parameterType="com.katri.web.system.menu.model.MenuSelectReq" resultType="com.katri.web.system.menu.model.MenuSelectRes">
+		/* MenuMapper.selectMenuDetail ( menu 상세 조회 ) */
+
+		SELECT	  tm.menu_sn
+				, tm.menu_nm
+				, tm.menu_lvl_val
+				, tm.up_menu_sn
+				, tm.best_menu_sn
+				, tm.all_menu_sn_val
+				, tm.menu_url_addr
+
+				, tm.link_ty_cd
+				, tcc1.comn_cd_nm as link_ty_cd_nm
+				, tcc1.comn_cd_val as link_ty_cd_val
+
+				, tm.site_ty_cd
+				, tcc2.comn_cd_nm as site_ty_cd_nm
+				, tcc2.comn_cd_val as site_ty_cd_val
+
+				, tm.srt_seq
+				, tm.use_yn
+				, tm.crt_dt
+				, tm.crtr_id
+				, tm.mdfcn_dt
+				, tm.mdfr_id
+
+		FROM	tb_menu_bas tm
+
+		/* 연계 유형 코드 */
+		LEFT OUTER JOIN tb_comn_cd tcc1 ON ( tcc1.comn_grp_cd = 'LTC' and tm.link_ty_cd = tcc1.comn_cd and tcc1.use_yn = 'Y')
+
+		/* 사이트 유형 코드 */
+		LEFT OUTER JOIN tb_comn_cd tcc2 ON ( tcc2.comn_grp_cd = 'STC' and tm.site_ty_cd = tcc2.comn_cd and tcc2.use_yn = 'Y')
+
+		<!-- 상세 메뉴 조회 번호 -->
+		WHERE tm.menu_sn = #{targetMenuSn}
+
+	</select>
+
+	<!-- menu 관리 등록 -->
+	<insert id="insertMenu" parameterType="com.katri.web.system.menu.model.MenuSaveReq" useGeneratedKeys="true" keyProperty="menuSn">
+		/* MenuMapper.insertMenu ( menu 관리 등록 ) */
+
+		INSERT INTO
+			tb_menu_bas
+				(
+					  menu_nm
+					, menu_lvl_val
+					, up_menu_sn
+					, best_menu_sn
+
+					, menu_url_addr
+					, link_ty_cd
+					, site_ty_cd
+					, srt_seq
+					, use_yn
+
+					, crt_dt
+					, crtr_id
+				)
+		VALUES (
+					  #{menuNm}
+					, #{menuLvlVal}
+					, #{upMenuSn}
+					, #{bestMenuSn}
+
+					, #{menuUrlAddr}
+					, #{linkTyCd}
+					, #{siteTyCd}
+					, (
+							SELECT COALESCE(MAX(srt_seq) + 1, 1)
+							FROM tb_menu_bas
+							WHERE menu_lvl_val = #{menuLvlVal}
+							<if test="upMenuSn != null and upMenuSn != ''">
+								AND up_menu_sn = #{upMenuSn}
+							</if>
+						)
+					, #{useYn}
+
+					, now()
+					, #{crtrId}
+				)
+	</insert>
+
+	<!-- menu 관리 수정 -->
+	<update id="updateMenu" parameterType="com.katri.web.system.menu.model.MenuSaveReq">
+		/* MenuMapper.updateMenu ( menu 관리 수정 ) */
+
+		UPDATE	tb_menu_bas
+
+		SET		menu_nm			= #{menuNm}
+				, menu_url_addr	= #{menuUrlAddr}
+				, link_ty_cd	= #{linkTyCd}
+				, use_yn		= #{useYn}
+				, mdfcn_dt		= now()
+				, mdfr_id		= #{mdfrId}
+
+		WHERE	menu_sn = #{menuSn}
+
+	</update>
+
+	<!-- 해당 menu 전체 메뉴 일련 번호 수정 -->
+	<update id="updateAllMenuSnVal" parameterType="com.katri.web.system.menu.model.MenuSaveReq">
+		/* MenuMapper.updateAllMenuSnVal ( 해당 menu 전체 메뉴 일련 번호 수정 ) */
+
+		UPDATE	tb_menu_bas
+
+		SET		  all_menu_sn_val = #{allMenuSnVal}
+				, mdfcn_dt		  = now()
+				, mdfr_id		  = #{mdfrId}
+
+		WHERE	menu_sn = #{menuSn}
+
+	</update>
+
+	<!-- menu 정렬 순서 수정 -->
+	<update id="updateMenuSeq" parameterType="com.katri.web.system.menu.model.MenuSaveReq">
+		/* MenuMapper.updateMenuSeq ( menu 정렬 순서 수정 ) */
+
+		UPDATE	tb_menu_bas
+
+		SET		  srt_seq 	= #{srtSeq}
+				, mdfcn_dt	= now()
+				, mdfr_id	= #{mdfrId}
+
+		WHERE	menu_sn = #{menuSn}
+
+	</update>
+
+	<!-- 해당 menu 사용여부 수정 -->
+	<update id="updateDownMenuUseYn" parameterType="com.katri.web.system.menu.model.MenuSaveReq">
+		/* MenuMapper.updateDownMenuUseYn ( menu 관리 수정 ) */
+
+		UPDATE	tb_menu_bas
+
+		SET		  use_yn		= #{useYn}
+				, mdfcn_dt		= now()
+				, mdfr_id		= #{mdfrId}
+
+		WHERE	menu_sn = #{menuSn}
+
+	</update>
+
+</mapper>

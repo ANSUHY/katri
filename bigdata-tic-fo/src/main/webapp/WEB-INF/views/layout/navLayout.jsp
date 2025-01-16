@@ -1,0 +1,172 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags"%>
+
+<script>
+	$(function(){
+		// 검색 아이콘 클릭 시 검색 입력창 focus
+		$(document).on('click', '.tnb .sch', function(){
+			$("#navUnifiedSearchKeyword").focus();
+		});
+	});
+
+	/**
+	 * 추천 키워드 조회 (모바일)
+	 */
+	function fn_getSchmRecKeywordList() {
+		$.ajax({
+			  url: "/search/getRecKeywordList"
+			, type: "GET"
+			, dataType: "json"
+			, success: function(jsonData) {
+				// 요소 초기화
+				$("#schmRecKeyword").nextAll().html("");
+
+				let schmRecKeywordHtml = "";
+
+				if (jsonData.resultCode === 200) {
+
+					if (jsonData.data !== null && jsonData.data.length > 0) {
+						// 추천 검색어 HTML 제작
+						$.each(jsonData.data, function(index, data){
+							schmRecKeywordHtml += fn_returnSchmRecKeywordHtml(data);
+						});
+					}
+
+					// 추천 검색어 HTML 추가
+					$("#schmRecKeyword").after(schmRecKeywordHtml);
+
+					// 검색 입력창 focus
+					$("#schmUnifiedSearchKeyword").focus();
+				} else {
+					alert(jsonData.resultMessage);
+				}
+			}
+		})
+	}
+
+	/**
+	 * 검색 버튼 클릭 시 추천검색어 조회
+	 */
+	function fn_schBtnUnifiedSearch() {
+		// 추천 키워드 조회 (모바일)
+		fn_getSchmRecKeywordList();
+	}
+
+	/**
+	 * 엔터 시 검색
+	 */
+	function fn_navUnifiedSearchEnter() {
+		if (window.event.keyCode == 13) {
+			fn_navGoUnifiedSearch();
+		}
+	}
+
+	/**
+	 * 검색 처리
+	 */
+	function fn_navGoUnifiedSearch() {
+		if ($.trim($("#navUnifiedSearchKeyword").val()) === "") { // 검색어 빈 값 체크
+			alert("<spring:message code='result-message.messages.search.message.required.checked'/>"); // 검색어를 입력해주세요.
+		} else {
+			$("#navLayoutSearchFrm").attr({
+				  onsubmit: "return true"
+				, method: "GET"
+				, action: "/search/searchList"
+			}).submit();
+		}
+	}
+</script>
+
+<div class="line"></div>
+<div class="inner">
+
+	<!-- [플랫폼 서비스] > [내 손안의 시험인증] URL 로그인한 사용자의 상태에 따라 달라짐 -->
+	<c:set var="urlIntroSvc" value="/platformSvc/myData/introSvc"/>
+	<c:if test="${sessionScope.SS_KATRI_FO.login_ent_grp_clct_agre_y_cnt != null && sessionScope.SS_KATRI_FO.login_ent_grp_clct_agre_y_cnt > 0}">
+		<c:set var="urlIntroSvc" value="/platformSvc/myData/myInfoCert/myCertList"/>
+	</c:if>
+
+	<h1><a href="/">로고</a></h1>
+	<ul class="gnb">
+		<li>
+			<span><a href="javascript:void(0);" title="데이터 활용안내">데이터 활용안내</a></span>
+			<div class="snb">
+				<dl>
+					<dt>데이터 활용안내</dt>
+					<dd><a href="/dataUsageGuide/certDataList"><span>인증데이터 조회</span></a></dd>
+				</dl>
+			</div>
+		</li>
+		<li>
+			<span><a href="javascript:void(0);" title="플랫폼 서비스">플랫폼 서비스</a></span>
+			<div class="snb">
+				<dl>
+					<dt>플랫폼 서비스</dt>
+					<dd><a href="${urlIntroSvc}"><span>내 손안의 시험인증 ( Varotic )</span></a></dd>
+					<dd><a href="/platformSvc/qrSvc/qrSvcGuide"><span>인증정보 QR서비스 ( Certishot )</span></a></dd>
+				</dl>
+			</div>
+		</li>
+		<li>
+			<span><a href="javascript:void(0);" title="참여기관 라운지">참여기관 라운지</a></span>
+			<div class="snb">
+				<dl>
+					<dt>참여기관 라운지</dt>
+					<dd><a href="/particiLounge/dataGatherStatus"><span>데이터 수집현황</span></a></dd>
+					<dd><a href="javascript:void(0);" onclick="fn_goMetaSite()"><span>메타데이터 관리시스템</span></a></dd>
+					<dd><a href="/particiLounge/dataVisualEnvi"><span>데이터 시각화 환경</span></a></dd>
+					<dd><a href="/particiLounge/dataAnalyEnvi"><span>데이터 분석 환경</span></a></dd>
+				</dl>
+			</div>
+		</li>
+		<li>
+			<span><a href="javascript:void(0);" title="플랫폼 소개">플랫폼 소개</a></span>
+			<div class="snb">
+				<dl>
+					<dt>플랫폼 소개</dt>
+					<dd><a href="/platformInfo/testCertBicDataInfo"><span>시험인증 빅데이터 플랫폼 소개</span></a></dd>
+					<dd><a href="/platformInfo/instiParticiInfo"><span>참여기관 소개</span></a></dd>
+					<dd><a href="/platformInfo/testCertIndustryInfo"><span>시험인증 산업 소개</span></a></dd>
+				</dl>
+			</div>
+		</li>
+		<li>
+			<span><a href="javascript:void(0);" title="이용안내">이용안내</a></span>
+			<div class="snb">
+				<dl>
+					<dt>이용안내</dt>
+					<dd><a href="/ctnt/notice/noticeList"><span>공지사항</span></a></dd>
+					<dd><a href="/ctnt/faq/faqList"><span>FAQ</span></a></dd>
+					<dd><a href="/ctnt/archive/archiveList"><span>자료실</span></a></dd>
+				</dl>
+			</div>
+		</li>
+	</ul>
+	<div class="tnb">
+		<form id="navLayoutSearchFrm" name="navLayoutSearchFrm" onsubmit="return false;">
+			<ul>
+				<li>
+					<div class="inp-sch-wr">
+						<button type="button" class="btn-sch-close">닫기</button>
+						<!-- 검색 -->
+						<input type="text" id="navUnifiedSearchKeyword" name="unifiedSearchKeyword" onkeypress="fn_navUnifiedSearchEnter()" placeholder="검색어를 입력해 주세요" class="inp-sch" title="검색"/>
+						<button type="button" onclick="fn_navGoUnifiedSearch()" class="btn-sch">검색</button>
+					</div>
+					<a href="javascript:void(0)" class="ic sch on"><i>검색하기</i></a>
+				</li>
+				<c:choose>
+					<c:when test="${sessionScope.SS_KATRI_FO == null}">
+						<li><a href="/auth/login" 	class="ic login"><div class="tool-tip">로그인</div><i>로그인</i></a></li>
+					</c:when>
+					<c:otherwise>
+						<li><a href="/auth/logout" 	class="ic logout"><div class="tool-tip">로그아웃</div><i>로그아웃</i></a></li>
+					</c:otherwise>
+				</c:choose>
+				<li><a href="/mypage/infoMng/infoMngPwdChk" class="ic mypage"><div class="tool-tip">마이페이지</div><i>마이페이지</i></a></li><!--마이페이지 알림 시 mypage에 on추가-->
+			</ul>
+		</form>
+		<button type="button" class="btn-sch" onclick="fn_schBtnUnifiedSearch()">검색하기</button>
+		<button type="button" class="btn-list">리스트</button>
+	</div>
+</div>

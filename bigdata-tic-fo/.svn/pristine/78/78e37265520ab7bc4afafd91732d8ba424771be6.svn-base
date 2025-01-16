@@ -1,0 +1,61 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c"		uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="spring"	uri="http://www.springframework.org/tags"%>
+<%@ taglib prefix="cm"		uri="/WEB-INF/tlds" %>
+
+<script type="text/javascript">
+
+	$(document).ready(function() {
+
+
+	});
+
+	/*
+	 * 함수명 : fn_getQRFileData()
+	 * 설   명 : QR파일 데이터 가져오기
+	*/
+	function fn_getQRFileData() {
+
+		 $.ajax({
+				url	 		: "/qr/getQRFileData"
+				, type 		: "GET"
+				, dataType 	: "json"
+				, data 		: $("#frm_boardQR").serialize()
+				, success 	: function(jsonData, textStatus, jqXHR) {
+					$.unblockUI();
+
+					if(jsonData.resultCode === 200){
+
+						//QR 파일 다운받기
+						let href = "/file/downloadFile?encodeFileSn=" + jsonData.data.encodeFileSn;
+						location.href= href;
+
+					} else {
+						alert(jsonData.resultMessage);
+					}
+				}
+			});
+
+	 }
+
+
+</script>
+
+<div id="container">
+	<div class="subVisual">
+		<span>QR</span>
+	</div>
+
+	<section>
+		<div class="contentsInner">
+			<form action="" method="get" name="frm_boardQR" id="frm_boardQR">
+				url : <input type="text" name="qrUrl"/>
+				fileNM : <input type="text" name="qrFileNm"/>
+				fileRefNo : <input type="text" name="qrRefNo"/>
+			</form>
+
+			<button class="button_type search" onclick="fn_getQRFileData();">create</button>
+		</div>
+
+	</section>
+</div>

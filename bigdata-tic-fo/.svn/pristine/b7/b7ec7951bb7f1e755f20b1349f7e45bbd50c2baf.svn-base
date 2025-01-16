@@ -1,0 +1,1561 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags" %>
+<%@ taglib prefix="c"		uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="cm"		uri="/WEB-INF/tlds" %>
+
+<%@ page import="com.katri.common.FileConst" %>
+
+<c:set var="FILE_DIV_NM_GNRL_CERT_FILE" value="<%=FileConst.File.FILE_DIV_NM_GNRL_CERT_FILE%>" />
+<c:set var="FILE_DIV_NM_BZMN_REG_FILE" 	value="<%=FileConst.File.FILE_DIV_NM_BZMN_REG_FILE%>" />
+
+<spring:eval var="BRNO_API_KEY_ENCODING" expression="@environment.getProperty('brno.api.key.encoding')" />
+
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+
+<style>
+
+	/* 관심키워드 > select2 -> PC인 경우 */
+	@media screen and (min-width:1440px){
+		.cate-wr .selectlgc {
+			margin-right: var(--w-10);
+			width:0%;
+		}
+		.cate-wr .select2-container {
+			width: calc((100% - var(--w-20)) / 3) !important;
+		}
+		.cate-wr .select2-container .select2-selection--single{
+			height: var(--w-45);
+		}
+		.cate-wr .select2-container--default .select2-selection--single .select2-selection__rendered {
+			line-height: var(--w-45);
+		}
+		.cate-wr .select2-container--default .select2-selection--single .select2-selection__arrow {
+			height: var(--w-45);
+			line-height: var(--w-45);
+		}
+		.select2-container--default .select2-search--dropdown .select2-search__field {
+			height: 35px;
+		}
+	}
+
+	/* 관심키워드 > select2 -> Mobile인 경우 */
+	@media screen and (max-width:1440px) {
+		.cate-wr .selectlgc {
+			margin-bottom: var(--w-10);
+			width:100%;
+		}
+		.cate-wr .select2-container {
+			width: 100% !important;
+		}
+		.cate-wr .select2-container .select2-selection--single{
+			height: var(--w-40);
+		}
+		.cate-wr .select2-container--default .select2-selection--single .select2-selection__rendered {
+			line-height: var(--w-40);
+		}
+		.cate-wr .select2-container--default .select2-selection--single .select2-selection__arrow {
+			height: var(--w-40);
+			line-height: var(--w-40);
+		}
+		.select2-container--default .select2-search--dropdown .select2-search__field {
+			height: 30px;
+		}
+	}
+
+</style>
+
+<script type="text/javascript">
+
+	//영문+숫자 조합의 6~20자 아이디
+	const regId = /^(?=.*\d)(?=.*[a-zA-Z])[0-9a-zA-Z]{6,20}$/;
+
+	// 영문+숫자+특수문자 조합의 8~20자 비밀번호
+	const regPwd = /^(?=.*[a-zA-Z])(?=.*[!@#$%^*+=-])(?=.*[0-9]).{8,20}$/;
+
+	$(document).ready(function() {
+
+		// 회원가입 페이지 초기 셋팅
+		fn_joinInfoInit();
+
+	});
+
+	// 파일 업로드 시 파일명 출력
+	$(document).on("change", ".file_upload", function(){
+
+		// 첨부된 파일 있는 경우
+		if( $(this).val() != "" ) {
+
+			let file 	= $(this)[0].files;
+
+			// 파일 확장자 및 파일 크기 검사
+			let chkExt 	= new Array();
+			chkExt = ["png", "jpg", "gif", "pdf", "doc"];
+
+			let chkSize = 1 * 1024 * 1024; // 1MB
+
+			for(let i= 0; i<file.length; i++){
+
+				// 파일 확장자
+				targetExt = file[i].name.split('.').pop().toLowerCase();
+
+				if(! ($.inArray(targetExt, chkExt) > -1)) {
+					$(this).val("");
+					$(this).parent().find(".file-ul").html("");
+					alert("<spring:message code='result-message.messages.common.message.data.file.exte.error'/>"); // '파일 확장자가 맞지않습니다. 올바른 파일을 넣으세요.'
+					return false;
+				}
+
+				// 파일 크기
+				if( file[0].size > chkSize ) {
+					$(this).val("");
+					$(this).parent().find(".file-ul").html("");
+					alert("<spring:message code='result-message.messages.join.message.attach.file.size.error'/>"); // '파일 크기가 맞지않습니다. 1MB 이하 파일만 첨부 가능합니다.'
+					return false;
+				}
+
+			}
+
+			// 파일 이름 html 출력
+			let fileHtml = '<li><a href="javascript:void(0);" class="file-del">삭제</a>';
+			fileHtml	+= file[0].name;
+			fileHtml	+= '</li>';
+
+			$(this).parent().find(".file-ul").html(fileHtml);
+
+		// 첨부된 파일 없는 경우
+		} else {
+
+			$(this).parent().find(".file-ul").html("");
+		}
+
+	});
+
+	// 파일 업로드 시 파일명 출력
+	$(document).on("click", ".file-del", function(){
+
+		$(this).parent().parent().parent().find("input:file").val("");
+		$(this).parent().remove();
+
+	});
+
+	// 숫자 형식 체크
+	$(document).on("keyup", '.number', function(event){
+
+		if (!(event.keyCode >=37 && event.keyCode<=40)) {
+			var inputVal = $(this).val();
+			$(this).val(inputVal.replace(/[^0-9]/gi,''));
+		}
+	});
+
+	// 그룹 추가 선택 시,
+	$(document).on("click", '.typeGroup', function(event){
+
+		let chkId = $(this).attr("id");
+
+		if( chkId == "type-group-off" ) {
+			$("#entGrpAddChkYn").val("N");
+			$("#chkEntGrpNm").val("");
+			$("#chkEntGrpMngNo").val("");
+		} else {
+			$("#entGrpAddChkYn").val("Y");
+		}
+
+	});
+
+	/*
+	 * 함수명 : fn_openEntAddressPop
+	 * 설   명 : 사업장 주소 [우편번호] 클릭 시, api 호출
+	 */
+	function fn_openEntAddressPop() {
+
+		new daum.Postcode({
+
+			// 주소 선택 시,
+			oncomplete: function(data) {
+				// 우편 번호 셋팅
+				$("#entGrpZip").val( data.zonecode );
+				// 기본 주소 셋팅
+				$("#entGrpBasAddr").val( data.address );
+				// 상세 주소 초기화
+				$("#entGrpDaddr").val('');
+				// 모달창 닫기
+				$(".md-rect .btn-close").click();
+			}
+			, width: '100%'
+			, height: '100%'
+
+		}).embed($(".zip-wr").get(0));
+
+	}
+
+	/*
+	 * 함수명 : fn_openAddressPop
+	 * 설   명 : 근무지 주소 [우편번호] 클릭 시, api 호출
+	 */
+	function fn_openAddressPop() {
+
+		new daum.Postcode({
+
+			// 주소 선택 시,
+			oncomplete: function(data) {
+				// 우편 번호 셋팅
+				$("#wrcZip").val( data.zonecode );
+				// 기본 주소 셋팅
+				$("#wrcBasAddr").val( data.address );
+				// 상세 주소 초기화
+				$("#wrcDaddr").val('');
+				// 모달창 닫기
+				$(".md-rect .btn-close").click();
+			}
+			, width: '100%'
+			, height: '100%'
+
+		}).embed($(".zip-wr").get(0));
+
+	}
+
+	/*
+	 * 함수명 : fn_joinInfoInit
+	 * 설 명 : 회원가입 페이지 초기 셋팅
+	*/
+	function fn_joinInfoInit(){
+
+		// 이메일 주소 초기값 셋팅
+		$("#chkEmlAddr").val( $("#selEmlAddr option:checked").text() );
+
+		// 이메일 주소 변경 시, 값 처리
+		$(document).on("change", '#selEmlAddr', function(){
+
+			let selAddr = $(this).val();
+
+			// 직접 입력인 경우
+			if( selAddr == "etc" ) {
+				$("#chkEmlAddr").prop("readonly", false);
+				$("#chkEmlAddr").val('');
+			} else {
+				$("#chkEmlAddr").prop("readonly", true);
+				$("#chkEmlAddr").val( $("#selEmlAddr option:checked").text() );
+			}
+
+		});
+
+		// 관심 키워드 대분류 값 변경 시,
+		$(document).on("change", "select[id^='kw_']", function(){
+
+			let upComnCd = $(this).val();
+			let selId	 = $(this).attr("id");
+			let selName	 = $(this).attr("name");
+			let DpcnChk	 = true;
+
+			// 해당 대분류 코드 중복 체크 확인
+			if( upComnCd != '' ) {
+				$("select[id^='kw_']").each( function(index) {
+					if( selId != $(this).attr("id") ) {
+						if( upComnCd == $(this).val() ) {
+							alert("<spring:message code='result-message.messages.join.message.keyword.duplicate.error'/>"); // '중복된 키워드입니다. 다시 확인해 주세요.'
+							DpcnChk = false;
+						}
+					}
+				});
+			}
+
+			// 중복체크 후, 해당 대분류 코드 중분류 값 조회 후 값 셋팅
+			if( DpcnChk ) {
+				fn_mlclfCdList(upComnCd, selName);
+			} else {
+				$(this).val("").select2();
+				fn_mlclfCdList("", selName);
+			}
+
+		});
+
+		// 관심 키워드 중분류 값 변경 시,
+		$(document).on("change", "select[id^='stdLgclfCd']", function(){
+
+			let comnCd 	= $(this).val();
+			let selId	= $(this).attr("id");
+			let DpcnChk	= true;
+
+			// 해당 중분류 코드 중복 체크 확인
+			if( comnCd != '' ) {
+				$("select[id^='stdLgclfCd']").each( function(index) {
+					if( selId != $(this).attr("id") ) {
+						if( comnCd == $(this).val() ) {
+							alert("<spring:message code='result-message.messages.join.message.keyword.duplicate.error'/>"); // '중복된 키워드입니다. 다시 확인해 주세요.'
+							DpcnChk = false;
+						}
+					}
+				});
+			}
+
+			// 중복체크 후, 중복되면 해당 중분류 코드 비우기
+			if( !DpcnChk ) {
+				$(this).val("").select2();
+			}
+
+		});
+
+		// 사업자 정보 값 변경 시 - [사업자번호인증] 체크값 변경
+		$("#chkEntNm").on("propertychange change paste input", function() {
+			$("#brnoChkYn").val('N');
+		});
+		$("#tblDatepicker_chkOpbizYmd").on("propertychange change paste input", function() {
+			$("#brnoChkYn").val('N');
+		});
+		$("#chkRprsvNm").on("propertychange change paste input", function() {
+			$("#brnoChkYn").val('N');
+		});
+		$("#chkBrno").on("propertychange change paste input", function() {
+			$("#brnoChkYn").val('N');
+		});
+
+		// 그룹명, 그룹ID 값 변경 시 - [그룹정보:중복확인] 체크값 변경
+		$("#chkEntGrpNm").on("propertychange change paste input", function() {
+			$("#entGrpDpcnChkYn").val('N');
+		});
+		$("#chkEntGrpMngNo").on("propertychange change paste input", function() {
+			$("#entGrpDpcnChkYn").val('N');
+		});
+
+		// 아이디 값 변경 시 - [아이디:중복확인] 체크값 변경
+		$("#chkUserId").on("propertychange change paste input", function() {
+			$("#idDpcnChkYn").val('N');
+		});
+
+		// 이메일 값 변경 시 - [메일:인증확인] 체크값 변경
+		$("#chkEmlAddrId").on("propertychange change paste input", function() {
+			$("#emailCertYn").val('N');
+		});
+		$("#chkEmlAddr").on("propertychange change paste input", function() {
+			$("#emailCertYn").val('N');
+		});
+		$("#selEmlAddr").on("change", function() {
+			$("#emailCertYn").val('N');
+		});
+
+		// 관심키워드 1,2 > select2 변경
+		for( let i=1; i<=2; i++ ) {
+			$("#kw_stdLgclfCd" + i).select2();
+			for( let j=1; j<=3; j++ ) {
+				$("#stdLgclfCd" + i + "_0" + j).select2();
+			}
+		}
+
+	}
+
+	/*
+	 * 함수명 : fn_mlclfCdList
+	 * 설 명 : 코드 중분류 값 목록 조회
+	*/
+	function fn_mlclfCdList(upComnCd, selName) {
+
+		// 0. 조회 시작
+		$.blockUI();
+
+		$.ajax({
+			url	 		: "/join/getMlclfCdList"
+			, type 		: "GET"
+			, dataType 	: "json"
+			, data 		: {
+							  "upCd" 	: upComnCd
+						}
+			, success 	: function(jsonData, textStatus, jqXHR) {
+				$.unblockUI();
+
+				if(jsonData.resultCode === 200){
+
+					// 1. 조회 > 데이터 출력
+					let codeHtml = "<option value=''>중분류 선택하세요</option>";
+
+					$.each(jsonData.data.list, function(index, data){
+						codeHtml += "<option value='" + data.stdMlclfCd + "'>";
+						codeHtml += data.stdMlclfNm;
+						codeHtml += "</option>";
+					});
+
+					// 2. select box에 html 출력
+					$("select[id^='" + selName +"']").html(codeHtml);
+					$("select[id^='" + selName +"']").select2();
+
+				} else {
+					alert(jsonData.resultMessage);
+				}
+			}
+		});
+
+	}
+
+	/*
+	 * 함수명 : fn_idValidation
+	 * 설 명 : 아이디 유효성 검사
+	*/
+	function fn_idValidation() {
+
+		let isValid = true;
+		let userId	= $("#chkUserId").val();
+
+		/* 아이디 빈값 검사 */
+		if($.trim(userId) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='아이디'/>") // '{0}를(을) 입력해주세요.'
+			$("#chkUserId").focus();
+			isValid = false;
+			return false;
+		}
+
+		/* 아이디 형식 검사 */
+		if( !regId.test(userId) ){
+			alert("<spring:message code='result-message.messages.join.message.id.pattern.error'/>"); // 아이디는 6~20자의 영문, 숫자 중 2가지 이상 문자를 조합하여 사용할 수 있습니다.
+			$("#chkUserId").focus();
+			isValid = false;
+			return false;
+		}
+
+		return isValid;
+	}
+
+	/*
+	 * 함수명 : fn_idDpcnChk
+	 * 설 명 : 아이디 중복확인
+	*/
+	function fn_idDpcnChk() {
+
+		// 0. 유효성 검사
+		if( !fn_idValidation() ) {
+			return;
+		}
+
+		/* 1. 중복 확인 시작 */
+		$.blockUI();
+
+		let userId 	= $("#chkUserId").val();
+
+		$.ajax({
+			url	 		: "/join/idDpcnChk"
+			, type 		: "POST"
+			, dataType 	: "json"
+			, data 		: {
+							  "targetUserId" : userId
+							}
+			, success 	: function(result) {
+
+				$.unblockUI();
+
+				if (result.resultCode == "200") {
+					// 비교한 값
+					if ( result.data ) {
+						alert(result.resultMessage);
+						$("#idDpcnChkYn").val('Y');
+						$("#userId").val(userId);
+					} else {
+						alert(result.resultMessage);
+						$("#idDpcnChkYn").val('N');
+						$("#userId").val('');
+						$("#chkUserId").focus();
+					}
+				} else {
+					alert(result.resultMessage);
+				}
+			}
+		});
+
+	}
+
+	/*
+	 * 함수명 : fn_emailValidation
+	 * 설 명 : 이메일 유효성 검사
+	*/
+	function fn_emailValidation() {
+
+		let isValid = true;
+
+		// 이메일 주소 검사
+		if($.trim($("#chkEmlAddrId").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='이메일 주소'/>") // '{0}를(을) 입력해주세요.'
+			$("#chkEmlAddrId").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 이메일 선택 검사
+		if($.trim($("#selEmlAddr").val()) == "") {
+			alert("<spring:message code='result-message.messages.join.message.select.required.checked.data' arguments='이메일'/>") // '{0}를(을) 선택해 주세요.'
+			$("#selEmlAddr").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 직접 입력 시,
+		if($.trim($("#chkEmlAddr").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='직접입력할 주소'/>") // '{0}를(을) 입력해주세요.'
+			$("#chkEmlAddr").focus();
+			isValid = false;
+			return false;
+		}
+
+		return isValid;
+	}
+
+	/*
+	 * 함수명 : fn_emailCert
+	 * 설 명 : 이메일 인증
+	*/
+	function fn_emailCert() {
+
+		/* 0. 유효성 검사 */
+		if( ! fn_emailValidation() ) {
+			return;
+		}
+
+		/* 1. 메일 보내기 */
+		$.blockUI();
+
+		let emlAddrId 	= $("#chkEmlAddrId").val();
+		let emlAddr 	= $("#chkEmlAddr").val();
+
+		let rcvrEmlAddr	 = emlAddrId + "@" + emlAddr;
+
+		$.ajax({
+			url	 		: "/join/certMailSend"
+			, type 		: "POST"
+			, dataType 	: "json"
+			, data 		: { "rcvrEmlAddr" : rcvrEmlAddr }
+			, success 	: function(result) {
+				$.unblockUI();
+
+				if (result.resultCode == "200") {
+					// 메일 인증 발송 성공 시,
+					if (result.data) {
+						alert(result.resultMessage.replaceAll("\\n" , "\\\n").replaceAll("\\", ""));
+					}
+				} else {
+					alert(result.resultMessage.replaceAll("\\n" , "\\\n").replaceAll("\\", ""));
+				}
+			}
+		});
+
+	}
+
+	/*
+	 * 함수명 : fn_emailCertNoChk
+	 * 설 명 : 이메일 인증 번호 확인
+	*/
+	function fn_emailCertNoChk() {
+
+		/* 0. 유효성 검사 */
+		if( ! fn_emailValidation() ) {
+			return;
+		}
+
+		if($.trim($("#chkCertNo").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='이메일 인증번호'/>") // '{0}를(을) 입력해주세요.'
+			$("#chkCertNo").focus();
+			return;
+		}
+
+		/* 1. 확인 시작 */
+		$.blockUI();
+
+		let emlAddrId 	= $("#chkEmlAddrId").val();
+		let emlAddr 	= $("#chkEmlAddr").val();
+
+		let rcvrEmlAddr	= emlAddrId + "@" + emlAddr;
+		let chkCertNo	= $("#chkCertNo").val();
+
+		$.ajax({
+			url	 		: "/join/certNoChk"
+			, type 		: "POST"
+			, dataType 	: "json"
+			, data 		: {
+							  "rcvrEmlAddr" : rcvrEmlAddr
+							, "chkCertNo" 	: chkCertNo
+							}
+			, success 	: function(result) {
+
+				$.unblockUI();
+
+				if (result.resultCode == "200") {
+					// 비교한 값
+					if ( result.data ) {
+						alert(result.resultMessage);
+						$("#emailCertYn").val('Y');
+						$("#emlAddrId").val(emlAddrId);
+						$("#emlAddr").val(emlAddr);
+					} else {
+						alert(result.resultMessage);
+						$("#emailCertYn").val('N');
+						$("#emlAddrId").val('');
+						$("#emlAddr").val('');
+						$("#chkCertNo").focus();
+					}
+				} else {
+					alert(result.resultMessage);
+				}
+			}
+		});
+	}
+
+	/*
+	 * 함수명 : fn_pwdValidation
+	 * 설 명 : 비밀번호 유효성 검사
+	 */
+	function fn_pwdValidation() {
+
+		let isValid = true;
+
+		let userPwd = $("#userPwd").val();
+		let userPwdChk = $("#userPwdChk").val();
+
+		/* 비밀번호 검사 */
+		if($.trim(userPwd) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='비밀번호'/>"); // '{0}를(을) 입력해주세요.'
+			$("#userPwd").focus();
+			isValid = false;
+			return false;
+		}
+
+		/* 비밀번호 확인 검사 */
+		if($.trim(userPwdChk) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='비밀번호 확인'/>"); // '{0}를(을) 입력해주세요.'
+			$("#userPwdChk").focus();
+			isValid = false;
+			return false;
+		}
+
+		/* 비밀번호 형식 검사 */
+		if( !regPwd.test(userPwd) ){
+			alert("<spring:message code='result-message.messages.join.message.pwd.pattern.error'/>"); // '비밀번호는 8~20자의 영문, 숫자, 특수문자 중 3가지 이상의 문자를 조합하여 사용할 수 있습니다.'
+			$("#userPwd").focus();
+			isValid = false;
+			return false;
+		}
+
+		/* 비밀번호 일치 검사 */
+		if( userPwd != userPwdChk ) {
+			alert("<spring:message code='result-message.messages.join.message.pwd.nomatch.error'/>"); // '비밀번호가 일치하지 않습니다.'
+			$("#userPwdChk").focus();
+			isValid = false;
+			return false;
+		}
+
+		return isValid;
+	}
+
+	/*
+	 * 함수명 : fn_keyWordValidation
+	 * 설 명 : 관심 키워드 중복 검사
+	 */
+	function fn_keyWordValidation( selObj ) {
+
+		let isValid = true;
+
+		let temp = [];
+			let obj	 = $(selObj);
+
+			$(obj).each( function(index) {
+				if( $(this).val() != "" ) {
+					temp[index] = $(this).val();
+				}
+			});
+
+			$(temp).each( function(index) {
+			let cnt = 0;
+			$(obj).each(function() {
+				if( temp[index] == $(this).val() && $(this).val() != "" ) {
+					cnt++;
+				}
+			});
+
+			if(cnt > 1) {
+
+				alert("<spring:message code='result-message.messages.join.message.keyword.duplicate.error'/>"); // '중복된 키워드입니다. 다시 확인해 주세요.'
+				isValid = false;
+				return false;
+			}
+
+		});
+
+			return isValid;
+	}
+
+	/*
+	 * 함수명 : fn_joinValidation
+	 * 설 명 : 회원가입 정보 유효성 검사
+	*/
+	function fn_joinValidation() {
+
+		let isValid = true;
+
+		// 0. 사업자 정보 관련 검사
+		if( ! fn_authBsnoValidation() ) {
+			return false;
+		}
+		// 0_1. 사업자 등록번호 인증 검사
+		if( "Y" != $("#brnoChkYn").val() ) {
+			alert("<spring:message code='result-message.messages.join.message.brno.auth.required.checked'/>"); // '사업자 등록번호 인증을 진행해 주세요.'
+			$("#chkBrno").focus();
+			isValid = false;
+			return false;
+		}
+		// 0_2. 사업자 등록번호 인증 후 셋팅 값 검사
+		if( $("#chkBrno").val() != $("#brno").val() || $("#chkEntNm").val() != $("#entNm").val() ) {
+			alert("<spring:message code='result-message.messages.join.message.brno.auth.required.checked'/>"); // '사업자 등록번호 인증을 진행해 주세요.'
+			$("#chkBrno").focus();
+			isValid = false;
+			return false;
+		}
+		// 0_3. 사업자 등록번호 인증 후 셋팅 값 검사
+		if( $("#tblDatepicker_chkOpbizYmd").val().replaceAll("-", "") != $("#opbizYmd").val() || $("#chkRprsvNm").val() != $("#rprsvNm").val() ) {
+			alert("<spring:message code='result-message.messages.join.message.brno.auth.required.checked'/>"); // '사업자 등록번호 인증을 진행해 주세요.'
+			$("#chkBrno").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 1. 그룹 추가 - (예)
+		if( $("#type-group-on").is(":checked") && "Y" == $("#entGrpAddChkYn").val() ) {
+			// 1_0. 그룹명 검사
+			if($.trim($("#chkEntGrpNm").val()) == "") {
+				alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='그룹명'/>"); // '{0}를(을) 입력해주세요.'
+				$("#chkEntGrpNm").focus();
+				isValid = false;
+				return false;
+			}
+			// 1_1. 그룹 ID 검사
+			if($.trim($("#chkEntGrpMngNo").val()) == "") {
+				alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='그룹ID'/>"); // '{0}를(을) 입력해주세요.'
+				$("#chkEhkEntGrpMngNo").focus();
+				isValid = false;
+				return false;
+			}
+			// 1_2. 그룹명, 그룹ID 중복 검사
+			if( "Y" != $("#entGrpDpcnChkYn").val() ) {
+				alert("<spring:message code='result-message.messages.join.message.ent.grp.required.checked'/>"); // '그룹정보 중복 확인을 진행해 주세요.'
+				$("#chkEntGrpNm").focus();
+				isValid = false;
+				return false;
+			}
+			// 1_3. 중복 확인 검사 후 셋팅 값 검사
+			if( $("#chkEntGrpNm").val() != $("#entGrpNm").val() || $("#chkEntGrpMngNo").val() != $("#entGrpMngNo").val() ) {
+				alert("<spring:message code='result-message.messages.join.message.ent.grp.required.checked'/>"); // '그룹정보 중복 확인을 진행해 주세요.'
+				$("#chkEntGrpNm").focus();
+				isValid = false;
+				return false;
+			}
+		}
+
+		// 2. 사업장 주소 검사 - (우편번호) 검사
+		if($.trim($("#entGrpZip").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='사업장 주소'/>"); // '{0}를(을) 입력해주세요.'
+			$("#entGrpZip").focus();
+			fn_openEntAddressPop(); // 우편번호 검색 팝업창 호출
+			isValid = false;
+			return false;
+		}
+
+		// 3. 사업장 주소 검사 - (기본주소) 검사
+		if($.trim($("#entGrpBasAddr").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='사업장 주소'/>"); // '{0}를(을) 입력해주세요.'
+			$("#entGrpBasAddr").focus();
+			fn_openEntAddressPop(); // 우편번호 검색 팝업창 호출
+			isValid = false;
+			return false;
+		}
+
+		// 4. 사업장 주소 검사 - (상세주소) 검사
+		if($.trim($("#entGrpDaddr").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='사업장 상세주소'/>"); // '{0}를(을) 입력해주세요.'
+			$("#entEntGrpDaddr").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 5. 부서명 검사
+		if($.trim($("#userDeptNm").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='부서명'/>"); // '{0}를(을) 입력해주세요.'
+			$("#userDeptNm").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 6. 직급명 검사
+		if($.trim($("#userJbgdNm").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='직급'/>"); // '{0}를(을) 입력해주세요.'
+			$("#userJbgdNm").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 7. 회사 전화번호 검사
+		if($.trim($("#wrcTelno").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='회사 전화번호'/>"); // '{0}를(을) 입력해주세요.'
+			$("#wrcTelno").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 8. 근무지 주소 - (우편번호) 검사
+		if($.trim($("#wrcZip").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='근무지 주소'/>"); // '{0}를(을) 입력해주세요.'
+			$("#wrcZip").focus();
+			fn_openAddressPop(); // 우편번호 검색 팝업창 호출
+			isValid = false;
+			return false;
+		}
+
+		// 9. 근무지 주소 - (기본주소) 검사
+		if($.trim($("#wrcBasAddr").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='근무지 주소'/>"); // '{0}를(을) 입력해주세요.'
+			$("#wrcBasAddr").focus();
+			fn_openAddressPop(); // 우편번호 검색 팝업창 호출
+			isValid = false;
+			return false;
+		}
+
+		// 10. 근무지 주소 - (상세주소) 검사
+		if($.trim($("#wrcDaddr").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='근무지 상세주소'/>"); // '{0}를(을) 입력해주세요.'
+			$("#wrcDaddr").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 11. 아이디 검사
+		if( ! fn_idValidation() ) {
+			return false;
+		}
+		// 12. 아이디 중복체크 검사
+		if( "Y" != $("#idDpcnChkYn").val() ) {
+			alert("<spring:message code='result-message.messages.join.message.id.required.checked'/>"); // '아이디 중복 확인을 진행해 주세요.'
+			$("#chkUserId").focus();
+			isValid = false;
+			return false;
+		}
+		// 12_1. 아이디 중복체크 후 셋팅 값 검사
+		if( $("#chkUserId").val() != $("#userId").val() ) {
+			alert("<spring:message code='result-message.messages.join.message.id.required.checked'/>"); // '아이디 중복 확인을 진행해 주세요.'
+			$("#chkUserId").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 13. 비밀번호 검사
+		if( ! fn_pwdValidation() ) {
+			return false;
+		}
+
+		// 14. 이름 검사
+		if($.trim($("#userNm").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='이름'/>"); // '{0}를(을) 입력해주세요.'
+			$("#userNm").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 15. 휴대폰 검사
+		if($.trim($("#mblTelnoVal").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='휴대폰 번호'/>"); // '{0}를(을) 입력해주세요.'
+			$("#mblTelnoVal").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 16. 이메일 검사
+		if( ! fn_emailValidation() ) {
+			return false;
+		}
+
+		// 17. 이메일 인증확인 검사
+		if( "Y" != $("#emailCertYn").val() ) {
+			alert("<spring:message code='result-message.messages.join.message.cert.email.required.checked'/>"); // '이메일 인증을 진행해 주세요.'
+			$("#chkCertNo").focus();
+			isValid = false;
+			return false;
+		}
+		// 17_1. 이메일 인증확인 후 셋팅 값 검사
+		if( $("#chkEmlAddrId").val() != $("#emlAddrId").val() ) {
+			alert("<spring:message code='result-message.messages.join.message.cert.email.required.checked'/>"); // '이메일 인증을 진행해 주세요.'
+			$("#chkCertNo").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 18. 관심 키워드1 하위 선택 검사
+		if( $("#kw_stdLgclfCd1").val() != "" ) {
+			if( ! fn_keyWordStdValidation("select[name='arrStdMlclfCd1']") ) {
+				$("#kw_stdLgclfCd1").focus();
+				isValid = false;
+				return false;
+			}
+		}
+
+		// 19. 관심 키워드2 하위 선택 검사
+		if( $("#kw_stdLgclfCd2").val() != "" ) {
+			if( ! fn_keyWordStdValidation("select[name='arrStdMlclfCd2']") ) {
+				$("#kw_stdLgclfCd2").focus();
+				isValid = false;
+				return false;
+			}
+		}
+
+		// 20. 관심 키워드1 중분류 중복 검사
+		if( ! fn_keyWordValidation("select[name='arrStdMlclfCd1']") ) {
+			return false;
+		}
+
+		// 21. 관심 키워드2 중분류 중복 검사
+		if( ! fn_keyWordValidation("select[name='arrStdMlclfCd2']") ) {
+			return false;
+		}
+
+		// 22. 첨부파일 검사 - 사업자등록증 첨부 검사
+		if($.trim($("#gnrlCertFile").val()) == "") {
+			alert("<spring:message code='result-message.messages.join.message.attach.file.required.data' arguments='사업자 등록증'/>") // '{0}를(을) 첨부해 주세요.'
+			$("#gnrlCertFile").click();
+			isValid = false;
+			return false;
+		}
+
+		// 23. 첨부파일 검사 - 재직증명서 첨부 검사
+		if($.trim($("#bzmnRegFile").val()) == "") {
+			alert("<spring:message code='result-message.messages.join.message.attach.file.required.data' arguments='재직증명서'/>") // '{0}를(을) 첨부해 주세요.'
+			$("#bzmnRegFile").click();
+			isValid = false;
+			return false;
+		}
+
+		return isValid;
+
+	}
+
+	/*
+	 * 함수명 : fn_keyWordStdValidation
+	 * 설 명 : 관심 키워드 대분류 선택시 중분류 유효성 검사
+	*/
+	function fn_keyWordStdValidation( obj ) {
+
+		let isValid = true;
+
+		let chkObj	= $(obj);
+		let chkCnt	= 0;
+
+		$(chkObj).each( function(index) {
+			if( $(this).val() != "" ) {
+				chkCnt++;
+			}
+		});
+
+		if( chkCnt == 0 ) {
+			alert("<spring:message code='result-message.messages.join.message.select.required.checked.data' arguments='관심키워드의 중분류'/>") // '{0}를(을) 선택해 주세요.'
+			isValid = false;
+			return false;
+		}
+
+		return isValid;
+	}
+
+	/*
+	 * 함수명 : fn_joinUserInfoSave
+	 * 설 명 : 회원가입 정보 저장
+	*/
+	function fn_joinUserInfoSave() {
+
+		// 0. 유효성 검사
+		if( !fn_joinValidation() ) {
+			return;
+		}
+
+		// 1. 가입 정보 저장
+		$.blockUI();
+
+		let form = $("#frm_join")[0];
+		let jData = new FormData(form);
+
+		// 2. 이메일 주소, 회사 전화번호 셋팅
+		let emlAddrId 	= $("#emlAddrId").val();
+		let emlAddr 	= $("#emlAddr").val();
+		let emlAddrVal	= emlAddrId + "@" + emlAddr;
+		jData.append("emlAddrVal", emlAddrVal);
+
+		$.ajax({
+			url				: "/join/saveUserJoinInfo"
+			, type			: "POST"
+			, cache			: false
+			, data			: jData
+			, processData 	: false
+			, contentType	: false
+			, success 		: function(result) {
+				$.unblockUI();
+
+				if (result.resultCode == "200") {
+
+					// 3. 저장 성공 후, 호출
+					fn_joinUserInfoSaveAfter(result);
+
+				} else {
+					alert(result.resultMessage);
+				}
+			}
+		});
+
+	}
+
+	/*
+	 * 함수명 : fn_joinUserInfoSaveAfter
+	 * 설 명 : 회원가입 정보 저장 후 호출
+	 */
+	function fn_joinUserInfoSaveAfter( result ) {
+
+		// 1. 저장 성공 메시지
+		alert("<spring:message code='result-message.messages.join.message.join.success'/>"); // '회원가입이 완료되었습니다.'
+
+		// 2. 페이지 이동
+		$("#frm_joinCmptn #targetUserTypeCd").val(result.data.userTyCd);
+
+		$("#frm_joinCmptn").attr("method", "POST");
+		$("#frm_joinCmptn").attr("action", "/join/joinCmptn");
+		$("#frm_joinCmptn").submit();
+
+	}
+
+
+	/*
+	 * 함수명 : fn_authBsnoValidation()
+	 * 설   명 : 사업자 등록번호 유효성 검사
+	*/
+	function fn_authBsnoValidation() {
+
+		let isValid	= true;
+
+		// 0. 사업자 번호 인증 - 상호명 미입력
+		if($.trim($("#chkEntNm").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='상호명'/>"); // '{0}를(을) 입력해주세요.'
+			$("#chkEntNm").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 1. 사업자 번호 인증 - 개업일자 미입력
+		if($.trim($("#tblDatepicker_chkOpbizYmd").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='개업일'/>"); // '{0}를(을) 입력해주세요.'
+			$("#tblDatepicker_chkOpbizYmd").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 2. 사업자 번호 인증 - 대표자명 미입력
+		if($.trim($("#chkRprsvNm").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='대표자명'/>"); // '{0}를(을) 입력해주세요.'
+			$("#chkRprsvNm").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 3. 사업자 번호 인증 - 사업자등록번호 미입력
+		if($.trim($("#chkBrno").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='사업자 등록번호'/>"); // '{0}를(을) 입력해주세요.'
+			$("#chkBrno").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 4. 사업자 번호 글자수 확인
+		if( $("#chkBrno").val().length > 10 ) {
+			alert("<spring:message code='result-message.messages.join.message.brno.auth.word.cnt.error'/>"); // '10자를 초과 입력할 수 없습니다.'
+			$("#chkBrno").focus();
+			isValid = false;
+			return false;
+		}
+
+		return isValid;
+
+	}
+
+	 /*
+	 * 함수명 : fn_authBsnoChk()
+	 * 설   명 : 사업자 등록 번호 진위 여부 조회
+	*/
+	function fn_authBsnoChk() {
+
+		if( ! fn_authBsnoValidation() ) {
+			return;
+		}
+
+		let entNm		= $("#chkEntNm").val();		// 상호명
+		let opbizYmd 	= $("#tblDatepicker_chkOpbizYmd").val().replaceAll("-", "");	// 개업일자
+		let rprsvNm 	= $("#chkRprsvNm").val();	// 대표자 성명
+		let brno 		= $("#chkBrno").val(); 		// 사업자 등록 번호
+
+		// 0. 진위 여부 조회할 사업자 정보
+		let data = {
+					"businesses":
+						[
+							{
+							  "b_no"	: brno		// * 사업자 등록 번호 ('-' 제거)
+							, "start_dt": opbizYmd	// * 개업일자 (YYYYMMDD 포맷)
+							, "p_nm"	: rprsvNm	// * 대표자성명
+							, "b_nm"	: entNm		// 상호 (Optional)
+							}
+						]
+				};
+
+		// 1. url + 인증키 셋팅
+		let strUrl = "https://api.odcloud.kr/api/nts-businessman/v1/validate?serviceKey=${BRNO_API_KEY_ENCODING}";
+
+		// 2. 사업자 번호 상태 조회 API 호출
+		$.ajax({
+
+			beforeSend	: function (request) {}, // 공통 js - $.ajaxSetup 자동 셋팅되어, 값 비우기
+			url			: strUrl,
+			type		: "POST",
+			data		: JSON.stringify(data), // json 을 string으로 변환하여 전송
+			dataType	: "JSON",
+			contentType	: "application/json",
+			accept		: "application/json",
+			success		: function(result) {
+
+				if( result.status_code === "OK" ) {
+
+					if( result.data[0].valid === "01" ) { // Valid
+
+						alert("<spring:message code='result-message.messages.join.message.brno.auth.success'/>"); // '사업장인증이 정상적으로 승인되었습니다.'
+
+						$("#brnoChkYn").val('Y');
+						$("#entNm").val(entNm);			// 상호명
+						$("#opbizYmd").val(opbizYmd);	// 개업일자
+						$("#rprsvNm").val(rprsvNm);		// 대표자 성명
+						$("#brno").val(brno);			// 사업자 등록 번호
+
+						// 3. 인증 확인 후, 해당 사업자 등록번호 조회 - 있는 경우 - 등록된 상호명 셋팅
+						fn_brnoChkGetEntNm( brno );
+
+					} else { // Invalid
+
+						alert("<spring:message code='result-message.messages.join.message.brno.auth.error'/>"); // '유효하지 않은 사업자 등록번호입니다. 사업자 정보 확인 후, 다시 시도해 주세요.'
+						$("#brnoChkYn").val('N');
+						$("#entNm").val('');
+						$("#opbizYmd").val('');
+						$("#rprsvNm").val('');
+						$("#brno").val('');
+					}
+				}
+
+			},
+
+			error: function(result) {
+				alert( "<spring:message code='result-message.messages.common.message.error'/>" );
+			}
+		});
+	}
+
+	/*
+	 * 함수명 : fn_brnoChkGetEntNm()
+	 * 설   명 : 인증 확인 후, 해당 사업자 등록번호 조회 - 상호명 셋팅
+	 */
+	function fn_brnoChkGetEntNm( brno ) {
+
+		$.blockUI();
+
+		// 0. 조회 시작
+		$.ajax({
+			url	 		: "/join/getEntNm"
+			, type 		: "POST"
+			, dataType 	: "json"
+			, data 		: {
+							  "brno" : brno
+							}
+			, success 	: function(result) {
+
+				$.unblockUI();
+
+				if (result.resultCode == "200") {
+
+					// 1. 조회 결과 있으면 값 셋팅
+					if ( result.data != null && result.data != "" ) {
+						$("#chkEntNm").val(result.data);
+						$("#entNm").val(result.data);
+					}
+
+				} else {
+					alert(result.resultMessage);
+				}
+			}
+		});
+	}
+
+	/*
+	 * 함수명 : fn_entGrpDpcnChk()
+	 * 설   명 : 사업자등록번호 + 그룹ID + 그룹명 중복 체크
+	 */
+	function fn_entGrpDpcnChk() {
+
+		// 0. 사업자 등록번호 검사
+		if($.trim($("#chkBrno").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='사업자 등록번호'/>") // '{0}를(을) 입력해주세요.'
+			$("#chkBrno").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 1. 그룹명 검사
+		if($.trim($("#chkEntGrpNm").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='그룹명'/>") // '{0}를(을) 입력해주세요.'
+			$("#chkEntGrpNm").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 2. 그룹ID 검사
+		if($.trim($("#chkEntGrpMngNo").val()) == "") {
+			alert("<spring:message code='result-message.messages.common.message.required.data2' arguments='그룹ID'/>") // '{0}를(을) 입력해주세요.'
+			$("#chkEntGrpMngNo").focus();
+			isValid = false;
+			return false;
+		}
+
+		// 3. 중복 확인 시작
+		$.blockUI();
+
+		let brno 		= $("#chkBrno").val();
+		let entGrpNm	= $("#chkEntGrpNm").val();
+		let entGrpMngNo	= $("#chkEntGrpMngNo").val();
+
+		$.ajax({
+			url	 		: "/join/entGrpDpcnChk"
+			, type 		: "POST"
+			, dataType 	: "json"
+			, data 		: {
+							  "brno" 		: brno
+							, "entGrpNm"	: entGrpNm
+							, "entGrpMngNo" : entGrpMngNo
+							}
+			, success 	: function(result) {
+
+				$.unblockUI();
+
+				if (result.resultCode == "200") {
+					// 비교한 값
+					if ( result.data ) {
+						alert(result.resultMessage.replaceAll("\\n" , "\\\n").replaceAll("\\", ""));
+						$("#entGrpDpcnChkYn").val('Y');
+						$("#entGrpNm").val(entGrpNm);
+						$("#entGrpMngNo").val(entGrpMngNo);
+					} else {
+						alert(result.resultMessage.replaceAll("\\n" , "\\\n").replaceAll("\\", ""));
+						$("#entGrpDpcnChkYn").val('N');
+						$("#entGrpNm").val('');
+						$("#entGrpMngNo").val('');
+						$("#chkEntGrpMngNo").focus();
+					}
+				} else {
+					alert(result.resultMessage);
+				}
+			}
+		});
+
+	}
+
+	/*
+	 * 함수명 : fn_fileOpen()
+	 * 설   명 : 해당 첨부파일 창 선택
+	 */
+	function fn_fileOpen(fileId) {
+		$("#" + fileId).click();
+	}
+
+
+</script>
+
+	<!-- ===== header ====== -->
+	<header id="header">
+		<div id="sub-mv" class="sub-join">
+			<div class="inner">
+				<h2>회원가입</h2>
+				<!-- <p>시험인증 빅데이터<br class="mo-block"> 플랫폼 회원가입 입니다.</p> -->
+				<div class="sub-obj">오브젝트</div>
+			</div>
+		</div>
+	</header>
+	<!-- ===== /header ====== -->
+
+	<!-- ===== 주소 찾기 modal ====== -->
+	<div class="zip-md">
+		<div class="md-rect">
+			<a href="javascript:void(0);" class="btn-close">닫기</a>
+			<h3 class="md-tit">우편번호 검색</h3>
+			<div class="zip-wr">
+
+			</div>
+		</div>
+	</div>
+
+	<!-- ===== container ====== -->
+	<div id="container">
+		<!-- <div id="breadcrumb-wr">
+			<div class="inner">
+				<a href="/" class="home">처음으로</a>
+				<div class="bcb-wrap">
+					<p class="breadcrumb">플랫폼 소개</p>
+					<div class="snb-sbox">
+						<ul>
+							<li><a href="">데이터활용</a></li>
+							<li><a href="">내 손안의 시험인증</a></li>
+							<li><a href="">참여기관 라운지</a></li>
+							<li><a href="">커뮤니티</a></li>
+						</ul>
+					</div>
+				</div>
+				<div class="bcb-wrap">
+					<p class="breadcrumb">참여기관 소개</p>
+					<div class="snb-sbox">
+						<ul>
+							<li><a href="">시험인증 빅데이터 플랫폼 소개</a></li>
+							<li><a href="">참여기관 소개</a></li>
+							<li><a href="">시험인증 산업 소개</a></li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div> -->
+
+		<!--container-->
+		<div id="cont" class="cont-join join-insert">
+			<!--tit-->
+			<div class="cont-agree-tit">
+				<h2 class="tit">회원가입 정보입력</h2>
+				<ul class="step-ul"><!--스텝에 갈때 해당 li에 on-->
+					<li>
+					<em></em>
+					<p>약관동의</p>
+					</li>
+					<li class="on"><i></i></li>
+					<li class="on">
+					<em></em>
+					<p>정보입력</p>
+					</li>
+					<li><i></i></li>
+					<li>
+					<em></em>
+					<p>가입완료</p>
+					</li>
+				</ul>
+			</div>
+
+			<!--입력 form-->
+			<form name="frm_join" id="frm_join" method="post">
+
+				<input type="hidden" name="entNm" 			id="entNm" 			value="" />
+				<input type="hidden" name="opbizYmd" 		id="opbizYmd" 		value="" />
+				<input type="hidden" name="rprsvNm" 		id="rprsvNm" 		value="" />
+				<input type="hidden" name="brno" 			id="brno" 			value="" />
+				<input type="hidden" name="brnoChkYn" 		id="brnoChkYn" 		value="N" />
+
+				<input type="hidden" name="entGrpAddChkYn"	id="entGrpAddChkYn" value="N" />
+				<input type="hidden" name="entGrpNm"		id="entGrpNm"  		value=""  />
+				<input type="hidden" name="entGrpMngNo"		id="entGrpMngNo" 	value=""  />
+				<input type="hidden" name="entGrpDpcnChkYn" id="entGrpDpcnChkYn" value="N" />
+
+				<input type="hidden" name="idDpcnChkYn" 	id="idDpcnChkYn" 	value="N" />
+				<input type="hidden" name="userId"			id="userId" 		value=""  />
+
+				<input type="hidden" name="emailCertYn"		id="emailCertYn"	value="N"/>
+				<input type="hidden" name="emlAddrId"		id="emlAddrId"		value="" />
+				<input type="hidden" name="emlAddr"			id="emlAddr"		value="" />
+
+				<c:forEach items="${joinData.arrChkTrmsSn}" var="item" varStatus="status">
+					<input type="hidden" name="arrChkTrmsSn" id="arrChkTrmsSn_${status.index}" value="${item}"/><!-- 동의한 약관 번호 -->
+				</c:forEach>
+				<input type="hidden" name="userTyCd" 		 id="userTyCd" 			value="${joinData.targetUserTypeCd}"/>
+
+				<p class="join-ist-txt"><span>*</span>표시는 반드시 입력하셔야 하는 항목입니다.</p>
+				<h4 class="tit"><span>회원유형</span></h4>
+				<input type="text" readonly value="기업(마스터)회원" class="inp-readonly wd100">
+
+				<h4 class="tit"><span>상호명</span></h4>
+				<input type="text" id="chkEntNm" name="chkEntNm" value="" placeholder="사업자등록증에 상호명을 띄워쓰기 없이 입력해 주세요." class="wd100" maxlength="50"/>
+
+				<h4 class="tit"><span>개업일</span></h4>
+				<input type="text" id="tblDatepicker_chkOpbizYmd" name="chkOpbizYmd" value="" placeholder="사업자등록증에 개업일자 선택해 주세요." class="wd100 datepicker" readonly/>
+
+				<h4 class="tit"><span>대표자명</span></h4>
+				<input type="text" id="chkRprsvNm" name="chkRprsvNm" value="" placeholder="사업자등록증에 성명을 입력해 주세요." class="wd100"  maxlength="20" />
+
+				<h4 class="tit"><span>사업자 등록번호</span></h4>
+				<div class="input-wr">
+					<input type="text" id="chkBrno" name="chkBrno" value="" class="wd1287 number" placeholder="사업자 등록번호 10자리를 입력해 주세요." maxlength="10" />
+					<button type="button" class="btn bt-chk wd143" onclick="fn_authBsnoChk();">사업자번호 인증</button>
+				</div>
+
+				<h4 class="tit"><span>그룹 등록</span></h4>
+				<div class="input-wr chk-r">
+					<label for="type-group-off">
+						<input type="radio" id="type-group-off" name="type-group" class="typeGroup" checked/>
+						<span>아니요</span>
+					</label>
+					<label for="type-group-on">
+						<input type="radio" id="type-group-on" name="type-group" class="typeGroup" />
+						<span>예</span>
+					</label>
+					<p class="cau-txt">내 기업의 데이터 조회 권한이 그룹ID 기준으로 제한적으로 관리되기를 원하실 경우에만 '예' 선택 후 입력해 주세요.</p>
+				</div>
+
+				<div class="chk-r-wr">
+					<h4 class="tit"><span>그룹명</span></h4>
+					<div class="input-wr">
+						<input type="text" id="chkEntGrpNm" name="chkEntGrpNm" class="wd1335" placeholder="그룹ID 쉬운 관리를 위해 별명을 입력하세요." maxlength="30" value="" />
+					</div>
+					<h4 class="tit"><span>그룹ID</span></h4>
+					<div class="input-wr">
+						<input type="text" id="chkEntGrpMngNo" name="chkEntGrpMngNo" class="wd1335" placeholder="시험인증 기관에 의뢰 시 등록된 기존 그룹ID(기관별 상이)를 동일하게 입력하세요." maxlength="20" value="" />
+						<button type="button" class="btn bt-chk" onclick="fn_entGrpDpcnChk();">중복확인</button>
+					</div>
+				</div>
+
+				<h4 class="tit"><span>사업장 주소</span></h4>
+				<div class="input-wr">
+					<input type="text" id="entGrpZip" name="entGrpZip" value="" class="wd-zip" maxlength="10" />
+					<button type="button" class="btn bt-chk wd-zip-btn" onclick="fn_openEntAddressPop();">우편번호 검색</button>
+					</div>
+				<div class="input-wr">
+					<input type="text" id="entGrpBasAddr" 	name="entGrpBasAddr" value="" class="wd-addr1" readonly />
+					<input type="text" id="entGrpDaddr" 	name="entGrpDaddr"	 value="" class="wd-addr2" maxlength="30" />
+				</div>
+
+				<h4 class="tit"><span>부서명</span></h4>
+				<input type="text" id="userDeptNm" name="userDeptNm" value="" placeholder="" class="wd100" maxlength="20" />
+
+				<h4 class="tit"><span>직급</span></h4>
+				<input type="text" id="userJbgdNm" name="userJbgdNm" value="" placeholder="" class="wd100" maxlength="20" />
+
+				<h4 class="tit"><span>회사 전화번호</span></h4>
+				<input type="text" id="wrcTelno" name="wrcTelno" value="" placeholder="" class="wd100 number" maxlength="13" />
+
+				<h4 class="tit"><span>근무지 주소</span></h4>
+				<div class="input-wr">
+					<input type="text" id="wrcZip" 		name="wrcZip" 		value="" class="wd-zip number" maxlength="10" />
+					<button type="button" class="btn bt-chk wd-zip-btn" onclick="fn_openAddressPop();">우편번호 검색</button>
+				</div>
+				<div class="input-wr">
+					<input type="text" id="wrcBasAddr"	name="wrcBasAddr" 	value="" class="wd-addr1" readonly />
+					<input type="text" id="wrcDaddr"	name="wrcDaddr" 	value="" class="wd-addr2"  maxlength="30" />
+				</div>
+
+				<h4 class="tit"><span>아이디</span></h4>
+				<div class="input-wr">
+					<input type="text" class="wd1335 engNumber" id="chkUserId" name="chkUserId" maxlength="20" />
+					<button type="button" class="btn bt-chk" onclick="fn_idDpcnChk();">중복확인</button>
+				</div>
+				<p class="cau-txt">영문, 숫자 중 2가지 이상의 문자를 조합하여 최소 6 ~ 20자로 생성 가능</p>
+
+				<h4 class="tit"><span>비밀번호</span></h4>
+				<input type="password" id="userPwd" name="userPwd" maxlength="20" />
+				<p class="cau-txt">영문, 숫자, 특수문자 중 3가지 이상의 문자를 조합하여 최소 8 ~ 20자로 생성 가능</p>
+
+				<h4 class="tit"><span>비밀번호 확인</span></h4>
+				<input type="password" id="userPwdChk" name="userPwdChk" maxlength="20" />
+
+				<h4 class="tit"><span>이름</span></h4>
+				<input type="text" class="wd100" id="userNm" name="userNm" maxlength="50"/>
+
+				<h4 class="tit"><span>휴대폰</span></h4>
+				<input type="text" class="wd100 number" id="mblTelnoVal" name="mblTelnoVal" maxlength="20"/>
+
+				<h4 class="tit"><span>회사 이메일</span></h4>
+				<div class="input-wr">
+					<input type="text" class="wd720" id="chkEmlAddrId" name="chkEmlAddrId" maxlength="30"/><span class="wd25">@</span>
+					<cm:makeTag cls="select" tagType="select" tagId="selEmlAddr" name="selEmlAddr" code="EML"/>
+					<input type="text" class="inp-readonly wd285 ml10" id="chkEmlAddr" name="chkEmlAddr" maxlength="30" readonly />
+					<button type="button" class="btn bt-chk"  onclick="fn_emailCert();">메일인증</button>
+				</div>
+				<p class="cau-txt">메일 인증 받을 이메일 주소를 기재해주세요. 등록한 이메일로 발송된 인증번호 인증이 된 후 사용이 가능합니다.</p>
+
+				<h4 class="tit"><span>이메일 인증</span></h4>
+				<div class="input-wr">
+					<input type="text" id="chkCertNo" name="chkCertNo" class="wd1335 number" maxlength="20" placeholder="이메일로 발송된 인증번호를 입력하세요.">
+					<button type="button" class="btn bt-chk" onclick="fn_emailCertNoChk();">인증확인</button>
+				</div>
+				<p class="cau-txt">이메일이 수신되지 않았을 경우 스팸메일함을 확인해주세요.</p>
+
+				<h4 class="tit type-c"><span>관심 키워드1</span></h4>
+					<div class="cate-wr">
+
+						<p class="stit">대분류</p>
+						<select class="select" id="kw_stdLgclfCd1" name="stdLgclfCd1">
+							<option value="">대분류를 선택하세요</option>
+							<c:forEach items="${lstPrdt}" var="item" varStatus="status">
+								<option value="${item.stdLgclfCd}">${item.stdLgclfNm}</option>
+							</c:forEach>
+						</select>
+
+						<p class="stit">중분류</p>
+						<select class="select wd30" id="stdLgclfCd1_01" name="arrStdMlclfCd1">
+							<option value="">중분류 선택하세요</option>
+						</select>
+						<div class="selectlgc">
+						</div>
+						<select class="select wd30" id="stdLgclfCd1_02" name="arrStdMlclfCd1">
+							<option value="">중분류 선택하세요</option>
+						</select>
+						<div class="selectlgc">
+						</div>
+						<select class="select wd30" id="stdLgclfCd1_03" name="arrStdMlclfCd1">
+							<option value="">중분류 선택하세요</option>
+						</select>
+
+					</div>
+
+					<h4 class="tit type-c"><span>관심 키워드2</span></h4>
+					<div class="cate-wr">
+
+						<p class="stit">대분류</p>
+						<select class="select" id="kw_stdLgclfCd2" name="stdLgclfCd2">
+							<option value="">대분류를 선택하세요</option>
+							<c:forEach items="${lstPrdt}" var="item" varStatus="status">
+								<option value="${item.stdLgclfCd}">${item.stdLgclfNm}</option>
+							</c:forEach>
+						</select>
+
+						<p class="stit">중분류</p>
+						<select class="select wd30" id="stdLgclfCd2_01" name="arrStdMlclfCd2">
+							<option value="">중분류 선택하세요</option>
+						</select>
+						<div class="selectlgc">
+						</div>
+						<select class="select wd30" id="stdLgclfCd2_02" name="arrStdMlclfCd2">
+							<option value="">중분류 선택하세요</option>
+						</select>
+						<div class="selectlgc">
+						</div>
+						<select class="select wd30" id="stdLgclfCd2_03" name="arrStdMlclfCd2">
+							<option value="">중분류 선택하세요</option>
+						</select>
+
+					</div>
+
+				<h4 class="tit"><span>사업자 등록증</span></h4>
+				<div class="info-rect tBr">
+					<button type="button" class="btn bt-chk" onclick="fn_fileOpen('gnrlCertFile')">파일첨부</button>
+					<input type="file" id="gnrlCertFile" name="${FILE_DIV_NM_GNRL_CERT_FILE}" class="file_upload" style="display: none;" />
+					<ul class="file-ul"></ul>
+				</div>
+
+				<h4 class="tit"><span>재직증명서 첨부</span></h4>
+				<div class="info-rect tBr">
+					<button type="button" class="btn bt-chk" onclick="fn_fileOpen('bzmnRegFile')">파일첨부</button>
+					<input type="file" id="bzmnRegFile" name="${FILE_DIV_NM_BZMN_REG_FILE}" class="file_upload" style="display: none;" />
+					<ul class="file-ul"></ul>
+				</div>
+
+				<div class="btn-wr">
+					<a href="/" class="btn cancel">취소</a>
+					<a href="javascript:void(0);" class="btn" onclick="fn_joinUserInfoSave();">회원가입</a>
+				</div>
+			</form>
+
+			<!-- 가입 완료 form -->
+			<form action="/join/joinCmptn" name="frm_joinCmptn" id="frm_joinCmptn" method="post">
+				<input type="hidden" name="targetUserTypeCd" id="targetUserTypeCd"	value="" />
+			</form>
+
+		</div>
+	</div>
+	<!-- ===== /container ====== -->

@@ -1,0 +1,71 @@
+
+package com.katri.web.platformSvc.myData.model;
+
+import java.util.List;
+
+import io.swagger.annotations.ApiModel;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@Data
+@EqualsAndHashCode(callSuper=false)
+@ApiModel(description = "[플랫폼 서비스] > [내손안의 시험인증] Request")
+public class MyDataStatSelectReq {
+
+
+	/* 기관 아이디 */
+	private String instId;
+
+	/* 기관 아이디 */
+	private String schInstId;
+
+	/* 검색 구분 (전체/신청/제출) */
+	private String searchType;
+	/* 검색 구분 ([인증]탭 -> 전체/어린이법/전안법) */
+	private String certType;
+	/* 사업자 등록 번호 */
+	private String brno;
+	/* */
+	private String pdctgCd;
+	/**/
+	private Integer entGrpSn;
+
+	/**/
+	List<String> pdctgCdList;
+
+
+	/* (조회시 필요) [성적서] 쿼리 타입 */
+	private String queryType;
+
+	/* (조회시 필요) [성적서] 순위 */
+	private Integer rankNo;
+
+	/* (조회시 필요) [성적서] > [월별 TOP10품목별 성적서 정보]_기관품목코드 */
+	private String rankInstPdctgCd;
+
+	/* (조회시 필요) [성적서] > [월별 TOP10품목별 성적서 정보]_기관품목명 */
+	private String rankInstPdctgNm;
+
+	/* (조회시 필요) [성적서] > [월별 TOP10품목별 성적서 정보]_품목 정보들 */
+	private List<MyDataStatSelectReq> rankRprtPdctgInfoList;
+
+	/* (조회시 필요) [성적서] > [월별 TOP10항목별 성적서 정보]_기관시험항목코드 */
+	private String rankInstTestItemCd;
+
+	/* (조회시 필요) [성적서] > [월별 TOP10항목별 성적서 정보]_기관시험항목명 */
+	private String rankInstTestItemNm;
+
+	/* (조회시 필요) [성적서] > [월별 TOP10항목별 성적서 정보]_항목 정보들 */
+	private List<MyDataStatSelectReq> rankRprtItemInfoList;
+
+	/* (조회시 필요) [성적서] > [월별 TOP10기업 정보]_접수회사사업자번호 */
+	private String rankRcptCoBrno;
+
+	/* (조회시 필요) [성적서] > [월별 TOP10기업 정보]_접수회사사업자번호 */
+	private String rankRcptCoNm;
+
+	/* (조회시 필요) [성적서] > [월별 TOP10기업 정보]_접수회사정보들 */
+	private List<MyDataStatSelectReq> rankRcptCoInfoList;
+
+
+}

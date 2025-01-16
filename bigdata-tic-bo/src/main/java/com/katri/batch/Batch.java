@@ -1,0 +1,174 @@
+package com.katri.batch;
+
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import com.katri.batch.model.BtchExcnHistSaveReq;
+import com.katri.batch.service.BatchService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+/***************************************************
+ * <ul>
+ * <li>배치를 위한 Class</li>
+ * </ul>
+ * <pre>
+ * ======================================
+ * 변경자/변경일 :
+ * 변경사유/내역 :
+ * ======================================
+ * </pre>
+ ***************************************************/
+@RequiredArgsConstructor
+@Component
+@Slf4j
+public class Batch {
+
+	/*****************************************************
+	 * <<<<<<<[[[cron 형식]]]>>>>>>
+	 * 초(0-59)  분(0-59)  시간(0-23)  일(1-31)  월(1-12)  요일(0-7):0과7은 일요일
+	 *
+	 * <<<<<<[[[sever 이름 세팅]]]>>>>>
+	 * Open Config 선택 -> 탭 Arguments 선택 -> Vm Argument 영역 부분에 아래 넣기
+	 		-Dserver.name=was1-server1
+	*****************************************************/
+
+	/** 배치 Service */
+	private final BatchService batchService;
+
+	/*****************************************************
+	 * [휴면회원 전환] 처리 배치
+	*****************************************************/
+	@Scheduled(cron="0 0 1 * * ?")
+	public void batchChgDrmncyMem() {
+
+		if("was1-server1".equals(System.getProperty("server.name"))) { //배치를 한곳에서만 처리할수있도록
+
+			/* [배치실행이력 저장]시 필요한 정보 */
+			String h_btchId		=  "PG-BT-001";	//배치아이디
+			String h_btchRsltCd = "F";			//배치결과코드(S:성공, F:실패)
+			String h_btchRsltCn	= "";			//배치결과내용
+
+			try{
+
+				// [휴면회원 전환] 처리 배치
+				batchService.processChgDrmncyMem();
+
+				// 값 셋팅
+				h_btchRsltCd = "S";
+
+			} catch (Exception e) {
+
+				log.error("\n==== [휴면회원 전환] 처리 배치 중 오류 ======");
+				log.error("\n===============ERROR===================\n" + e.getMessage());
+
+				// 값 셋팅
+				h_btchRsltCd = "F";
+				h_btchRsltCn = e.getMessage();
+
+			} finally {
+
+				// [배치실행이력 저장]
+				BtchExcnHistSaveReq btchExcnHistSaveReq = new BtchExcnHistSaveReq();
+				btchExcnHistSaveReq.setBtchId(h_btchId);
+				btchExcnHistSaveReq.setBtchRsltCd(h_btchRsltCd);
+				btchExcnHistSaveReq.setBtchRsltCn(h_btchRsltCn);
+				batchService.savetBtchExcnHist(btchExcnHistSaveReq);
+
+			}
+
+		}
+
+	}
+
+	/*****************************************************
+	 * [휴면회원 전환 30일전 알림 메일] 처리 배치
+	*****************************************************/
+	@Scheduled(cron="0 0 2 * * ?")
+	public void batchBeforeDrmncyMem() {
+
+		if("was1-server1".equals(System.getProperty("server.name"))) { //배치를 한곳에서만 처리할수있도록
+
+			/* [배치실행이력 저장]시 필요한 정보 */
+			String h_btchId		=  "PG-BT-002";	//배치아이디
+			String h_btchRsltCd = "F";			//배치결과코드(S:성공, F:실패)
+			String h_btchRsltCn	= "";			//배치결과내용
+
+			try{
+
+				// [휴면회원 전환 30일전 알림 메일] 처리 배치
+				batchService.processBeforeDrmncyMem();
+
+				// 값 셋팅
+				h_btchRsltCd = "S";
+
+			} catch (Exception e) {
+
+				log.error("\n==== [휴면회원 전환 30일전 알림 메일] 처리 배치 중 오류 ======");
+				log.error("\n===============ERROR===================\n" + e.getMessage());
+
+				// 값 셋팅
+				h_btchRsltCd = "F";
+				h_btchRsltCn = e.getMessage();
+
+			} finally {
+
+				// [배치실행이력 저장]
+				BtchExcnHistSaveReq btchExcnHistSaveReq = new BtchExcnHistSaveReq();
+				btchExcnHistSaveReq.setBtchId(h_btchId);
+				btchExcnHistSaveReq.setBtchRsltCd(h_btchRsltCd);
+				btchExcnHistSaveReq.setBtchRsltCn(h_btchRsltCn);
+				batchService.savetBtchExcnHist(btchExcnHistSaveReq);
+
+			}
+
+		}
+	}
+
+	/*****************************************************
+	 * [기업그룹수집동의여부 기관에게 알림 메일] 처리 배치
+	*****************************************************/
+	//@Scheduled(cron="0 30 6 * * ?")
+	@Scheduled(cron="0 01 13 * * ?")
+	public void batchNotiInstEntGrpClctAgre() {
+
+//		if("was1-server1".equals(System.getProperty("server.name"))) { //배치를 한곳에서만 처리할수있도록
+
+			/* [배치실행이력 저장]시 필요한 정보 */
+			String h_btchId		=  "PG-BT-003";	//배치아이디
+			String h_btchRsltCd = "F";			//배치결과코드(S:성공, F:실패)
+			String h_btchRsltCn	= "";			//배치결과내용
+
+			try{
+
+				// [기업그룹수집동의여부 기관에게 알림 메일] 처리 배치
+				h_btchRsltCn = batchService.processNotiInstEntGrpClctAgre();
+
+				// 값 셋팅
+				h_btchRsltCd = "S";
+
+			} catch (Exception e) {
+
+				log.error("\n==== [기업그룹수집동의여부 기관에게 알림 메일] 처리 배치 중 오류 ======");
+				log.error("\n===============ERROR===================\n" + e.getMessage());
+
+				// 값 셋팅
+				h_btchRsltCd = "F";
+				h_btchRsltCn = e.getMessage();
+
+			} finally {
+
+				// [배치실행이력 저장]
+				BtchExcnHistSaveReq btchExcnHistSaveReq = new BtchExcnHistSaveReq();
+				btchExcnHistSaveReq.setBtchId(h_btchId);
+				btchExcnHistSaveReq.setBtchRsltCd(h_btchRsltCd);
+				btchExcnHistSaveReq.setBtchRsltCn(h_btchRsltCn);
+				batchService.savetBtchExcnHist(btchExcnHistSaveReq);
+
+			}
+
+//		}
+	}
+
+}

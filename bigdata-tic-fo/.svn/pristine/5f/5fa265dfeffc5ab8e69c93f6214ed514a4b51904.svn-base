@@ -1,0 +1,89 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags"%>
+
+<script>
+
+	$(function(){
+
+		/* ======= 대메뉴 ======= */
+		let menuTopNo = $("#menuTopNo").val();
+		//대메뉴명 셋팅
+		$("#menuTopTitle").text( $("#menuTopDiv").find("a[id='" + menuTopNo + "']").text() );
+
+		/* ======= 소메뉴 ======= */
+		let menuSubNo = $("#menuSubNo").val();
+		//지정된 소메뉴 말고는 소메뉴 날리기
+		$("[id^='menuSubDiv_']").not("#menuSubDiv_" + menuTopNo).remove();
+		//소메뉴명 셋팅
+		$("#menuSubTitle").text( $("#menuSubDiv_" + menuTopNo).find("a[id='" + menuSubNo + "']").text() );
+
+	});
+
+</script>
+
+<div id="breadcrumb-wr">
+	<div class="inner">
+
+		<!-- [플랫폼 서비스] > [내 손안의 시험인증] URL 로그인한 사용자의 상태에 따라 달라짐 -->
+		<c:set var="urlIntroSvc" value="/platformSvc/myData/introSvc"/>
+		<c:if test="${sessionScope.SS_KATRI_FO.login_ent_grp_clct_agre_y_cnt != null && sessionScope.SS_KATRI_FO.login_ent_grp_clct_agre_y_cnt > 0}">
+			<c:set var="urlIntroSvc" value="/platformSvc/myData/myInfoCert/myCertList"/>
+		</c:if>
+
+		<input type="hidden" name="menuTopNo" id="menuTopNo" value="${param.menuTopNo}"/>
+		<input type="hidden" name="menuSubNo" id="menuSubNo" value="${param.menuSubNo}"/>
+
+		<a href="/" class="home">처음으로</a>
+		<div class="bcb-wrap">
+			<p id="menuTopTitle" class="breadcrumb"><!-- 대메뉴명 들어가는곳  --></p>
+
+			<div id="menuTopDiv" class="snb-sbox">
+				<ul>
+					<li><a id="01" href="/dataUsageGuide/certDataList">데이터 활용안내</a></li>
+					<li><a id="02" href="${urlIntroSvc}">플랫폼 서비스</a></li>
+					<li><a id="03" href="/particiLounge/dataGatherStatus">참여기관 라운지</a></li>
+					<li><a id="04" href="/platformInfo/testCertBicDataInfo">플랫폼 소개</a></li>
+					<li><a id="05" href="/ctnt/notice/noticeList">이용안내</a></li>
+				</ul>
+			</div>
+		</div>
+		<div class="bcb-wrap">
+			<p id="menuSubTitle" class="breadcrumb"><!-- 소메뉴명 들어가는곳  --></p>
+
+			<div id="menuSubDiv_01" class="snb-sbox">
+				<ul>
+					<li><a id="0101" href="/dataUsageGuide/certDataList">인증데이터 조회</a></li>
+				</ul>
+			</div>
+			<div id="menuSubDiv_02" class="snb-sbox">
+				<ul>
+					<li><a id="0201" href="${urlIntroSvc}">내 손안의 시험인증</a></li>
+					<li><a id="0202" href="/platformSvc/qrSvc/qrSvcGuide">통합QR 서비스 안내</a></li>
+				</ul>
+			</div>
+			<div id="menuSubDiv_03" class="snb-sbox">
+				<ul>
+					<li><a id="0301" href="/particiLounge/dataGatherStatus">데이터 수집현황</a></li>
+					<li><a id="0302" href="javascript:void(0);" onclick="fn_goMetaSite()">메타데이터 관리시스템</a></li>
+					<li><a id="0303" href="/particiLounge/dataVisualEnvi">데이터 시각화 환경</a></li>
+					<li><a id="0304" href="/particiLounge/dataAnalyEnvi">데이터 분석 환경</a></li>
+				</ul>
+			</div>
+			<div id="menuSubDiv_04" class="snb-sbox">
+				<ul>
+					<li><a id="0401" href="/platformInfo/testCertBicDataInfo" style="letter-spacing:-1px;">시험인증 빅데이터 플랫폼 소개</a></li>
+					<li><a id="0402" href="/platformInfo/instiParticiInfo">참여기관 소개</a></li>
+					<li><a id="0403" href="/platformInfo/testCertIndustryInfo">시험인증 산업소개</a></li>
+				</ul>
+			</div>
+			<div id="menuSubDiv_05" class="snb-sbox">
+				<ul>
+					<li><a id="0501" href="/ctnt/notice/noticeList">공지사항</a></li>
+					<li><a id="0502" href="/ctnt/faq/faqList">FAQ</a></li>
+					<li><a id="0503" href="/ctnt/archive/archiveList">자료실</a></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</div>

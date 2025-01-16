@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.mbr.mapper.MbrMapper">
+
+	<update id="insertUser" parameterType="com.katri.web.mbr.model.MbrReq">
+		/* MbrMapper.insertUser (회원 추가) */
+		INSERT INTO tb_mbr (
+			inst_id,
+			dept_nm,
+			mbr_id,
+			mbr_pwd,
+			mbr_nm,
+			mbr_eml_addr,
+			mbr_cp_no,
+			lgn_fir_notms,
+			stt_cd,
+			reg_dt,
+			reg_id,
+			mngr_yn
+
+		)
+		VALUES (
+			#{instId},
+			#{deptNm},
+			#{mbrId},
+			#{mbrPwd},
+			#{mbrNm},
+			#{mbrEmlAddr},
+			#{mbrCpNo},
+			0,
+			#{sttCd},
+			now(),
+			#{regId},
+			'N'
+		)
+	</update>
+
+	<select id="selectInfoChk" parameterType="com.katri.web.mbr.model.MbrReq" resultType="com.katri.web.mbr.model.MbrRes">
+		/* MbrMapper.selectInfoChk (사용자 정보 조회) */
+		select sum(id_count) as id_count, sum(email_count) as email_count
+		  from (
+				select count(mbr_id) as id_count, 0 as email_count
+				  from tb_mbr
+				 where mbr_id = #{mbrId}
+				 union
+				 select 0 as id_count , count(mbr_eml_addr) as email_count
+				  from tb_mbr
+				 where mbr_eml_addr = #{mbrEmlAddr}
+		) A
+	</select>
+
+	<select id="selectLoginDetail" parameterType="com.katri.web.mbr.model.MbrReq" resultType="com.katri.web.mbr.model.MbrRes">
+		/* MbrMapper.selectLoginDetail (로그인 정보 조회) */
+		SELECT
+			mbr_id,
+			mbr_nm,
+			mbr_eml_addr,
+			inst_id,
+			dept_nm,
+			mbr_pwd,
+			mbr_cp_no,
+			lgn_fir_notms,
+			stt_cd,
+			clsg_yn,
+			reg_dt,
+			reg_id,
+			mdfcn_dt,
+			mdfr_id,
+			lgn_dt,
+			mngr_yn
+		FROM
+			tb_mbr
+		WHERE
+			mbr_id = #{loginId}
+
+	</select>
+
+	<update id="updateLoginFailCntInit" parameterType="com.katri.web.mbr.model.MbrReq">
+		/* MbrMapper.updateLoginFailCntInit (로그인 실패 횟수 초기화 + IPAddress넣기) */
+		UPDATE tb_mbr
+		   SET lgn_fir_notms = 0
+			 , clsg_yn = #{ipAddress}
+			 , lgn_dt = NOW()
+		 WHERE mbr_id = #{loginId}
+	</update>
+
+	<sql id="userWhereSql">
+		<if test="mbrNm != null">
+		   AND mbr_nm LIKE '%' || #{mbrNm} || '%'
+		 </if>
+		 <if test="sDt != null and eDt != null">
+		   AND TO_CHAR(reg_dt, 'YYYY.MM.DD') BETWEEN #{sDt} AND #{eDt}
+		 </if>
+	</sql>
+
+	<select id="selectUserCount" parameterType="HashMap" resultType="int">
+		/* MbrMapper.selectUserCount (로그인 정보 조회) */
+		select count(mbr_id) as save_count
+		  from tb_mbr
+		 where stt_cd != 'S'
+		<include refid="userWhereSql" />
+
+	</select>
+	<select id="selectUser" parameterType="HashMap" resultType="com.katri.web.mbr.model.MbrRes">
+		/* MbrMapper.selectLoginDetail (로그인 정보 조회) */
+		select mbr_id
+		     , mbr_nm
+		     , mbr_eml_addr
+		     , inst_id
+		     , fn_cd_nm('INST03',inst_id, '1') cert_inst_nm
+		     , dept_nm
+		     , mbr_cp_no
+		     , lgn_fir_notms
+		     , fn_cd_nm('STT01',stt_cd, '1') as stt_cd
+		     , clsg_yn
+		     , to_char(reg_dt, 'yyyy.mm.dd') as reg_dt
+		     , reg_id
+		     , mdfcn_dt
+		     , mdfr_id
+		     , lgn_dt
+		     , mngr_yn
+		     , (row_number() over(order by reg_dt asc)) as rownum
+		  from tb_mbr
+		 where stt_cd != 'S'
+		<include refid="userWhereSql" />
+		 order by rownum desc
+		offset #{s_c} limit #{e_c};
+	</select>
+
+	<select id="selectUserInfo" parameterType="String" resultType="com.katri.web.mbr.model.MbrRes">
+		/* MbrMapper.selectUserInfo (회원 정보 상세조회) */
+		select mbr_id
+		     , mbr_nm
+		     , mbr_eml_addr
+		     , inst_id
+		     , fn_cd_nm('INST03',inst_id, '1') cert_inst_nm
+		     , dept_nm
+		     , mbr_cp_no
+		     , lgn_fir_notms
+		     , fn_cd_nm('STT01',stt_cd, '1') as stt_cd
+		     , clsg_yn
+		     , to_char(reg_dt, 'YYYY.MM.DD') as reg_dt
+		     , reg_id
+		     , mdfcn_dt
+		     , mdfr_id
+		     , lgn_dt
+		     , mngr_yn
+		  from tb_mbr
+		 where mbr_id = #{targetId}
+		 LIMIT 1
+	</select>
+
+	<update id="updateUser" parameterType="com.katri.web.mbr.model.MbrReq">
+		/* MbrMapper.updateUser (회원수정) */
+		UPDATE tb_mbr
+		   SET mdfr_id = #{loginId}
+			 , mdfcn_dt = NOW()
+			 , stt_cd = #{sttCd}
+		 WHERE mbr_id = #{mbrId}
+	</update>
+
+	<update id="deleteUser" parameterType="com.katri.web.mbr.model.MbrReq">
+		/* MbrMapper.deleteUser (회원탈퇴) */
+		delete from tb_mbr
+		 where mbr_id = #{mbrId}
+	</update>
+
+
+	<select id="selectMbrListExcelDown" parameterType="HashMap" resultType="com.katri.web.mbr.model.MbrRes">
+		/* MbrMapper.selectMbrListExcelDown ( 회원 엑셀 다운로드 ) */
+		select mbr_id
+				, mbr_nm
+				, mbr_eml_addr
+				, inst_id
+				, fn_cd_nm('INST03',inst_id, '1') cert_inst_nm
+				, dept_nm
+				, mbr_cp_no
+				, lgn_fir_notms
+				, fn_cd_nm('STT01',stt_cd, '1') as stt_cd
+				, clsg_yn
+				, to_char(reg_dt, 'yyyy.mm.dd') as reg_dt
+				, reg_id
+				, mdfcn_dt
+				, mdfr_id
+				, lgn_dt
+				, mngr_yn
+				, (row_number() over(order by reg_dt asc)) as rownum
+		from tb_mbr
+		where stt_cd != 'S'
+		order by rownum desc
+
+	</select>
+
+</mapper>

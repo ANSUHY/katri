@@ -1,0 +1,27 @@
+spring:
+  profiles:
+    active: prd
+
+
+---
+spring:
+  config:
+    import: classpath:config/dev/config-dev.yaml,classpath:config/dev/login-exclude-dev.yaml,classpath:config/common/message.yaml
+    activate:
+      on-profile: dev
+
+
+---
+spring:
+  config:
+    import: classpath:config/stg/config-stg.yaml,classpath:config/stg/login-exclude-stg.yaml,classpath:config/common/message.yaml
+    activate:
+      on-profile: stg
+
+
+---
+spring:
+   config:
+    import: classpath:config/prd/config-prd.yaml,classpath:config/prd/login-exclude-prd.yaml,classpath:config/common/message.yaml
+    activate:
+      on-profile: prd

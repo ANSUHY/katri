@@ -1,0 +1,1287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.platformSvc.myData.mapper.MyDataStatMapper">
+
+<!-- [나의 시험인증 현황] -> [통계] > 인증 WHERE조건 -->
+<sql id="myDataStatCertWhere">
+	/* [나의 시험인증 현황] -> [통계] > 인증 WHERE조건 */
+	INNER JOIN pt_rf_cert_rcpt_rlt prcrr	/* PT_RF_인증서접수관계 */
+		ON prcrr.inst_id = ${alias_cert}inst_id AND prcrr.cert_no = ${alias_cert}cert_no
+	INNER JOIN pt_rf_rcpt_bas prrb 			/* 접수기본 */
+		ON prrb.inst_id = prcrr.inst_id
+			AND prrb.inst_rcpt_no = prcrr.inst_rcpt_no
+			AND prrb.rcpt_co_brno = #{brno}	/* 접수기본.접수회사사업자등록번호 = 로그인한 사용자 사업자번호 */
+			AND prrb.grp_id = #{entGrpMngNo}	/* 그룹아이디 = 로그인한 사용자 그룹관리번호 */
+</sql>
+
+<!-- [나의 시험인증 현황] -> [통계] > 성적서,시험항목 join조건 -->
+<sql id="myDataStatRprtJoin">
+	SELECT
+		U.inst_id
+		, U.inst_rcpt_no
+		, U.rprt_no
+	FROM
+		(
+		<if test='(searchType == null or searchType == "") or (searchType != null and searchType != "" and searchType == "2")'>
+			/* [검색:입장구분:전체] or [검색:입장구분:신청] */
+			/***** 접수사업자등록번호로 조회한 접수 *****/
+			SELECT
+				rcpt.inst_id
+				, rcpt.inst_rcpt_no
+				, rcpt.rprt_no
+			FROM pt_rf_rcpt_bas rcpt			/* 접수기본 */
+			WHERE
+				rcpt.rcpt_co_brno = #{brno}	 /* 접수회사사업자등록번호 = 로그인한 사용자 사업자번호 */
+				AND rcpt.grp_id = #{entGrpMngNo}  /* 그룹아이디 = 로그인한 사용자 그룹관리번호 */
+			<if test='instId != null and instId != ""'>
+				AND rcpt.inst_id = #{instId} 					/* [검색:시험기관] */
+			</if>
+			/***** 접수사업자등록번호로 조회한 접수 끝 *****/
+		</if>
+
+		<if test='searchType == null or searchType == ""'>
+			UNION ALL	/* [검색:입장구분:전체] */
+		</if>
+
+		<if test='(searchType == null or searchType == "") or (searchType != null and searchType != "" and searchType == "3")'>
+			/* [검색:입장구분:전체] or [검색:입장구분:제출] */
+			/***** 제출사업자등록번호로 조회한 접수 *****/
+			SELECT
+				rcpt.inst_id
+				, rcpt.inst_rcpt_no
+				, rcpt.rprt_no
+			FROM pt_rf_rcpt_bas rcpt
+			INNER JOIN tb_ent_grp_clct_agre_mng mng	/* 기업그룹수집동의관리 */
+				ON rcpt.inst_id = mng.inst_id
+				AND rcpt.rcpt_co_brno = mng.brno
+				AND rcpt.grp_id = (case when mng.ent_grp_mng_no = '9999999999' then '_' else mng.ent_grp_mng_no end)
+				AND mng.sbmsn_co_rls_agre_yn = 'Y'
+			WHERE
+				rcpt.sbmsn_co_brno = #{brno}	/* 제출회사사업자등록번호 = 로그인한 사용자 사업자번호 */
+			<if test='instId != null and instId != ""'>
+				AND rcpt.inst_id = #{instId} 					/* [검색:시험기관] */
+			</if>
+			/***** 제출사업자등록번호로 조회한 접수 끝 *****/
+		</if>
+		) U
+	GROUP BY U.inst_id, U.inst_rcpt_no, U.rprt_no
+</sql>
+
+<!-- [나의 시험인증 현황] -> [통계] -->
+<sql id="myDataStatInstId">
+	<if test="instId != null and instId != ''">
+		AND ${alias_inst_id}inst_id = #{instId}
+	</if>
+</sql>
+
+<!-- [나의 시험인증 현황] -> [인증] -->
+<sql id="myDataStatPrdt">
+	<choose>
+		<when test='certType == null or certType == ""'>
+			AND cert.cert_div_cd in ('1311', '1312', '1511', '1512', '1513', '1514')	/*검색조건:법정기준-전체*/
+		</when>
+		<when test='certType == "2"'>
+			AND cert.cert_div_cd in ('1311', '1312')	/*검색조건:법정기준-어린이법*/
+		</when>
+		<when test='certType == "3"'>
+			AND cert.cert_div_cd in ('1511', '1512', '1513', '1514')	/*검색조건:법정기준-전안법*/
+		</when>
+	</choose>
+</sql>
+
+
+<!-- [플랫폼서비스] -> [내손안의 시험인증] -> [나의 시험인증 현황] 기관 목록 조회 -->
+<select id="selectInstList" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+	/* MyDataStatMapper.selectInstList ([플랫폼서비스] -> [내 손안의 시험인증] -> [나의 시험인증 현황] 기관 목록 조회 ) */
+	SELECT
+			inst_id
+		  , inst_eng_nm
+	FROM pt_co_inst_bas
+	WHERE inst_id NOT LIKE 'T000'
+</select>
+
+<!-- [플랫폼서비스] -> [내손안의 시험인증] -> [나의 시험인증 현황] 사업자등록번호 조회 -->
+<select id="selectMyDataStatBrno" parameterType="integer" resultType="string">
+	SELECT brno FROM tb_ent_grp_bas WHERE use_yn='Y' AND ent_grp_sn = #{entGrpSn}
+</select>
+
+<!-- [플랫폼서비스] -> [내손안의 시험인증] -> [나의 시험인증 현황] 년,월 정보 조회 -->
+<select id="selectDateData" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+	/* MyDataStatMapper.selectDateData ([플랫폼서비스] -> [내 손안의 시험인증] -> [나의 시험인증 현황] 년,월 정보 조회) */
+	SELECT
+		EXTRACT('YEAR' from NOW()) as year
+	  , EXTRACT('MONTH' from NOW()) as month
+</select>
+
+<!-- [플랫폼서비스] -> [내손안의 시험인증] -> [나의 시험인증 현황] -> [통계]-> 년 기준 의뢰 현황 -> 인증 데이터 조회-->
+<select id="selectStatCertDataByYear1" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+		/* MyDataStatMapper.selectStatCertDataByYear1 ([플랫폼서비스] -> [내손안의 시험인증] -> [나의 시험인증 현황] -> [통계]-> 년 기준 의뢰 현황 -> 인증 데이터 ) */
+		SELECT
+				g.dt
+				, COALESCE(sum(t.cnt), 0) as cnt
+		FROM
+		(
+			SELECT TO_CHAR(GENERATE_SERIES(now() - INTERVAL '1 year', now(), '1 year') ,'YYYY') AS dt
+		) g
+		LEFT OUTER JOIN
+		(
+			SELECT
+				SUBSTRING(cert.cert_ymd, 1, 4) as data_year
+				, 1 as cnt
+			FROM
+				pt_rf_cert_bas cert				/*인증서기본*/
+			INNER JOIN
+				pt_rf_cert_rcpt_rlt rlt			/*인증서접수관계*/
+				ON cert.inst_id = rlt.inst_id	/*기관아이디*/
+				AND cert.cert_no = rlt.cert_no	/*인증번호*/
+			<include refid='myDataStatCertWhere'>
+				<property name="alias_cert" value="cert."/>
+			</include>
+			/* 검색 조건 */
+			WHERE SUBSTRING(cert.cert_ymd, 1, 4) BETWEEN  TO_CHAR(NOW() - INTERVAL '1 year', 'YYYY') AND TO_CHAR(NOW(), 'YYYY')
+			<include refid='myDataStatInstId'>
+				<property name="alias_inst_id" value="cert."/>
+			</include>
+		) t
+		ON g.dt = t.data_year
+		GROUP BY g.dt
+		ORDER BY g.dt ASC
+</select>
+
+<!-- [플랫폼서비스] -> [내손안의 시험인증] -> [나의 시험인증 현황] -> [통계]-> 년 기준 의뢰 현황 -> 성적서 데이터 조회 -->
+<select id="selectStatRprtDataByYear" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+		/* MyDataStatMapper.selectStatRprtDataByYear ([플랫폼서비스] -> [내손안의 시험인증] -> [나의 시험인증 현황] -> [통계]-> 년 기준 의뢰 현황 -> 성적서 데이터 ) */
+		SELECT
+				g.dt
+			  , coalesce(sum(t.cnt), 0) as cnt
+		FROM
+		(
+			SELECT TO_CHAR(GENERATE_SERIES(now() - INTERVAL '1 year', now(), '1 year') ,'YYYY') AS dt
+		) g
+		LEFT OUTER JOIN
+			(
+				SELECT
+					SUBSTRING(rprt.rprt_issu_ymd, 1, 4) as data_year
+					, 1 as cnt
+				FROM pt_rf_rprt_bas rprt	/* 성적서기본 */
+				INNER JOIN 
+					(
+						<include refid='myDataStatRprtJoin' />
+					) rcpt	/*접수기본*/
+					ON rprt.inst_id = rcpt.inst_id	/*기관아이디*/
+					AND rprt.inst_rcpt_no = rcpt.inst_rcpt_no	/*기관접수번호*/
+					AND rprt.rprt_no = rcpt.rprt_no	/*성적서번호*/
+			WHERE SUBSTRING(rprt.rprt_issu_ymd, 1, 4) BETWEEN TO_CHAR(now() - interval '1 year', 'YYYY') and TO_CHAR(now(), 'YYYY')
+			) t
+			ON g.dt = t.data_year
+			GROUP BY g.dt
+			ORDER BY g.dt ASC
+</select>
+
+<!-- [플랫폼서비스] -> [내손안의 시험인증] -> [나의 시험인증 현황] -> [통계] -> 년 기준 의뢰 현황 -> 시험항목 데이터 조회 -->
+<select id="selectStatTestDataByYear" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+	/* MyDataStatMapper.selectStatTestDataByYear ([플랫폼서비스] -> [내손안의 시험인증] -> [나의 시험인증 현황] -> [통계]-> 년 기준 의뢰 현황 -> 시험항목 데이터 ) */
+	SELECT
+	g.dt
+	, COALESCE(sum(t.cnt), 0) as cnt
+FROM
+	(
+		SELECT TO_CHAR(GENERATE_SERIES(now() - INTERVAL '1 year', now(), '1 year') ,'YYYY') AS dt
+	) g
+LEFT OUTER JOIN
+	(
+		select
+			t.data_year
+			, 1 as cnt
+		FROM pt_rf_test_item_bas item	/* 시험항목기본 */
+				INNER JOIN (
+							SELECT
+								rprt.inst_id
+								, rprt.inst_rcpt_no
+								, rprt.rprt_no
+								, SUBSTRING(rprt.rprt_issu_ymd, 1, 4) as data_year
+							FROM pt_rf_rprt_bas rprt	/* 성적서기본 */
+							inner join 
+								(
+									<include refid='myDataStatRprtJoin' />
+								) rcpt	/*접수기본*/
+								ON rprt.inst_id = rcpt.inst_id
+								AND rprt.inst_rcpt_no = rcpt.inst_rcpt_no
+								AND rprt.rprt_no = rcpt.rprt_no
+							WHERE
+								rprt.rprt_issu_ymd != '_'
+								AND rprt.rprt_issu_ymd is not null
+								AND SUBSTRING(rprt.rprt_issu_ymd, 1, 4) BETWEEN  TO_CHAR(NOW() - interval '1 year', 'YYYY') and TO_CHAR(now(), 'YYYY')
+							GROUP BY rprt.inst_id
+									, rprt.inst_rcpt_no
+									, rprt.rprt_no
+									, rprt.rprt_issu_ymd
+							) t	/* 성적서, 접수,품목, 시료 */
+					ON item.inst_id = t.inst_id
+					AND item.inst_rcpt_no = t.inst_rcpt_no
+					AND item.rprt_no = t.rprt_no
+		) t
+		ON g.dt = t.data_year
+		GROUP BY g.dt
+		ORDER BY g.dt ASC
+</select>
+
+<!-- [플랫폼서비스] -> [내손안의 시험인증] -> [나의 시험인증 현황] -> [통계] -> 월 기준 의뢰 현황 -> 인증 데이터 조회 -->
+<select id="selectStatCertDataByMonth" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq"  resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+	/* MyDataStatMapper.selectStatCertDataByMonth ([플랫폼서비스] -> [내손안의 시험인증] -> [나의 시험인증 현황] -> [통계]-> 월 기준 의뢰 현황 -> 인증 데이터) */
+SELECT
+	g.dt
+	, COALESCE(SUM(t.cnt), 0) as cnt
+FROM
+	(
+		SELECT TO_CHAR(GENERATE_SERIES( NOW() - interval '1 month' , NOW() , '1 month'::INTERVAL) ,'YY.MM') AS dt
+	) g
+LEFT OUTER JOIN
+	(
+		SELECT
+			TO_CHAR(TO_DATE(cert.cert_ymd, 'YYYYMMDD'), 'YY.MM')as data_year
+			, 1 as cnt
+		FROM
+			pt_rf_cert_bas cert								/*인증서기본*/
+		<include refid='myDataStatCertWhere'>
+			<property name="alias_cert" value="cert."/>
+		</include>
+		WHERE TO_CHAR(TO_DATE(cert.cert_ymd, 'YYYYMMDD'), 'YY.MM') BETWEEN  TO_CHAR(NOW() - interval '1 month', 'YY.MM') and TO_CHAR(NOW(), 'YY.MM')
+		<include refid='myDataStatInstId'>
+			<property name="alias_inst_id" value="cert."/>
+		</include>
+		) t
+		ON g.dt = t.data_year
+		GROUP BY g.dt
+		ORDER BY g.dt ASC
+</select>
+
+<!-- [플랫폼서비스] -> [내손안의 시험인증] -> [나의 시험인증 현황] -> [통계] -> 월 기준 의뢰 현황 -> 성적서 데이터 조회 -->
+<select id="selectStatRprtDataByMonth" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+	/* MyDataStatMapper.selectStatRprtDataByMonth([플랫폼서비스] -> [통계] -> 월 기준 의뢰 현황 -> 성적서 )*/
+	SELECT
+	g.dt
+	, COALESCE(SUM(t.cnt), 0) as cnt
+FROM
+	(
+		SELECT TO_CHAR(GENERATE_SERIES( NOW() - interval '1 month' , NOW() , '1 month'::INTERVAL) ,'YY.MM') AS dt
+	) g
+LEFT OUTER JOIN
+	(
+		SELECT
+			TO_CHAR(TO_DATE(rprt.rprt_issu_ymd, 'YYYYMMDD'), 'YY.MM')as data_year
+			, 1 as cnt
+		FROM
+			pt_rf_rprt_bas rprt	/*성적서기본*/
+		INNER JOIN
+			(
+				<include refid='myDataStatRprtJoin' />
+			) rcpt	/*접수기본*/
+			on rprt.inst_id = rcpt.inst_id	/*기관아이디*/
+			and rprt.inst_rcpt_no = rcpt.inst_rcpt_no	/*기관접수번호*/
+			and rprt.rprt_no = rcpt.rprt_no	/*성적서번호*/
+		WHERE
+			rprt.rprt_issu_ymd != '_'
+			AND rprt.rprt_issu_ymd is not null
+			AND SUBSTRING(rprt.rprt_issu_ymd, 1, 6) BETWEEN  TO_CHAR(NOW() - interval '1 month', 'YYYYMM') and TO_CHAR(NOW(), 'YYYYMM')
+		) t
+		ON g.dt = t.data_year
+		GROUP BY g.dt
+		ORDER BY g.dt ASC
+</select>
+
+<!-- [플랫폼서비스] -> [내손안의 시험인증] -> [나의 시험인증 현황] -> [통계] -> 월 기준 의뢰 현황 -> 시험항목 데이터 조회 -->
+<select id="selectStatTestDataByMonth" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+	/* MyDataStatMapper.selectStatTestDataByMonth([나의 시험인증 현황] -> [통계] -> [월 기준 의뢰 현황] -> [시험항목] */
+
+	SELECT
+	g.dt
+	, COALESCE(SUM(t.cnt), 0) as cnt
+FROM
+	(
+		SELECT TO_CHAR(GENERATE_SERIES( NOW() - interval '1 month' , NOW() , '1 month'::INTERVAL) ,'YY.MM') AS dt
+	) g
+LEFT OUTER JOIN
+	(
+		select
+			t.data_year
+			, 1 as cnt
+		FROM pt_rf_test_item_bas item	/* 시험항목기본 */
+				INNER JOIN (
+							SELECT
+								rprt.inst_id
+								, rprt.inst_rcpt_no
+								, rprt.rprt_no
+								, fn_date_fmt(rprt.rprt_issu_ymd, 'YY.MM') as data_year
+							FROM pt_rf_rprt_bas rprt	/* 성적서기본 */
+							inner join 
+								(
+									<include refid='myDataStatRprtJoin' />
+								) rcpt	/*접수기본*/
+								ON rprt.inst_id = rcpt.inst_id
+								AND rprt.inst_rcpt_no = rcpt.inst_rcpt_no
+								AND rprt.rprt_no = rcpt.rprt_no
+							WHERE
+								rprt.rprt_issu_ymd != '_'
+								AND rprt.rprt_issu_ymd is not null
+								AND SUBSTRING(rprt.rprt_issu_ymd, 1, 6) BETWEEN  TO_CHAR(NOW() - interval '1 month', 'YYYYMM') and TO_CHAR(now(), 'YYYYMM')
+										GROUP BY rprt.inst_id
+											, rprt.inst_rcpt_no
+											, rprt.rprt_no
+											, rprt.rprt_issu_ymd
+										) t	/* 성적서, 접수,품목, 시료 */
+								ON item.inst_id = t.inst_id
+								AND item.inst_rcpt_no = t.inst_rcpt_no
+								AND item.rprt_no = t.rprt_no
+		) t
+		ON g.dt = t.data_year
+		GROUP BY g.dt
+		ORDER BY g.dt ASC
+</select>
+
+
+<select id="selectStatReqDataByMonth" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+	/* MyDataStatMapper.selectStatReqDataByMonth([나의 시험인증 현황] -> [통계] -> [월별 내 의뢰 추이] (인증) )*/
+	SELECT
+	g.dt
+	, coalesce(sum(t.cnt), 0) as cnt
+FROM
+	(
+		SELECT TO_CHAR(GENERATE_SERIES( NOW() - interval '11 month' , NOW() , '1 month'::INTERVAL) ,'YY.MM') AS dt
+	) g
+LEFT OUTER JOIN
+	(
+		SELECT
+			fn_date_fmt(cert.cert_ymd, 'YY.MM') as data_year
+			, 1 as cnt
+		FROM
+			pt_rf_cert_bas cert				/*인증서기본*/
+		<include refid='myDataStatCertWhere'>
+			<property name="alias_cert" value="cert."/>
+		</include>
+		WHERE
+			fn_date_fmt(cert.cert_ymd, 'YY.MM') BETWEEN  TO_CHAR(NOW() - interval '11 month', 'YY.MM') and TO_CHAR(NOW(), 'YY.MM')
+		<include refid='myDataStatInstId'>
+			<property name="alias_inst_id" value="cert."/>
+		</include>
+		) t
+		ON g.dt = t.data_year
+		GROUP BY g.dt
+		ORDER BY g.dt ASC
+</select>
+
+<select id="selectCertRateData2" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+	/* MyDataStatMapper.selectCertRateData2([나의 시험인증 현황] -> [통계] -> [월별 내 의뢰 추이] (성적서) )*/
+SELECT
+	g.dt
+	, COALESCE(sum(t.cnt), 0) as cnt
+FROM
+	(
+		SELECT TO_CHAR(GENERATE_SERIES( NOW() - interval '11 month' , NOW() , '1 month'::INTERVAL) ,'YY.MM') AS dt
+	) g
+LEFT OUTER JOIN
+	(
+		SELECT
+			fn_date_fmt(rprt.rprt_issu_ymd, 'YY.MM') as data_year
+			, 1 as cnt
+		FROM
+			pt_rf_rprt_bas rprt	/*성적서기본*/
+		INNER JOIN
+			(
+				<include refid='myDataStatRprtJoin' />
+			) rcpt	/*접수기본*/
+			on rprt.inst_id = rcpt.inst_id	/*기관아이디*/
+			and rprt.inst_rcpt_no = rcpt.inst_rcpt_no	/*기관접수번호*/
+			and rprt.rprt_no = rcpt.rprt_no	/*성적서번호*/
+		WHERE
+			rprt.rprt_issu_ymd != '_'
+			AND rprt.rprt_issu_ymd is not null
+			AND SUBSTRING(rprt.rprt_issu_ymd, 1, 6) BETWEEN  TO_CHAR(NOW() - interval '11 month', 'YYYYMM') and TO_CHAR(NOW(), 'YYYYMM')
+		) t
+		ON g.dt = t.data_year
+		GROUP BY g.dt
+		ORDER BY g.dt ASC
+</select>
+
+<select id="selectCertRateData3" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+	/* MyDataStatMapper.selectCertRateData3([나의 시험인증 현황] -> [통계] -> [월별 내 의뢰 추이] (시험항목) )*/
+	select
+	g.dt
+	, coalesce(sum(t.cnt), 0) as cnt
+from
+	(
+		SELECT TO_CHAR(GENERATE_SERIES( NOW() - interval '11 month' , NOW() , '1 month'::INTERVAL) ,'YY.MM') AS dt
+	) g
+left outer join
+	(
+		select
+			t.data_year
+			, 1 as cnt
+		FROM pt_rf_test_item_bas item	/* 시험항목기본 */
+				INNER JOIN (
+							SELECT
+								rprt.inst_id
+								, rprt.inst_rcpt_no
+								, rprt.rprt_no
+								, fn_date_fmt(rprt.rprt_issu_ymd, 'YY.MM') as data_year
+							FROM pt_rf_rprt_bas rprt	/* 성적서기본 */
+							inner join 
+								(
+									<include refid='myDataStatRprtJoin' />
+								) rcpt	/*접수기본*/
+								ON rprt.inst_id = rcpt.inst_id
+								AND rprt.inst_rcpt_no = rcpt.inst_rcpt_no
+								AND rprt.rprt_no = rcpt.rprt_no
+							WHERE
+								rprt.rprt_issu_ymd != '_'
+								AND rprt.rprt_issu_ymd is not null
+								AND SUBSTRING(rprt.rprt_issu_ymd, 1, 6) BETWEEN  TO_CHAR(NOW() - interval '11 month', 'YYYYMM') and TO_CHAR(now(), 'YYYYMM')
+										GROUP BY rprt.inst_id
+											, rprt.inst_rcpt_no
+											, rprt.rprt_no
+											, rprt.rprt_issu_ymd
+										) t	/* 성적서, 접수,품목, 시료 */
+								ON item.inst_id = t.inst_id
+								AND item.inst_rcpt_no = t.inst_rcpt_no
+								AND item.rprt_no = t.rprt_no
+		) t
+		ON g.dt = t.data_year
+		GROUP BY g.dt
+		ORDER BY g.dt ASC
+</select>
+
+<!--  [나의 시험인증 현황] -> [인증] -> [~년 인증 전체 현황] -> [전체 인증 건수] -->
+<select id="selectCertCountData" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+		/* MyDataStatMapper.selectCertCountData ([나의 시험인증 현황] -> [인증] -> [~년 인증 전체 현황] -> [전체 인증 건수] ) */
+		SELECT
+			COUNT(1) as cnt
+		FROM
+			pt_rf_cert_bas cert	/*인증서기본*/
+		INNER JOIN
+			pt_rf_cert_rcpt_rlt rlt	/*인증서접수관계*/
+			on cert.inst_id = rlt.inst_id	/*기관아이디*/
+			and cert.cert_no = rlt.cert_no	/*인증번호*/
+			<include refid='myDataStatCertWhere'>
+				<property name="alias_cert" value="cert."/>
+			</include>
+		WHERE
+			SUBSTRING(cert.cert_ymd, 1, 4) = TO_CHAR(NOW(), 'YYYY')
+		<include refid='myDataStatInstId'>
+			<property name="alias_inst_id" value="cert."/>
+		</include>
+
+</select>
+
+
+<!-- [나의 시험인증 현황] -> [인증] -> [~년 인증 전체 현황] -> [월별 인증 추이 (건수)] -->
+<select id="selectStatCertCountByMonthData" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+	/* MyDataStatMapper.selectStatCertCountByMonthData ([나의 시험인증 현황] -> [인증] -> [~년 인증 전체 현황] -> [월별 인증 추이 (건수)]) */
+	SELECT
+	g.dt
+	, coalesce(sum(t.cnt), 0) as cnt
+FROM
+	(
+		SELECT
+			TO_CHAR(a.dd, 'YY.MM') as dt
+		FROM
+			(
+				(
+					WITH date_series as
+						(
+							SELECT DATE(generate_series(NOW() - interval '11 month', now() , '1 month')) as dd
+						)
+					SELECT
+						dd
+					FROM
+						date_series
+				)
+			) a
+	) g
+LEFT OUTER JOIN
+	(
+		SELECT
+			fn_date_fmt(cert.cert_ymd, 'YY.MM') as cert_ym
+			, 1 as cnt
+		FROM
+			pt_rf_cert_bas cert	/*인증서기본*/
+		INNER JOIN
+			pt_rf_cert_rcpt_rlt rlt	/*인증서접수관계*/
+			on cert.inst_id = rlt.inst_id	/*기관아이디*/
+			and cert.cert_no = rlt.cert_no	/*인증번호*/
+			<include refid='myDataStatCertWhere'>
+				<property name="alias_cert" value="cert."/>
+			</include>
+		WHERE
+			SUBSTRING(cert.cert_ymd, 1, 6) BETWEEN to_char(now() - interval '11 month', 'YYYYMM') and TO_CHAR(now(), 'YYYYMM')
+		<include refid='myDataStatInstId'>
+			<property name="alias_inst_id" value="cert."/>
+		</include>
+		) t
+			ON g.dt = t.cert_ym
+			GROUP BY g.dt
+			ORDER BY g.dt ASC
+</select>
+
+
+
+
+<!-- [나의 시험인증 현황] -> [인증] -> ~년 인증 현황 -> 법정기준 인증 비율 -->
+<select id="selectCertRateDataByYear" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+	/* MyDataStatMapper.selectCertRateDataByYear ([나의 시험인증 현황] -> [인증] -> [~년 인증 현황] -> [법정기준 인증 비율]) */
+	SELECT
+	g.cert_div_cd
+	, coalesce(sum(t.cnt), 0) as cnt
+FROM
+	(
+		SELECT
+			'A' as cert_div_cd
+		UNION ALL
+		SELECT
+			'B' as cert_div_cd
+		UNION ALL
+		SELECT
+			'C' as cert_div_cd
+		UNION ALL
+		SELECT
+			'D' as cert_div_cd
+	) g
+LEFT OUTER JOIN
+	(
+		SELECT
+			SUBSTRING(cert.cert_ymd, 1, 4) as cert_ym
+			, CASE
+				WHEN cert.cert_div_cd = '1311' then 'B'	/*1311 안전인증대상 어린이제품*/
+				WHEN cert.cert_div_cd = '1511' then 'D'	/*1511 안전인증대상 전기용품*/
+				WHEN cert.cert_div_cd = '1512' then 'D'	/*1512 안전인증대상 생활용품*/
+				WHEN cert.cert_div_cd = '1312' then 'A'	/*1312 안전확인대상 어린이제품*/
+				WHEN cert.cert_div_cd = '1513' then 'C'	/*1513 안전확인대상 전기용품*/
+				WHEN cert.cert_div_cd = '1514' then 'C'	/*1514 안전확인대상 생활용품*/
+			END as cert_div_cd	/*법정기준유형(A:안전 확인(어린이법), B:안전 인증(어린이법), C:안전 확인(전안법), D:안전 인증(전안법)*/
+			, 1 as cnt
+		FROM
+			pt_rf_cert_bas cert	/*인증서기본*/
+		INNER JOIN
+			pt_rf_cert_rcpt_rlt rlt	/*인증서접수관계*/
+			on cert.inst_id = rlt.inst_id	/*기관아이디*/
+			and cert.cert_no = rlt.cert_no	/*인증번호*/
+		<include refid='myDataStatCertWhere'>
+			<property name="alias_cert" value="cert."/>
+		</include>
+		WHERE
+			SUBSTRING(cert.cert_ymd, 1, 4) = to_char(now(), 'YYYY')
+	<include refid="myDataStatPrdt"/>
+	<include refid='myDataStatInstId'>
+		<property name="alias_inst_id" value="cert."/>
+	</include>
+	) t
+		ON g.cert_div_cd = t.cert_div_cd
+		GROUP BY g.cert_div_cd
+		ORDER BY g.cert_div_cd ASC
+</select>
+
+
+<select id="selectStatProgressCount" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+	/* MyDataStatMapper.selectStatProgressCount ([나의 시험인증 현황] -> [인증] -> [~년 인증 현황] -> [월별 법정기준 인증 추이(건수)]) */
+	SELECT
+			  g.cert_div_cd
+			, g.dt
+			, coalesce(sum(t.cnt), 0) as cnt
+	FROM
+	(
+		SELECT
+			c.cert_div_cd
+			, c.ord
+			, k.dt
+		FROM
+			(
+				SELECT
+					'A' as cert_div_cd
+					, 1 as ord
+				UNION ALL
+				SELECT
+					'B' as cert_div_cd
+					, 2 as ord
+				UNION ALL
+				SELECT
+					'C' as cert_div_cd
+					, 3 as ord
+				UNION ALL
+				SELECT
+					'D' as cert_div_cd
+					, 4 as ord
+			) c
+			, (
+				SELECT
+					TO_CHAR(a.dd, 'YYYYMM') as dt
+				FROM
+					(
+						(
+							with date_series as
+								(
+									select date(generate_series(now() - interval '11 month', now(), '1 month')) as dd
+								)
+							SELECT
+								dd
+							FROM
+								date_series
+						)
+					) a
+			) k
+	) g
+LEFT OUTER JOIN
+	(
+		SELECT
+			SUBSTRING(cert.cert_ymd, 1, 6) as cert_ym
+			, CASE
+				WHEN cert.cert_div_cd = '1311' then 'B'	/*1311 안전인증대상 어린이제품*/
+				WHEN cert.cert_div_cd = '1511' then 'D'	/*1511 안전인증대상 전기용품*/
+				WHEN cert.cert_div_cd = '1512' then 'D'	/*1512 안전인증대상 생활용품*/
+				WHEN cert.cert_div_cd = '1312' then 'A'	/*1312 안전확인대상 어린이제품*/
+				WHEN cert.cert_div_cd = '1513' then 'C'	/*1513 안전확인대상 전기용품*/
+				WHEN cert.cert_div_cd = '1514' then 'C'	/*1514 안전확인대상 생활용품*/
+			END as cert_div_cd	/*법정기준유형(A:안전 확인(어린이법), B:안전 인증(어린이법), C:안전 확인(전안법), D:안전 인증(전안법)*/
+			, 1 as cnt
+		FROM
+			pt_rf_cert_bas cert	/*인증서기본*/
+		INNER JOIN
+			pt_rf_cert_rcpt_rlt rlt	/*인증서접수관계*/
+			on cert.inst_id = rlt.inst_id	/*기관아이디*/
+			and cert.cert_no = rlt.cert_no	/*인증번호*/
+			<include refid='myDataStatCertWhere'>
+				<property name="alias_cert" value="cert."/>
+			</include>
+		WHERE
+			SUBSTRING(cert.cert_ymd, 1, 6) BETWEEN TO_CHAR(now() - interval '11 month', 'YYYYMM') and TO_CHAR(now(), 'YYYYMM')
+		<include refid="myDataStatPrdt"/>
+		<include refid='myDataStatInstId'>
+			<property name="alias_inst_id" value="cert."/>
+		</include>
+		) t
+		ON g.cert_div_cd = t.cert_div_cd
+		AND g.dt = t.cert_ym
+		GROUP BY g.cert_div_cd, g.dt, g.ord
+		ORDER BY g.ord asc, g.dt asc
+</select>
+
+<select id="selectCertRateByItem" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+	/* MyDataStatMapper.selectCertRateByItem ([나의 시험인증 현황] -> [~년 품목별 인증 현황] -> [품목별 인증 비율]) */
+	SELECT
+		t.pdctg_cd
+		, t.pdctg_nm
+		, coalesce(sum(t.cnt), 0) as cnt
+FROM
+	(
+		SELECT
+			SUBSTRING(LPAD(cert.stty_prdt_clf_cd, 8, '0'), 1, 6) as pdctg_cd	/*품목코드*/
+			, clf.pdctg_nm	/*품목명*/
+			, 1 as cnt
+		FROM pt_rf_cert_bas cert	/*인증서기본*/
+		<include refid='myDataStatCertWhere'>
+			<property name="alias_cert" value="cert."/>
+		</include>
+		INNER JOIN
+			pt_co_stty_prdt_clf_cd clf	/*CO_법정제품분류코드*/
+			on cert.stty_prdt_clf_cd = clf.stty_prdt_clf_cd
+			and clf.use_yn = 'Y'
+		WHERE
+			SUBSTRING(cert.cert_ymd, 1, 4) = to_char(now(), 'YYYY')
+			AND clf.pdctg_nm IS NOT NULL
+		<include refid='myDataStatInstId'>
+			<property name="alias_inst_id" value="cert."/>
+		</include>
+			) t
+		GROUP BY t.pdctg_cd, t.pdctg_nm
+		ORDER BY COALESCE(sum(t.cnt), 0) desc, t.pdctg_cd asc
+</select>
+
+
+<select id="selectChartJsTop3ProgressByItem" parameterType="list" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+		/* MyDataStatMapper.selectChartJsTop3ProgressByItem ([나의 시험인증 현황] -> [~년 품목별 인증 현황] -> [월별 TOP3 품목별 인증 추이(건수)]) */
+		SELECT
+				g.dt
+				, g.pdctg_cd
+				, t.pdctg_nm
+				, coalesce(t.cnt, 0) as cnt
+			, t.tot_cnt
+	FROM
+		(
+			SELECT
+				c.pdctg_cd
+				, c.ord
+				, k.dt
+			FROM
+			(
+			<foreach collection="pdctgCdList" item="item" index="index" separator="UNION ALL">
+				SELECT
+					#{item} as pdctg_cd
+					, #{index} as ord
+			</foreach>
+			) c
+			, (
+				SELECT
+					TO_CHAR(a.dd, 'YYYYMM') as dt
+				FROM
+					(
+						(
+							with date_series as
+								(
+									SELECT DATE(GENERATE_SERIES(NOW() - interval '11 month', now(), '1 month')) as dd
+								)
+							SELECT
+								dd
+							FROM
+								date_series
+						)
+					) a
+			) k
+	) g
+LEFT OUTER JOIN
+	(
+		SELECT
+			r.cert_ym
+			, r.pdctg_cd
+			, r.pdctg_nm
+			, coalesce(sum(r.cnt), 0) as cnt
+			, r.tot_cnt
+		FROM
+			(
+				SELECT
+					SUBSTRING(cert.cert_ymd, 1, 6) as cert_ym
+					, SUBSTRING(lpad(cert.stty_prdt_clf_cd, 8, '0'), 1, 6) as pdctg_cd	/*품목코드*/
+					, clf.pdctg_nm	/*품목명*/
+					, 1 as cnt
+					, COUNT(SUBSTRING(LPAD(cert.stty_prdt_clf_cd, 8, '0'), 1, 6)) over(partition by SUBSTRING(LPAD(cert.stty_prdt_clf_cd, 8, '0'), 1, 6)) as tot_cnt
+				FROM
+					pt_rf_cert_bas cert	/*인증서기본*/
+				<include refid='myDataStatCertWhere'>
+					<property name="alias_cert" value="cert."/>
+				</include>
+				INNER JOIN
+					pt_co_stty_prdt_clf_cd clf	/*CO_법정제품분류코드*/
+					on cert.stty_prdt_clf_cd = clf.stty_prdt_clf_cd
+					and clf.use_yn = 'Y'
+				WHERE
+					SUBSTRING(cert.cert_ymd, 1, 6) BETWEEN TO_CHAR(NOW() - interval '11 month', 'YYYYMM') and TO_CHAR(now(), 'YYYYMM')
+				AND SUBSTRING(lpad(cert.stty_prdt_clf_cd, 8, '0'), 1, 6) IN
+				<foreach collection="pdctgCdList" item="item" index="index" open="(" close=")" separator=",">
+					#{item}
+				</foreach>
+				<include refid='myDataStatInstId'>
+					<property name="alias_inst_id" value="cert."/>
+				</include>
+				) r
+				GROUP BY
+					r.cert_ym, r.pdctg_cd, r.pdctg_nm, r.tot_cnt
+			) t
+			ON g.dt = t.cert_ym
+			AND g.pdctg_cd = t.pdctg_cd
+			ORDER BY g.ord asc, g.dt asc
+</select>
+
+
+
+
+
+	<!-- [나의 시험인증 현황] -> [성적서] 관련 조건 sql : join구문 -->
+	<sql id="sqlJoinMyDataRprtInfo">
+		SELECT
+			U.inst_id
+			, U.inst_rcpt_no
+			, U.rprt_no
+			, U.rcpt_co_brno
+			, U.rcpt_co_nm
+		FROM
+			(
+			<if test='(searchType == null or searchType == "") or (searchType != null and searchType != "" and searchType == "APPLY")'>
+				/* [검색:입장구분:전체] or [검색:입장구분:신청] */
+				/***** 접수사업자등록번호로 조회한 접수 *****/
+				SELECT
+					rcpt.inst_id
+					, rcpt.inst_rcpt_no
+					, rcpt.rprt_no
+					, rcpt.rcpt_co_brno
+					, rcpt.rcpt_co_nm
+				FROM pt_rf_rcpt_bas rcpt			/* 접수기본 */
+				WHERE
+					rcpt.rcpt_co_brno = #{brno}	 /* 접수회사사업자등록번호 = 로그인한 사용자 사업자번호 */
+					AND rcpt.grp_id = #{entGrpMngNo}  /* 그룹아이디 = 로그인한 사용자 그룹관리번호 */
+				<if test='instId != null and instId != ""'>
+					AND rcpt.inst_id = #{instId} 					/* [검색:시험기관] */
+				</if>
+				/***** 접수사업자등록번호로 조회한 접수 끝 *****/
+			</if>
+
+			<if test='searchType == null or searchType == ""'>
+				UNION ALL	/* [검색:입장구분:전체] */
+			</if>
+
+			<if test='(searchType == null or searchType == "") or (searchType != null and searchType != "" and searchType == "SUBMIT")'>
+				/* [검색:입장구분:전체] or [검색:입장구분:제출] */
+				/***** 제출사업자등록번호로 조회한 접수 *****/
+				SELECT
+					rcpt.inst_id
+					, rcpt.inst_rcpt_no
+					, rcpt.rprt_no
+					, rcpt.rcpt_co_brno
+					, rcpt.rcpt_co_nm
+				FROM pt_rf_rcpt_bas rcpt
+				INNER JOIN tb_ent_grp_clct_agre_mng mng	/* 기업그룹수집동의관리 */
+					ON rcpt.inst_id = mng.inst_id
+					AND rcpt.rcpt_co_brno = mng.brno
+					AND rcpt.grp_id = (case when mng.ent_grp_mng_no = '9999999999' then '_' else mng.ent_grp_mng_no end)
+					AND mng.sbmsn_co_rls_agre_yn = 'Y'
+				WHERE
+					rcpt.sbmsn_co_brno = #{brno}	/* 제출회사사업자등록번호 = 로그인한 사용자 사업자번호 */
+				<if test='instId != null and instId != ""'>
+					AND rcpt.inst_id = #{instId} 					/* [검색:시험기관] */
+				</if>
+				/***** 제출사업자등록번호로 조회한 접수 끝 *****/
+			</if>
+			) U
+		GROUP BY U.inst_id, U.inst_rcpt_no, U.rprt_no, U.rcpt_co_brno, U.rcpt_co_nm
+	</sql>
+
+	<!-- [나의 시험인증 현황] -> [성적서] 관련 조건 sql : where구문 -->
+	<sql id="sqlWhereMyDataRprtInfo">
+
+		<!-- [조회조건] 날짜 null 제거 -->
+		AND rprt.rprt_issu_ymd != '_'
+		AND rprt.rprt_issu_ymd is not null
+
+	</sql>
+
+
+	<!-- [나의 시험인증 현황] -> [성적서] > [판정결과별 성적서 비율(건수)] 데이터 조회 -->
+	<select id="selectMyDataRprtPassRate" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+		/* MyDataStatMapper.selectMyDataRprtPassRate ([성적서] > [판정결과별 성적서 비율(건수)] 데이터 조회) */
+
+		select
+			  g.intgr_gnrlz_jgmt_rslt_cd
+			, coalesce(sum(t.cnt), 0) as cnt
+		from
+			(
+				select	pcicdc.dtl_cd 		as intgr_gnrlz_jgmt_rslt_cd
+				FROM 	pt_co_intgr_comn_dtl_cd pcicdc
+				WHERE 	pcicdc.use_yn = 'Y'
+				AND 	pcicdc.grp_cd = 'ATC005'
+			) g
+		left outer join
+			(
+				select
+					rprt.intgr_gnrlz_jgmt_rslt_cd
+					, 1 as cnt
+				from
+					pt_rf_rprt_bas rprt	/*성적서기본*/
+				inner join
+					(
+						<include refid="sqlJoinMyDataRprtInfo" />
+					) rcpt	/*접수기본*/
+					on rprt.inst_id = rcpt.inst_id	/*기관아이디*/
+					and rprt.inst_rcpt_no = rcpt.inst_rcpt_no	/*기관접수번호*/
+					and rprt.rprt_no = rcpt.rprt_no	/*성적서번호*/
+				<where>
+					<include refid="sqlWhereMyDataRprtInfo" />
+					and substring(rprt.rprt_issu_ymd, 1, 4) = to_char(now(), 'YYYY')
+					and rprt.intgr_gnrlz_jgmt_rslt_cd in (
+													SELECT	pcicdc.dtl_cd as rslt_cd
+													FROM 	pt_co_intgr_comn_dtl_cd pcicdc
+													WHERE 	pcicdc.use_yn = 'Y'
+													AND 	pcicdc.grp_cd = 'ATC005'
+												)
+				</where>
+
+			) t
+			on g.intgr_gnrlz_jgmt_rslt_cd = t.intgr_gnrlz_jgmt_rslt_cd
+		group by
+			g.intgr_gnrlz_jgmt_rslt_cd
+		order by
+			g.intgr_gnrlz_jgmt_rslt_cd asc
+
+	</select>
+
+	<!-- [나의 시험인증 현황] -> [성적서] > [월별 판정결과별 성적서 추이(건수)] 데이터 조회 -->
+	<select id="selectMyDataRprtMonthPassCnt" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+		/* MyDataStatMapper.selectMyDataRprtMonthPassCnt ([성적서] > [월별 판정결과별 성적서 추이(건수)] 데이터 조회) */
+
+		select
+			TO_CHAR(to_date(g.dt, 'YYYYMMDD'), 'YY.MM') as dt
+			, g.intgr_gnrlz_jgmt_rslt_cd
+			, coalesce(sum(t.cnt), 0) as cnt
+		from
+			(
+				select
+					c.intgr_gnrlz_jgmt_rslt_cd
+					, k.dt
+				from
+					(
+						SELECT	pcicdc.dtl_cd AS intgr_gnrlz_jgmt_rslt_cd
+						FROM 	pt_co_intgr_comn_dtl_cd pcicdc
+						WHERE 	pcicdc.use_yn = 'Y'
+						AND 	pcicdc.grp_cd = 'ATC005'
+					) c
+					, (
+						select
+							to_char(a.dd, 'YYYYMM') as dt
+						from
+							(
+								(
+									with date_series as
+										(
+											select date(generate_series(now() - interval '11 month', now(), '1 month')) as dd
+										)
+									select
+										dd
+									from
+										date_series
+								)
+							) a
+					) k
+			) g
+		left outer join
+			(
+				select
+					substring(rprt.rprt_issu_ymd, 1, 6) as rprt_issu_ym
+					, rprt.intgr_gnrlz_jgmt_rslt_cd
+					, 1 as cnt
+				from
+					pt_rf_rprt_bas rprt	/*성적서기본*/
+				inner join
+					(
+						<include refid="sqlJoinMyDataRprtInfo" />
+					) rcpt	/*접수기본*/
+					on rprt.inst_id = rcpt.inst_id	/*기관아이디*/
+					and rprt.inst_rcpt_no = rcpt.inst_rcpt_no	/*기관접수번호*/
+					and rprt.rprt_no = rcpt.rprt_no	/*성적서번호*/
+				<where>
+					<include refid="sqlWhereMyDataRprtInfo" />
+					and substring(rprt.rprt_issu_ymd, 1, 6) between to_char(now() - interval '11 month', 'YYYYMM') and to_char(now(), 'YYYYMM')
+					and rprt.intgr_gnrlz_jgmt_rslt_cd in (
+						SELECT	pcicdc.dtl_cd as rslt_cd
+						FROM 	pt_co_intgr_comn_dtl_cd pcicdc
+						WHERE 	pcicdc.use_yn = 'Y'
+						AND 	pcicdc.grp_cd = 'ATC005'
+					)
+
+				</where>
+
+			) t
+			on ( g.intgr_gnrlz_jgmt_rslt_cd = t.intgr_gnrlz_jgmt_rslt_cd and g.dt = t.rprt_issu_ym )
+		group by
+			g.intgr_gnrlz_jgmt_rslt_cd, g.dt
+		order by
+			g.intgr_gnrlz_jgmt_rslt_cd asc, g.dt asc
+
+	</select>
+
+	<!--  [나의 시험인증 현황] -> [성적서] > [TOP10 품목별 성적서] 쿼리 -->
+	<sql id="sqlQueryRprtTopPdctg">
+		/* SQL : TOP10 품목별 성적서 쿼리 */
+
+		SELECT
+			pdctg.inst_pdctg_cd --기관품목코드
+			, max(pdctg.inst_pdctg_nm) as inst_pdctg_nm --기관품목명
+			, count(1) as cnt
+			<if test='queryType == "MONTHCNT"'>
+			, SUBSTRING(rprt.rprt_issu_ymd, 1, 6) as data_dt
+			</if>
+		FROM
+			pt_rf_rprt_bas rprt	/*성적서기본*/
+		INNER JOIN
+			(
+				<include refid="sqlJoinMyDataRprtInfo" />
+			) rcpt	/*접수기본*/
+			ON rprt.inst_id = rcpt.inst_id	/*기관아이디*/
+			AND rprt.inst_rcpt_no = rcpt.inst_rcpt_no	/*기관접수번호*/
+			AND rprt.rprt_no = rcpt.rprt_no	/*성적서번호*/
+		INNER JOIN
+			pt_rf_pdctg_bas pdctg	/*품목기본*/
+			ON rcpt.inst_id = pdctg.inst_id	/*기관아이디*/
+			AND rcpt.inst_rcpt_no = pdctg.inst_rcpt_no	/*기관접수번호*/
+			AND rcpt.rprt_no = pdctg.rprt_no	/*성적서번호*/
+		<where>
+			<include refid="sqlWhereMyDataRprtInfo" />
+			<choose>
+				<when test='queryType == "RATE"'>
+					AND substring(rprt.rprt_issu_ymd, 1, 4) = to_char(now(), 'YYYY')
+				</when>
+				<when test='queryType == "MONTHCNT"'>
+					and substring(rprt.rprt_issu_ymd, 1, 6) BETWEEN  TO_CHAR(NOW() - interval '11 month', 'YYYYMM') and TO_CHAR(NOW(), 'YYYYMM')
+				</when>
+			</choose>
+			<if test='queryType == "MONTHCNT"'>
+			/* top10 품목만 돌리기(받아온걸로)_받아오는 곳에서 CD로만 하고 NM은 MAX값으로 가져왔기때문에 CD로만 조회 */
+			AND (
+				(pdctg.inst_pdctg_cd) IN
+					<foreach collection="rankRprtPdctgInfoList" item="item" index="index" open="(" close=")" separator=",">
+						(#{item.rankInstPdctgCd})
+					</foreach>
+				)
+			</if>
+		</where>
+		GROUP BY
+			pdctg.inst_pdctg_cd
+			<if test='queryType == "MONTHCNT"'>
+			, substring(rprt.rprt_issu_ymd, 1, 6)
+			</if>
+		ORDER BY
+			cnt desc, pdctg.inst_pdctg_cd asc
+
+	</sql>
+
+	<!-- [나의 시험인증 현황] -> [성적서] > [TOP10 품목별 성적서 비율(건수)] 데이터 조회 -->
+	<select id="selectMyDataRprtTopPdctgRate" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+		/* MyDataStatMapper.selectMyDataRprtTopPdctgRate ([성적서] > [TOP10 품목별 성적서 비율(건수)] 데이터 조회) */
+
+		<include refid="sqlQueryRprtTopPdctg"/>
+		LIMIT 10
+
+	</select>
+
+	<!-- [나의 시험인증 현황] -> [성적서] > [월별 TOP10 품목별 성적서 추이(건수)] 데이터 조회 -->
+	<select id="selectMyDataRprtTopPdctgCnt" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+		/* MyDataStatMapper.selectMyDataRprtTopPdctgCnt ([성적서] > [월별 TOP10 품목별 성적서 추이(건수)]) */
+
+		SELECT
+			TO_CHAR(to_date(g.dt_cal, 'YYYYMM'), 'YY.MM') as dt
+			, g.inst_pdctg_cd
+			, g.inst_pdctg_nm
+			, coalesce((t.cnt), 0) as cnt
+		FROM
+			(
+				select tt_d.dt_cal, tt_co.inst_pdctg_cd, tt_co.inst_pdctg_nm, tt_co.rank_no
+				from (
+					select TO_CHAR(GENERATE_SERIES( NOW() - interval '11 month' , NOW() , '1 month'::INTERVAL) ,'YYYYMM') AS dt_cal
+				) tt_d
+				left outer join (
+					<foreach collection="rankRprtPdctgInfoList" item="item" index="index" open="(" close=")" separator="union all">
+						select #{item.rankInstPdctgCd} as inst_pdctg_cd,  #{item.rankInstPdctgNm} as inst_pdctg_nm, #{item.rankNo} as rank_no
+					</foreach>
+				) tt_co
+				ON 1 = 1
+			)g
+		LEFT OUTER JOIN
+			(
+			<include refid="sqlQueryRprtTopPdctg"/>
+			)t
+		ON g.dt_cal = t.data_dt and g.inst_pdctg_cd = t.inst_pdctg_cd  and g.inst_pdctg_nm = t.inst_pdctg_nm
+		ORDER by g.rank_no asc, g.dt_cal ASC
+
+
+	</select>
+
+	<!-- [나의 시험인증 현황] -> [성적서] > [TOP10 시험항목별 ] 쿼리 -->
+	<sql id="sqlQueryRprtTopItem">
+		/* SQL : TOP10 시험항목별 성적서 쿼리 */
+
+		SELECT
+			item.inst_test_item_cd 							--기관시험항목코드
+			, max(item.inst_test_item_nm) as inst_test_item_nm --기관시험항목명
+			, count(1) as cnt
+			<if test='queryType == "MONTHCNT"'>
+			, pcds.data_dt
+			</if>
+		FROM pt_rf_test_item_bas item	/* 시험항목기본 */
+		INNER JOIN (
+				SELECT
+					rprt.inst_id
+					, rprt.inst_rcpt_no
+					, rprt.rprt_no
+					<if test='queryType == "MONTHCNT"'>
+					, substring(rprt.rprt_issu_ymd, 1, 6) as data_dt
+					</if>
+				FROM pt_rf_rprt_bas rprt	/* 성적서기본 */
+				INNER JOIN 
+					(
+						<include refid="sqlJoinMyDataRprtInfo" />
+					) rcpt	/*접수기본*/
+					ON rprt.inst_id = rcpt.inst_id
+					AND rprt.inst_rcpt_no = rcpt.inst_rcpt_no
+					AND rprt.rprt_no = rcpt.rprt_no
+				<where>
+					<include refid="sqlWhereMyDataRprtInfo" />
+					<choose>
+						<when test='queryType == "RATE"'>
+							and substring(rprt.rprt_issu_ymd, 1, 4) = to_char(now(), 'YYYY')
+						</when>
+						<when test='queryType == "MONTHCNT"'>
+							and substring(rprt.rprt_issu_ymd, 1, 6) BETWEEN  TO_CHAR(NOW() - interval '11 month', 'YYYYMM') and TO_CHAR(NOW(), 'YYYYMM')
+						</when>
+					</choose>
+				</where>
+				GROUP BY rprt.inst_id
+						, rprt.inst_rcpt_no
+						, rprt.rprt_no
+						, rprt.rprt_issu_ymd
+			) pcds	/* 성적서, 접수,품목, 시료 */
+		ON item.inst_id = pcds.inst_id
+			AND item.inst_rcpt_no = pcds.inst_rcpt_no
+			AND item.rprt_no = pcds.rprt_no
+		<if test='queryType == "MONTHCNT"'>
+		/* top10 항목만 돌리기(받아온걸로)_받아오는 곳에서 CD로만 하고 NM은 MAX값으로 가져왔기때문에 CD로만 조회 */
+		WHERE (
+			(item.inst_test_item_cd) IN
+				<foreach collection="rankRprtItemInfoList" item="item" index="index" open="(" close=")" separator=",">
+					(#{item.rankInstTestItemCd})
+				</foreach>
+			)
+		</if>
+		GROUP BY
+			item.inst_test_item_cd
+			<if test='queryType == "MONTHCNT"'>
+			, pcds.data_dt
+			</if>
+		ORDER BY
+			cnt desc, item.inst_test_item_cd asc
+
+	</sql>
+
+	<!-- [나의 시험인증 현황] -> [성적서] > [TOP10 시험항목별 비율(건수)] 데이터 조회 -->
+	<select id="selectMyDataRprtTopItemRate" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+		/* MyDataStatMapper.selectMyDataRprtTopItemRate ([성적서] > [TOP10 시험항목별 비율(건수)] 데이터 조회) */
+
+		<include refid="sqlQueryRprtTopItem"/>
+		limit 10
+
+	</select>
+
+	<!-- [나의 시험인증 현황] -> [성적서] > [월별 TOP10 시험항목별 추이(건수)] 데이터 조회 -->
+	<select id="selectMyDataRprtTopItemCnt" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+		/* MyDataStatMapper.selectMyDataRprtTopItemCnt ([성적서] > [월별 TOP10 시험항목별 추이(건수)] 데이터 조회) */
+
+		select
+			TO_CHAR(to_date(g.dt_cal, 'YYYYMM'), 'YY.MM') as dt
+			, g.inst_test_item_cd
+			, g.inst_test_item_nm
+			, coalesce((t.cnt), 0) as cnt
+		from
+			(
+				select tt_d.dt_cal, tt_co.inst_test_item_cd, tt_co.inst_test_item_nm, tt_co.rank_no
+				from (
+					select TO_CHAR(GENERATE_SERIES( NOW() - interval '11 month' , NOW() , '1 month'::INTERVAL) ,'YYYYMM') AS dt_cal
+				) tt_d
+				left outer join (
+					<foreach collection="rankRprtItemInfoList" item="item" index="index" open="(" close=")" separator="union all">
+						select #{item.rankInstTestItemCd} as inst_test_item_cd,  #{item.rankInstTestItemNm} as inst_test_item_nm, #{item.rankNo} as rank_no
+					</foreach>
+				) tt_co
+				ON 1 = 1
+			)g
+		left outer join
+			(
+			<include refid="sqlQueryRprtTopItem"/>
+			)t
+		ON g.dt_cal = t.data_dt and g.inst_test_item_cd = t.inst_test_item_cd  and g.inst_test_item_nm = t.inst_test_item_nm
+		ORDER by g.rank_no asc, g.dt_cal ASC
+
+	</select>
+
+	<!-- [나의 시험인증 현황] -> [성적서] > [TOP10 기업별 성적서] 쿼리 -->
+	<sql id="sqlQueryRprtTopEnt">
+		/* SQL : TOP10 기업별 성적서 쿼리 */
+
+		select
+			rcpt.rcpt_co_brno --접수회사사업자번호
+			, rcpt.rcpt_co_nm --접수회사명
+			, sum(case when rprt.intgr_gnrlz_jgmt_rslt_cd = '10' then 1 else 0 end ) as cnt_10
+			, sum(case when rprt.intgr_gnrlz_jgmt_rslt_cd = '20' then 1 else 0 end ) as cnt_20
+			, sum(case when rprt.intgr_gnrlz_jgmt_rslt_cd = '30' then 1 else 0 end ) as cnt_30
+			, sum(case when rprt.intgr_gnrlz_jgmt_rslt_cd = '40' then 1 else 0 end ) as cnt_40
+			, sum(case when rprt.intgr_gnrlz_jgmt_rslt_cd = '50' then 1 else 0 end ) as cnt_50
+			, count(1) as cnt
+			<if test='queryType == "MONTHCNT"'>
+			, substring(rprt.rprt_issu_ymd, 1, 6) as data_dt
+			</if>
+		from
+			pt_rf_rprt_bas rprt				/*성적서기본*/
+		inner join
+			(
+				<include refid="sqlJoinMyDataRprtInfo" />
+			) rcpt	/*접수기본*/
+			on rprt.inst_id = rcpt.inst_id	/*기관아이디*/
+			and rprt.inst_rcpt_no = rcpt.inst_rcpt_no	/*기관접수번호*/
+			and rprt.rprt_no = rcpt.rprt_no	/*성적서번호*/
+		where
+			rprt.intgr_gnrlz_jgmt_rslt_cd in (
+				select	pcicdc.dtl_cd as rslt_cd
+				from 	pt_co_intgr_comn_dtl_cd pcicdc
+				where 	pcicdc.use_yn = 'Y'
+				and 	pcicdc.grp_cd = 'ATC005'
+			)
+
+			/* search type '제출'로 svc에서 지정함 */
+			<include refid="sqlWhereMyDataRprtInfo" />
+			<choose>
+				<when test='queryType == "RATE"'>
+					and substring(rprt.rprt_issu_ymd, 1, 4) = to_char(now(), 'YYYY')
+				</when>
+				<when test='queryType == "MONTHCNT"'>
+					and substring(rprt.rprt_issu_ymd, 1, 6) BETWEEN  TO_CHAR(NOW() - interval '11 month', 'YYYYMM') and TO_CHAR(NOW(), 'YYYYMM')
+				</when>
+			</choose>
+
+			<if test='queryType == "MONTHCNT"'>
+			/* top10 기업만 돌리기(받아온걸로) */
+			and (
+				(rcpt.rcpt_co_brno, rcpt.rcpt_co_nm) IN
+					<foreach collection="rankRcptCoInfoList" item="item" index="index" open="(" close=")" separator=",">
+						(#{item.rankRcptCoBrno}, #{item.rankRcptCoNm})
+					</foreach>
+				)
+			</if>
+
+		GROUP BY
+			rcpt.rcpt_co_brno, rcpt.rcpt_co_nm
+			<if test='queryType == "MONTHCNT"'>
+			, substring(rprt.rprt_issu_ymd, 1, 6)
+			</if>
+		order by cnt desc, rcpt.rcpt_co_nm asc
+
+	</sql>
+
+	<!-- [나의 시험인증 현황] -> [성적서] > [TOP10 기업별 성적서 비율(건수)] 데이터 조회 -->
+	<select id="selectMyDataRprtTopEntRate" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+		/* MyDataStatMapper.selectMyDataRprtTopEntRate ([성적서] > [TOP10 기업별 성적서 비율(건수)] 데이터 조회) */
+
+		<include refid="sqlQueryRprtTopEnt"/>
+		LIMIT 10
+
+	</select>
+
+	<!--  [나의 시험인증 현황] -> [성적서] > [TOP10 기업별 성적서 추이(건수)] 데이터 조회 -->
+	<select id="selectMyDataRprtTopEntCnt" parameterType="com.katri.web.platformSvc.myData.model.MyDataStatSelectReq" resultType="com.katri.web.platformSvc.myData.model.MyDataStatSelectRes">
+		/* MyDataStatMapper.selectMyDataRprtTopEntCnt ([성적서] > [TOP10 기업별 성적서 추이(건수)] 데이터 조회) */
+
+		select
+			TO_CHAR(to_date(g.dt_cal, 'YYYYMM'), 'YY.MM') as dt
+			, g.rcpt_co_brno
+			, g.rcpt_co_nm
+			, coalesce((t.cnt_10), 0) as cnt_10
+			, coalesce((t.cnt_20), 0) as cnt_20
+			, coalesce((t.cnt_30), 0) as cnt_30
+			, coalesce((t.cnt_40), 0) as cnt_40
+			, coalesce((t.cnt_50), 0) as cnt_50
+			, coalesce((t.cnt), 0) as cnt
+		from
+			(
+				select tt_d.dt_cal, tt_co.rcpt_co_brno, tt_co.rcpt_co_nm, tt_co.rank_no
+				from (
+					select TO_CHAR(GENERATE_SERIES( NOW() - interval '11 month' , NOW() , '1 month'::INTERVAL) ,'YYYYMM') AS dt_cal
+				) tt_d
+				left outer join (
+					<foreach collection="rankRcptCoInfoList" item="item" index="index" open="(" close=")" separator="union all">
+						select #{item.rankRcptCoBrno} as rcpt_co_brno,  #{item.rankRcptCoNm} as rcpt_co_nm, #{item.rankNo} as rank_no
+					</foreach>
+				) tt_co
+				ON 1 = 1
+			)g
+		left outer join
+			(
+			<include refid="sqlQueryRprtTopEnt"/>
+			)t
+		ON g.dt_cal = t.data_dt and g.rcpt_co_brno = t.rcpt_co_brno  and g.rcpt_co_nm = t.rcpt_co_nm
+		ORDER by g.rank_no asc, g.dt_cal ASC
+	</select>
+
+
+
+</mapper>

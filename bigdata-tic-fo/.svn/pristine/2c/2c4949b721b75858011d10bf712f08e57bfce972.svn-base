@@ -1,0 +1,615 @@
+package com.katri.web.join.controller;
+
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.springframework.context.MessageSource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.katri.common.Const;
+import com.katri.common.GlobalExceptionHandler.CustomMessageException;
+import com.katri.common.model.CommonRes;
+import com.katri.common.model.ResponseDto;
+import com.katri.common.util.SessionUtil;
+import com.katri.web.comm.model.CommReq;
+import com.katri.web.comm.service.CommService;
+import com.katri.web.comm.service.NiceService;
+import com.katri.web.join.model.JoinPrdtSelectRes;
+import com.katri.web.join.model.JoinSaveReq;
+import com.katri.web.join.model.JoinSaveRes;
+import com.katri.web.join.model.JoinSelectReq;
+import com.katri.web.join.model.JoinSelectRes;
+import com.katri.web.join.service.JoinService;
+
+import io.swagger.annotations.Api;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Controller
+@RequiredArgsConstructor
+@Api(tags = {"join Controller"})
+@RequestMapping(value = "/join")
+@Slf4j
+public class JoinController {
+
+	/** 공통 Service */
+	private final CommService commService;
+
+	/** Join Service */
+	private final JoinService joinService;
+
+	/** NICE Service */
+	private final NiceService niceService;
+
+	/** 메시지 Component */
+	private final MessageSource messageSource;
+
+	/*****************************************************
+	 * [회원 가입] > 회원 유형 선택 페이지 이동
+	 * @param model
+	 * @return String
+	*****************************************************/
+	@GetMapping(value = {"/joinUserType"})
+	public String joinUserType(Model model) {
+
+		return "join/joinUserType";
+	}
+
+	/*****************************************************
+	 * [회원 가입] > 약관 및 수집 동의 페이지 이동
+	 * @param model
+	 * @param joinSelectReq
+	 * @return
+	*****************************************************/
+	@PostMapping(value = {"/joinTermsList"})
+	public String joinTermsList(Model model, @ModelAttribute JoinSelectReq joinSelectReq ) {
+
+		// [0]. 반환할 정보
+		JoinSelectRes joinRes = new JoinSelectRes();
+
+		// [1]. 현재 사용중인 약관 조회
+		/* 1_0. 서비스 이용약관 (TTC001) */
+		joinSelectReq.setSearchTrmsTyCd( "TTC001" );
+		joinRes = joinService.getJoinTrmsDetail(joinSelectReq);
+		model.addAttribute("joinTrms01", joinRes);
+
+		/* 1_1. 개인정보처리방침 (TTC005) */
+		joinSelectReq.setSearchTrmsTyCd( "TTC005" );
+		joinRes = joinService.getJoinTrmsDetail(joinSelectReq);
+		model.addAttribute("joinTrms02", joinRes);
+
+		/* 1_2. 개인(신용)정보 수집 및 이용약관 (TTC003) */
+		joinSelectReq.setSearchTrmsTyCd( "TTC003" );
+		joinRes = joinService.getJoinTrmsDetail(joinSelectReq);
+		model.addAttribute("joinTrms03", joinRes);
+
+		/* 1_3. 개인정보 제3자 제공동의 (TTC004) */
+		joinSelectReq.setSearchTrmsTyCd( "TTC004" );
+		joinRes = joinService.getJoinTrmsDetail(joinSelectReq);
+		model.addAttribute("joinTrms04", joinRes);
+
+		/* 1_4. 저작권 정책 (TTC006) */
+		joinSelectReq.setSearchTrmsTyCd( "TTC006" );
+		joinRes = joinService.getJoinTrmsDetail(joinSelectReq);
+		model.addAttribute("joinTrms05", joinRes);
+
+		/* 1_5. 만 14세 이상 이용확인 (TTC002) */
+		joinSelectReq.setSearchTrmsTyCd( "TTC002" );
+		joinRes = joinService.getJoinTrmsDetail(joinSelectReq);
+		model.addAttribute("joinTrms06", joinRes);
+
+		// [2]. 반환값 셋팅
+		model.addAttribute( "joinData", joinSelectReq );
+
+		return "join/joinTermsList";
+	}
+
+	/*****************************************************
+	 * [회원 가입] > 회원 유형 별 가입 페이지 이동
+	 * @param model
+	 * @param joinSelectReq
+	 * @return
+	*****************************************************/
+	@PostMapping(value = {"/joinUserInfo"})
+	public String joinUserInfo(HttpSession session, HttpServletResponse response, Model model, @ModelAttribute JoinSelectReq joinSelectReq ) throws Exception {
+
+		/* 뒤로가기 방지 */
+		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
+		response.setHeader("Pragma", "no-cache"); // HTTP 1.0.
+		response.setHeader("Expires", "0"); // Proxies.
+
+		// [0]. 반환값 셋팅
+		String strReturn	= "";
+		String strUserTyCd	= joinSelectReq.getTargetUserTypeCd();
+
+		// [1]. 유형별 값 셋팅
+		if( !"".equals( strUserTyCd) ) {
+
+			if( Const.Code.UserTyCd.INST_GENERAL.equals( strUserTyCd ) ) {
+				// 1_0. 기관 일반
+				strReturn = "join/joinInstGnrlInfo";
+				// 1_2_0. 기관 목록 조회 후 셋팅
+				List<JoinSelectRes> lstInst = joinService.getInstList(joinSelectReq);
+
+				if( lstInst != null ) {
+					model.addAttribute( "lstInst", lstInst );
+				}
+
+			} else if( Const.Code.UserTyCd.ENT_MASTER.equals( strUserTyCd ) ) {
+				// 1_1. 기업 마스터
+				strReturn = "join/joinEntMasterInfo";
+
+			} else if( Const.Code.UserTyCd.ENT_GENERAL.equals( strUserTyCd ) ) {
+				// 1_2. 기업 일반
+				strReturn = "join/joinEntGnrlInfo";
+				// 1_2_0. 기업 그룹 목록 조회 후 셋팅
+				List<JoinSelectRes> lstEntGrp = joinService.getEntGrpList(joinSelectReq);
+
+				if( lstEntGrp != null ) {
+					model.addAttribute( "lstEntGrp", lstEntGrp );
+				}
+
+			} else if( Const.Code.UserTyCd.GENERAL.equals( strUserTyCd ) ) {
+				// 1_3. 일반
+				strReturn = "join/joinGnrlInfo";
+			}
+
+			// 2_0. 관심키워드 목록 조회 후 셋팅
+			List<JoinPrdtSelectRes> lstPrdt = joinService.getStdLgclfCdList();
+			if( lstPrdt != null ) {
+				model.addAttribute( "lstPrdt", lstPrdt );
+			}
+
+			// 3_0. NICE 업체정보를 암호화 한 데이터 세팅
+			String passEncData = niceService.getNiceData(session);
+			model.addAttribute("passEncData", passEncData);
+		}
+
+		model.addAttribute( "joinData", joinSelectReq );
+
+		return strReturn;
+	}
+
+	/*****************************************************
+	 * [회원 가입] > 아이디 중복체크
+	 * @param request
+	 * @param joinSelectReq
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@PostMapping(value = {"/idDpcnChk"})
+	public ResponseEntity<ResponseDto> idDpcnChk(HttpServletRequest request, @ModelAttribute JoinSelectReq joinSelectReq) throws Exception {
+
+		// [[0]]. 반환할 정보들
+		String 			msg 			= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); // 에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer 		resultCode 		= HttpStatus.BAD_REQUEST.value();
+		int 			nDpcnCnt		= 0;
+		boolean			bDpcnYn			= false;
+
+		try {
+
+			// 0_0. 해당 아이디 중복 체크
+			nDpcnCnt = joinService.getIdDpcnChkCnt(joinSelectReq);
+
+			// 0_1. 중복 확인 후 반환값 셋팅
+			if( nDpcnCnt == 0 ) {
+				bDpcnYn = true;
+				resultCode = HttpStatus.OK.value();
+				msg = messageSource.getMessage("result-message.messages.join.message.id.use.success", null, SessionUtil.getLocale()); // 사용 가능한 아이디입니다.
+			} else {
+				bDpcnYn = false;
+				resultCode = HttpStatus.OK.value();
+				msg = messageSource.getMessage("result-message.messages.join.message.id.use.already", null, SessionUtil.getLocale()); // 이미 사용 중인 아이디입니다.
+			}
+
+		} catch(CustomMessageException e) {
+
+			// 값 셋팅
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			msg 		= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+
+		} catch(Exception e) {
+
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(bDpcnYn)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+	/*****************************************************
+	 * [회원 가입] > 메일 인증 번호 발송
+	 * @param request
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@PostMapping(value = {"/certMailSend"})
+	public ResponseEntity<ResponseDto> certMailSend(HttpServletRequest request, @ModelAttribute JoinSelectReq joinSelectReq) throws Exception {
+
+		// [0]. 반환할 정보들
+		String 			msg 			= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); // 에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer 		resultCode 		= HttpStatus.BAD_REQUEST.value();
+		boolean 		mailSuccess 	= false;
+
+		try {
+
+			// 0_0. 인증 번호 발송
+			mailSuccess = joinService.joinCertMailSend(request, joinSelectReq);
+
+			if(mailSuccess) {
+				resultCode = HttpStatus.OK.value();
+				msg	= messageSource.getMessage("result-message.messages.join.message.cert.email.use.checked.success", null, SessionUtil.getLocale()); // 사용 가능한 이메일입니다. 입력하신 메일로 발송된 인증번호를 입력 후 인증확인을 클릭하세요.
+			}
+
+		} catch(CustomMessageException e) {
+
+			// 값 셋팅
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			msg 		= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+
+		} catch(Exception e) {
+
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(mailSuccess)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+
+	}
+
+	/*****************************************************
+	 * [회원 가입] > 이메일 인증 번호 체크
+	 * @param request
+	 * @param joinSelectReq
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@PostMapping(value = {"/certNoChk"})
+	public ResponseEntity<ResponseDto> certNoChk(HttpServletRequest request, @ModelAttribute JoinSelectReq joinSelectReq) throws Exception {
+
+		// [0]. 반환할 정보들
+		String 			msg 			= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); // 에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer 		resultCode 		= HttpStatus.BAD_REQUEST.value();
+		String 			strCertNo		= "";
+		boolean			bCertYn			= false;
+
+		try {
+
+			// 0_0. 해당 이메일의 가장 최신 인증 번호 가져오기
+			strCertNo = joinService.getCertNoOfEmlAddr(joinSelectReq);
+
+			// 0_1. 가져온 값 비교
+			if( strCertNo.equals( joinSelectReq.getChkCertNo() ) ) {
+				bCertYn = true;
+				resultCode = HttpStatus.OK.value();
+				msg = messageSource.getMessage("result-message.messages.common.message.cert.code.checked.success", null, SessionUtil.getLocale()); // 인증코드 완료
+			} else {
+				bCertYn = false;
+				resultCode = HttpStatus.OK.value();
+				msg = messageSource.getMessage("result-message.messages.common.message.cert.code.checked.fail", null, SessionUtil.getLocale()); // 인증코드가 틀립니다. 다시 확인해 주세요.
+			}
+
+		} catch(CustomMessageException e) {
+
+			// 값 셋팅
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			msg 		= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+
+		} catch(Exception e) {
+
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(bCertYn)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+	/*****************************************************
+	 * [회원 가입] > 코드 중분류 값 목록 조회
+	 * @param joinSelectReq
+	 * @return ResponseEntity<ResponseDto>
+	 * @throws Exception
+	*****************************************************/
+	@GetMapping(value = {"/getMlclfCdList"})
+	public ResponseEntity<ResponseDto> getMlclfCdList( @ModelAttribute CommReq commReq ) throws Exception {
+
+		// [0]. 반환할 정보들
+		String 			msg 		= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer 		resultCode 	= HttpStatus.BAD_REQUEST.value();
+		CommonRes 		commonRes 	= new CommonRes();
+
+		List<JoinPrdtSelectRes> mlclfCdList 	= null;
+
+		/* [1]. 중분류 목록 조회 */
+		mlclfCdList = joinService.getStdMlclfCdList(commReq);
+
+		if( mlclfCdList.size() > 0 ) {
+			resultCode = HttpStatus.OK.value();
+			msg = messageSource.getMessage("result-message.messages.common.message.search", null, SessionUtil.getLocale()); // 정상적으로 조회 하였습니다.
+
+		} else {
+
+			resultCode = HttpStatus.OK.value();
+			msg = messageSource.getMessage("result-message.messages.common.message.no.data", null, SessionUtil.getLocale()); // 데이터가 없습니다.
+
+		}
+
+		// [[3]]. 데이터 셋팅
+		commonRes.setList(mlclfCdList);
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(commonRes)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+	/*****************************************************
+	 * [회원 가입] > 회원 정보 저장
+	 * @param request
+	 * @param joinSaveReq
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@PostMapping(value = {"/saveUserJoinInfo"})
+	public ResponseEntity<ResponseDto> saveUserJoinInfo( HttpServletRequest request, @ModelAttribute JoinSaveReq joinSaveReq ) throws Exception {
+
+		// [[0]]. 반환할 정보들
+		String 			msg 			= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); // 에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer 		resultCode 		= HttpStatus.BAD_REQUEST.value();
+		JoinSaveRes		joinSaveRes		= new JoinSaveRes();
+
+		try {
+
+			// [[1]]. 저장 시작
+			String strUserTyCd	= joinSaveReq.getUserTyCd();
+
+			if( !"".equals(strUserTyCd) ) {
+
+				/* 회원 가입 정보 저장 */
+				joinSaveRes = joinService.saveUserJoinInfo(request, joinSaveReq);
+
+			}
+
+			// [[2]]. 성공 여부에 따른 메시지 셋팅 */
+			if( "".equals( joinSaveRes.getUserId() ) ) {
+				resultCode = HttpStatus.BAD_REQUEST.value();
+				msg = messageSource.getMessage("result-message.messages.common.message.save.error", null, SessionUtil.getLocale()); // 저장 중 오류가 발생하였습니다. 관리자에게 문의하여 주십시오.
+			} else {
+				resultCode = HttpStatus.OK.value();
+				msg = messageSource.getMessage("result-message.messages.common.message.save", null, SessionUtil.getLocale()); 		// 정상적으로 저장 하였습니다.
+			}
+
+		} catch(CustomMessageException e) {
+
+			// 값 셋팅
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			msg 		= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+
+		} catch(Exception e) {
+
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(joinSaveRes)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+
+	}
+
+	/*****************************************************
+	 * [회원 가입] > 회원 가입 완료 페이지 이동
+	 * @param model
+	 * @param joinSelectReq
+	 * @return
+	*****************************************************/
+	@PostMapping(value = {"/joinCmptn"})
+	public String joinCmptn(Model model, @ModelAttribute JoinSelectReq joinSelectReq ) {
+
+		model.addAttribute( "joinData", joinSelectReq );
+
+		return "join/joinCmptn";
+	}
+
+	/*****************************************************
+	 * [회원 가입] > 사업자 번호 인증 확인 후, 해당 사업자 등록번호로 상호명 조회 -> 상호명 셋팅
+	 * @param model
+	 * @param joinSelectReq
+	 * @return
+	*****************************************************/
+	@PostMapping(value = {"/getEntNm"})
+	public ResponseEntity<ResponseDto> getEntNm(Model model, @ModelAttribute JoinSelectReq joinSelectReq ) throws Exception {
+
+		// [0]. 반환할 정보들
+		String 			msg 			= messageSource.getMessage("result-message.messages.common.message.save", null, SessionUtil.getLocale()); 	// 정상적으로 저장 하였습니다.
+		Integer 		resultCode 		= HttpStatus.OK.value();
+		String			strEntNm		= "";
+
+		try {
+
+			// 0_0. 해당 사업자 등록번호로 상호명 가져오기
+			strEntNm = joinService.getBrnoEntNm(joinSelectReq);
+
+		} catch(CustomMessageException e) {
+
+			// 값 셋팅
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			msg 		= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+
+		} catch(Exception e) {
+
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(strEntNm)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+	/*****************************************************
+	 * [회원 가입] > 사업자등록번호 + 그룹ID + 그룹명 중복 체크
+	 * @param request
+	 * @param joinSelectReq
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@PostMapping(value = {"/entGrpDpcnChk"})
+	public ResponseEntity<ResponseDto> entGrpDpcnChk(HttpServletRequest request, @ModelAttribute JoinSelectReq joinSelectReq) throws Exception {
+
+		// [[0]]. 반환할 정보들
+		String 			msg 			= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); // 에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer 		resultCode 		= HttpStatus.BAD_REQUEST.value();
+		int 			nDpcnCnt		= 0;
+		boolean			bDpcnYn			= false;
+
+		try {
+
+			// 0_0. 해당 사업자등록번호 + 그룹ID + 그룹명 중복 체크
+			nDpcnCnt = joinService.getEntGrpDpcnChkCnt(joinSelectReq);
+
+			// 0_1. 중복 확인 후 반환값 셋팅
+			if( nDpcnCnt == 0 ) {
+				bDpcnYn = true;
+				resultCode = HttpStatus.OK.value();
+				msg = messageSource.getMessage("result-message.messages.join.message.ent.grp.use.success", null, SessionUtil.getLocale()); // 사용 가능한 그룹명입니다.
+			} else {
+				bDpcnYn = false;
+				resultCode = HttpStatus.OK.value();
+				msg = messageSource.getMessage("result-message.messages.join.message.ent.grp.use.already", null, SessionUtil.getLocale()); // 이미 사용중 입니다. 다시 확인해 주세요.
+			}
+
+		} catch(CustomMessageException e) {
+
+			// 값 셋팅
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			msg 		= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+
+		} catch(Exception e) {
+
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(bDpcnYn)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+	/*****************************************************
+	 * [회원 가입] > 연계 정보 중복 체크
+	 * @param request
+	 * @param joinSelectReq
+	 * @return
+	 * @throws Exception
+	*****************************************************/
+	@PostMapping(value = {"/userLinkInfoDpcnChk"})
+	public ResponseEntity<ResponseDto> userLinkInfoDpcnChk(HttpServletRequest request, @ModelAttribute JoinSelectReq joinSelectReq) throws Exception {
+
+		// [[0]]. 반환할 정보들
+		String 			msg 			= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); // 에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer 		resultCode 		= HttpStatus.BAD_REQUEST.value();
+		int 			nDpcnCnt		= 0;
+		boolean			bDpcnYn			= false;
+
+		try {
+
+			// 0_0. 연계 정보 중복 체크
+			nDpcnCnt = joinService.getUserLinkInfoDpcnChkCnt(joinSelectReq);
+
+			// 0_1. 중복 확인 후 반환값 셋팅
+			if( nDpcnCnt == 0 ) {
+				bDpcnYn = true;
+				resultCode = HttpStatus.OK.value();
+			} else {
+				bDpcnYn = false;
+				resultCode = HttpStatus.OK.value();
+				msg = messageSource.getMessage("result-message.messages.join.message.pass.auth.ci.use.already", null, SessionUtil.getLocale()); // 이미 가입된 휴대폰 번호입니다.\n 아이디 찾기를 진행하여 로그인하시기 바랍니다.\n 아이디 찾기 페이지로 이동합니다.
+			}
+
+		} catch(CustomMessageException e) {
+
+			// 값 셋팅
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			msg 		= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+
+		} catch(Exception e) {
+
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(bDpcnYn)
+				.resultMessage(msg)
+				.resultCode(resultCode)
+				.build(),
+				HttpStatus.OK);
+	}
+
+}

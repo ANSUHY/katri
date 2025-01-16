@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+    <g data-name="타원 40" style="fill:#fff;stroke:#dddada">
+        <circle cx="20" cy="20" r="20" style="stroke:none"/>
+        <circle cx="20" cy="20" r="19.5" style="fill:none"/>
+    </g>
+    <path data-name="arrow" d="m1063.674 1231.411 10 9.333-10 9.333" transform="rotate(90 1154.376 106.202)" style="stroke:#000;stroke-width:2px;fill:none"/>
+</svg>

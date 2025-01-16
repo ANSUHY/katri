@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xmlns="http://www.ehcache.org/v3"
+		xmlns:jsr107="http://www.ehcache.org/v3/jsr107"
+		xsi:schemaLocation="
+ 			http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core-3.0.xsd
+ 			http://www.ehcache.org/v3/jsr107 http://www.ehcache.org/schema/ehcache-107-ext-3.0.xsd">
+
+	<cache-template name="defaultTemplate">
+		<!-- 차후 EhCacheEventLogger가 필요할 경우 아래 경로에 class를 생성하여 사용 -->
+		<!--
+		<listeners>
+			<listener>
+				<class>com.katri.common.EhCacheEventLogger</class>
+				<event-firing-mode>ASYNCHRONOUS</event-firing-mode>
+				<event-ordering-mode>UNORDERED</event-ordering-mode>
+				<events-to-fire-on>CREATED</events-to-fire-on>
+				<events-to-fire-on>EVICTED</events-to-fire-on>
+				<events-to-fire-on>REMOVED</events-to-fire-on>
+				<events-to-fire-on>UPDATED</events-to-fire-on>
+				<events-to-fire-on>EXPIRED</events-to-fire-on>
+			</listener>
+		</listeners>
+		-->
+	</cache-template>
+
+	<cache alias="cacheAllCode" uses-template="defaultTemplate">
+		<expiry>
+			<ttl unit="hours">1</ttl>
+		</expiry>
+		<heap unit="entries">100</heap>
+	</cache>
+
+	<cache alias="cacheAllCust" uses-template="defaultTemplate">
+		<expiry>
+			<ttl unit="hours">24</ttl>
+		</expiry>
+		<heap unit="entries">180</heap>
+	</cache>
+
+	<cache alias="cacheAllMatl" uses-template="defaultTemplate">
+		<expiry>
+			<ttl unit="hours">24</ttl>
+		</expiry>
+		<heap unit="entries">100</heap>
+	</cache>
+
+</config>

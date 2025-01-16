@@ -1,0 +1,720 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="c"		uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="cm" 		uri="/WEB-INF/tlds" %>
+<%@ taglib prefix="spring"	uri="http://www.springframework.org/tags" %>
+<%@ page import="com.katri.common.Const" %>
+
+<script type="text/javascript" src="<c:url value='/asset/js/chart/dist/chart.min.js'/>"></script>
+<script type="text/javascript" src="<c:url value='/asset/js/chart/custom.color.js'/>"></script>
+
+<script type="text/javascript">
+
+	const noDataMessage = "데이터가 없습니다.";
+
+	$(document).ready(function(){
+		fn_getChartJsCertCountData(); 		//[~년 인증 전체 현황] -> [전체 인증 건수]
+		fn_getChartJsCertData();      		//[~년 인증 전체 현황] -> [월별 인층 추이(건수)]
+		fn_getChartJsCertRateData();  		//[~년 인증 현황] -> [법정기준 인증 비율]
+		fn_getChartJsCertProgressCount(); 	//[~년 인증 현황] -> [월별 법정기준 인증 추이(건수)]
+		fn_getChartJsCertRateByItem();		//[~년 품목별 인증 현황] -> [품목별 인증 비율]
+
+		/* 검색 조건 (셀렉트 박스-기관)*/
+		$('#inst-select').change(function(){
+			let selectedVal = $('#inst-select option:selected').val();
+			$("#instId").val(selectedVal);
+
+			fn_getChartJsCertCountData(); 		//[~년 인증 전체 현황] -> [전체 인증 건수]
+			fn_getChartJsCertData();      		//[~년 인증 전체 현황] -> [월별 인층 추이(건수)]
+			fn_getChartJsCertRateData();  		//[~년 인증 현황] -> [법정기준 인증 비율]
+			fn_getChartJsCertProgressCount(); 	//[~년 인증 현황] -> [월별 법정기준 인증 추이(건수)]
+			fn_getChartJsCertRateByItem();		//[~년 품목별 인증 현황] -> [품목별 인증 비율]
+		});
+
+		/* 검색조건 (셀렉트 박스-법정기준)*/
+		$("#cert-select").change(function(){
+			let selectedVal = $('#cert-select option:selected').val();
+			$("#certType").val(selectedVal);
+
+			fn_getChartJsCertRateData();  		//[~년 인증 현황] -> [법정기준 인증 비율]
+			fn_getChartJsCertProgressCount() 	//[~년 인증 현황] -> [월별 법정기준 인증 추이(건수)]
+		})
+	});
+
+	/* [나의 시험인증 현황] -> [인증] -> [~년 인증 전체 현황] -> [전체 인증 건수] */
+	function fn_getChartJsCertCountData() {
+		$.ajax({
+			url			: "/platformSvc/myData/myDataStatCert/getChartJsCertCountData"
+		  , type		: "POST"
+		  , dataType	: "json"
+		  , data		: $("#frm_myDataStatCertForm").serialize()
+		  , success		: function(jsonData, textStatus, jqXHR) {
+			 	if(jsonData.resultCode == 200) {
+			 		if(jsonData.data != null && jsonData.data.length != 0) {
+					  	let totalCount = jsonData.data.cnt;
+						$("#myDataStat-total").text(fn_addComma(totalCount, 0) + "건");
+			 		}
+			 	}
+		  }
+		});
+	}
+
+	/* [나의 시험인증 현황] -> [인증] -> [~년 인증 전체 현황] -> [월별 인층 추이(건수)]*/
+	function fn_getChartJsCertData(){
+		$.ajax({
+			url			: "/platformSvc/myData/myDataStatCert/getChartJsCertCountByMonthData"
+		  , type		: "post"
+		  , dataType	: "json"
+		  , data		: $("#frm_myDataStatCertForm").serialize()
+		  , success		: function(jsonData, textStatus, jqXHR){
+
+			  if(jsonData.resultCode == 200) {
+			  		if(jsonData.data != null && jsonData.data.length != 0) {
+
+			  			let count = 0;
+
+			  			//데이터 확인 (빈값 확인)
+			  			for(let i = 0; i < jsonData.data.length; i++) {
+			  				 jsonData.data[i].cnt == 0 ? count += 1 : "";
+			  			}
+
+			  			/* 데이터가 없을 때 */
+			  			if(count == 12) {
+			  				$("#cert-byMonth-chartArea2").html("");
+							$("#cert-byMonth-chartArea2").text(noDataMessage);
+			  			} else {
+			  				/* 데이터 있을 때 (chart.js 만들기) */
+			  				fn_setChartJsCertDataByMonth(jsonData.data, "cert-byMonth-chartArea2", "cert-byMonth-canvasArea");
+			  			}
+			  		}
+			  	} else {
+			  		//데이터 X
+			  		$("#cert-byMonth-chartArea2").html("");
+					$("#cert-byMonth-chartArea2").text(noDataMessage);
+			  	}
+		  }
+		});
+	}
+
+
+	/* [나의 시험인증 현황] -> [인증] -> [~년 인증 현황] -> [법정기준 인증 비율]  */
+	function fn_getChartJsCertRateData() {
+		$.ajax({
+			url			: "/platformSvc/myData/myDataStatCert/getChartJsCertRateData"
+		  , type		: "POST"
+		  , data		: $("#frm_myDataStatCertForm").serialize()
+		  , dataType	: "json"
+		  , success		: function(jsonData, textStatus, jqXHR) {
+
+			  if(jsonData.resultCode == 200) {
+				  if(jsonData.data != null && jsonData.data.length != 0) {
+					  let count = 0;
+
+					  //데이터 확인 (빈값 확인)
+					  for(let i = 0;  i < jsonData.data.length; i++) {
+						  jsonData.data[i].cnt == 0 ? count += 1 : "";
+					  }
+
+					  if(count == 3) {
+						  /* 데이터가 없을 때 */
+						$("#cert-byYear-chartArea").text(noDataMessage);
+					  } else {
+						  /* 데이터 있을 때 (chart.js 만들기) */
+						  fn_setChartJsCertDataByYear(jsonData.data, "cert-byYear-chartArea", "cert-byYear-canvasArea");
+					  }
+
+				  }
+			  }
+		  }
+		});
+	}
+
+	/* [나의 시험인증 현황] -> [인증] -> [~년 인증 현황] -> [월별 법정기준 인증 추이(건수) ] */
+	function fn_getChartJsCertProgressCount() {
+		$.ajax({
+			url			: "/platformSvc/myData/myDataStatCert/getChartJsCertProgressCount"
+		  , type		: "POST"
+		  , data		:  $("#frm_myDataStatCertForm").serialize()
+		  , dataType	: "json"
+		  , success		: function(jsonData, textStatus, jqXHR) {
+
+			  if(jsonData.resultCode == 200){
+				  if(jsonData.data != null && jsonData.data.length != 0) {
+
+					let count = 0;
+
+					//데이터 확인 (빈값 확인)
+					for(let i = 0; i < 12; i++) {
+						jsonData.data.conformanceList[i].cnt	== 0 ? count += 1 : "";
+						jsonData.data.safetyCertList[i].cnt		== 0 ? count += 1 : "";
+						jsonData.data.safetyConfirmList[i].cnt	== 0 ? count += 1 : "";
+					}
+
+					if(count == 36) {
+						/* 데이터가 없을 때 (전부 다 0일 때) */
+						$("#cert-countByMonth-chartArea").html("");
+						$("#cert-countByMonth-chartArea").text(noDataMessage);
+					} else {
+						/* 데이터 있을 때 (chart.js 만들기) */
+						fn_setChartJsCertProgressCountByMonth(jsonData.data.safetyConfirmList,
+															  jsonData.data.safetyCertList,
+															  jsonData.data.conformanceList,
+															  "cert-countByMonth-chartArea",
+															  "cert-countByMonth-canvasArea");
+					}
+				  } else {
+					  /* 데이터가 없을 때 */
+						$("#cert-countByMonth-chartArea").html("");
+						$("#cert-countByMonth-chartArea").text(noDataMessage);
+				  }
+			  }
+		  }
+		});
+	}
+
+	/* [나의 시험인증 현항] -> [인증] -> [~년 품목별 인증 현황] -> [품목별 인증 비율, 월별TOP3 품목별 인증 추이(건수)] */
+	function fn_getChartJsCertRateByItem() {
+		$.ajax({
+			url			: "/platformSvc/myData/myDataStatCert/getChartJsCertRateByItem"
+		  , type		: "POST"
+		  , data		: $("#frm_myDataStatCertForm").serialize()
+		  , dataType	: "json"
+		  , success		: function(jsonData, textStatus, jqXHR) {
+
+			  if(jsonData.resultCode == 200) {
+			 		if(jsonData.data != null && jsonData.data.length != 0) {
+
+			 			let count = 0;
+
+			 			//데이터 확인 (빈값 확인)
+			 			jsonData.data.chartJsTop3ByItemfirstList == null ? count += 1 : "";
+			 			jsonData.data.chartJsTop3ByItemSecondList == null ? count += 1 : "";
+			 			jsonData.data.chartJsTop3ByItemThirdList == null ? count += 1 : "";
+
+			 			if(count < 3) {
+			 				/* 품목별 인증 비율 */
+				 			fn_setChartJsCertRateByItem(jsonData.data.chartJsRateByItemList, "cert-byItem-chartArea2", "cert-byItem-canvasArea2");
+
+				 			/* 월별 TOP3 품목별 인증 추이(건수) */
+				 			fn_setChartJsCertProgressCountByMonth(jsonData.data.chartJsTop3ByItemfirstList,
+				 												  jsonData.data.chartJsTop3ByItemSecondList,
+				 												  jsonData.data.chartJsTop3ByItemThirdList,
+				 												  "cert-byItem-chartArea3", "cert-byItem-canvasArea3");
+			 			} else if(count == 3) {
+			 				//데이터 X
+							$("#cert-byItem-chartArea2").text(noDataMessage);
+					 		$("#cert-byItem-chartArea3").text(noDataMessage);
+			 			}
+
+			 		}
+			 	} else {
+			 		//데이터 X
+					$("#cert-byItem-chartArea2").text(noDataMessage);
+			 		$("#cert-byItem-chartArea3").text(noDataMessage);
+			 	}
+		  }
+		});
+	}
+
+	/* [나의 시험인증 현황] -> [인증]탭 -> [~년 인증 전체 현황] -> 월별 인증 추이(건수) */
+	function fn_setChartJsCertDataByMonth(data, chartArea, canvasArea){
+		//1. 차트 영역 설정
+		$("#" + chartArea).html("<canvas id='" + canvasArea + "'> </canvas>");
+
+		//2. 차트 데이터
+		let labels = [];
+		let datasets = [];
+		let padding= 0;
+
+		//3.차트 컬러 설정
+		let arrColor = [
+			CUSTOM_COLOR_NAVY
+			, CUSTOM_COLOR_NAVY
+			, CUSTOM_COLOR_NAVY
+			, CUSTOM_COLOR_NAVY
+			, CUSTOM_COLOR_NAVY
+			, CUSTOM_COLOR_NAVY
+			, CUSTOM_COLOR_NAVY
+			, CUSTOM_COLOR_NAVY
+			, CUSTOM_COLOR_NAVY
+			, CUSTOM_COLOR_NAVY
+			, CUSTOM_COLOR_NAVY
+			, CUSTOM_COLOR_NAVY
+		];
+
+		//4.
+		let certData = {label: "인증", data: []};
+
+		for(let i = 0; i < data.length; i++) {
+			labels.push(data[i].dt);
+			certData.data.push(data[i].cnt);
+		}
+
+		datasets.push(certData);
+
+		//4. 데이터 담기
+		const obj = {
+				id : canvasArea,
+				type : "bar",
+				datasets,
+				labels,
+				arrColor,
+				padding,
+				position: "bottom"
+		}
+
+		//차트 색상 설정
+		fn_chartColorSetting(certData, arrColor[0], arrColor[0]);
+
+		//6. 차트 그리기
+		fn_makeMyDataStatChartJs(obj);
+	}
+
+	/*
+	 * [나의 시험인증 현황] -> [인증]탭 -> [~년 인증 현황] -> [법정기준 인증 비율]
+	*/
+	function fn_setChartJsCertDataByYear(data, chartArea, canvasArea) {
+		//1. 차트 영역 설정
+		$("#" + chartArea).html("<canvas width='300px' height='400px' style='margin:0 auto' id='" + canvasArea + "'> </canvas>");
+
+		//2. 차트 데이터
+		let labels = [];
+		let datasets = [];
+		let padding = 5;
+
+		//3. 차트 컬러 설정
+		let arrColor = [
+			CUSTOM_CHART_COLOR_01
+			, CUSTOM_CHART_COLOR_04
+			, CUSTOM_CHART_COLOR_06
+		];
+
+		//4. 데이터 설정
+		for(let i = 0; i < data.length; i++) {
+			datasets.push(data[i].cnt);
+		}
+
+		labels.push("안전인증");
+		labels.push("안전확인");
+		labels.push("공급자적합성확인");
+
+		const obj = {
+				id	: canvasArea,
+				type : "pie",
+				datasets,
+				labels,
+				arrColor,
+				padding
+		}
+
+		//6.차트 그리기
+		fn_makeMainChartJs(obj);
+	}
+
+	 /* [나의 시험인증 현황] -> [인증] -> [~년 인증 현황] -> [월별 법정기준 인증 추이(건수)] */
+	 function fn_setChartJsCertProgressCountByMonth(safetyConfirmList, safetyCertList, conformanceList, chartArea, canvasArea) {
+		//1. 차트 영역 설정
+		 $("#" + chartArea).html("<canvas id='" + canvasArea + "'> </canvas>");
+		// $("#" + chartArea).html("<canvas id='" + canvasArea + "'  style='height:100%; width:100%; margin:0 auto;'> </canvas>");
+
+		//2.차트 데이터
+		let labels = [];
+		let datasets = [];
+
+		//3. 차트 컬러 설정
+		let arrColors = [
+			CUSTOM_CHART_COLOR_01
+			, CUSTOM_CHART_COLOR_04
+			, CUSTOM_CHART_COLOR_06
+			, CUSTOM_CHART_COLOR_02
+			, CUSTOM_CHART_COLOR_03
+			, CUSTOM_CHART_COLOR_05
+			, CUSTOM_CHART_COLOR_07
+			, CUSTOM_CHART_COLOR_08
+			, CUSTOM_CHART_COLOR_09
+			, CUSTOM_CHART_COLOR_10
+		];
+
+		let label1 = '';
+		let label2 = '';
+		let label3 = '';
+
+
+		for(let i = 0; i < 12; i++) {
+
+			if(safetyConfirmList != null && safetyConfirmList.length != 0){
+				if(safetyConfirmList[i].pdctgNm != null && safetyConfirmList[i].pdctgNm != '') {
+					label1 = safetyConfirmList[i].pdctgNm
+				}
+			}
+
+			if(safetyCertList != null && safetyCertList.length != 0){
+				if(safetyCertList[i].pdctgNm != null && safetyCertList[i].pdctgNm != '') {
+					label2 = safetyCertList[i].pdctgNm
+				}
+			}
+
+			if(conformanceList != null && conformanceList.length != 0){
+				if(conformanceList[i].pdctgNm != null && conformanceList[i].pdctgNm != '') {
+					label3 = conformanceList[i].pdctgNm
+				}
+			}
+		}
+
+		//4. datasets에 담기 위한 객체 생성 및 초기화
+		let safteyConfirmData	= {label: label1, data: []};  		//안전확인
+		let safetyCertData		= {label: label2, data: []};  		//안전인증
+		let conformanceData		= {label: label3, data: []};        //공급자적합성확인
+
+
+		//5. 데이터 설정
+		for(let i = 0; i < 12; i++) {
+
+			let formatDate = "";
+
+			/* 라벨 담기 */
+			if(safetyConfirmList != null && safetyConfirmList.length != 0) {
+				formatDate = safetyConfirmList[i].dt.substr(2,2) + "." + safetyConfirmList[i].dt.substr(4,2);
+			} else if(safetyCertList != null && safetyCertList.length != 0) {
+				formatDate = safetyCertList[i].dt.substr(2,2) + "." + safetyCertList[i].dt.substr(4,2);
+			} else if(conformanceList != null && conformanceList.length != 0) {
+				formatDate = conformanceList[i].dt.substr(2,2) + "." + conformanceList[i].dt.substr(4,2);
+			}
+
+			//labels에 날짜 담기
+			labels.push(formatDate);
+
+			//데이터 담기
+			safetyConfirmList != null && safetyConfirmList.length != 0 ? safteyConfirmData.data.push(safetyConfirmList[i].cnt) : "";
+			safetyCertList    != null && safetyCertList.length != 0    ? safetyCertData.data.push(safetyCertList[i].cnt)       : "";
+			conformanceList   != null && conformanceList.length != 0   ?  conformanceData.data.push(conformanceList[i].cnt)     : "";
+
+		}
+
+		//6.차트 색상 설정
+		fn_chartColorSetting(safteyConfirmData, arrColors[0], arrColors[0]);
+		fn_chartColorSetting(safetyCertData, arrColors[1], arrColors[1]);
+		fn_chartColorSetting(conformanceData, arrColors[2], arrColors[2]);
+
+		//7. 데이터 담기
+		if(safteyConfirmData.label != null && safteyConfirmData.label != '') {
+			if(safteyConfirmData.data != null & safteyConfirmData.data.length != 0) {
+				datasets.push(safteyConfirmData);
+			}
+		}
+
+		if(safetyCertData.label != null && safetyCertData.label != '') {
+			if(safetyCertData.data != null && safetyCertData.data.length != 0) {
+				datasets.push(safetyCertData);
+			}
+		}
+
+		if(conformanceData.label != null && conformanceData.label != '') {
+			if(conformanceData.data != null && conformanceData.data.length != 0) {
+				datasets.push(conformanceData);
+			}
+		}
+
+		//7. 차트 데이터 obj 셋팅
+		const obj = {
+				id: canvasArea,
+				type: "line",
+				datasets,
+				labels,
+				yDisplay: true,
+				position: "bottom",
+				display: true,
+		}
+
+		//8. 차트 그리기
+		fn_makeMyDataStatChartJs(obj);
+	 }
+
+	 /* [인증] -> [~년 품목별 인증 현황] -> [품목별 인증 비율] */
+	 function fn_setChartJsCertRateByItem(data, chartArea, canvasArea) {
+		 //1. 차트 영역 설정
+		 $("#" + chartArea).html("<canvas width='300px' height='400px' style='margin:0 auto' id='" + canvasArea + "'> </canvas>");
+
+		 //2. 차트 데이터
+		 let labels		= [];
+		 let datasets	= [];
+		 let padding 	= 0;
+
+		 //3. 차트 컬러 설정
+		 let arrColor = [
+				CUSTOM_CHART_COLOR_01
+				, CUSTOM_CHART_COLOR_02
+				, CUSTOM_CHART_COLOR_03
+				, CUSTOM_CHART_COLOR_04
+				, CUSTOM_CHART_COLOR_05
+				, CUSTOM_CHART_COLOR_06
+				, CUSTOM_CHART_COLOR_07
+				, CUSTOM_CHART_COLOR_08
+				, CUSTOM_CHART_COLOR_09
+				, CUSTOM_CHART_COLOR_10
+		 ]
+
+		 //4. 데이터 설정
+		 for(let i = 0; i < data.length; i++) {
+			 labels.push(fn_convertXss(data[i].pdctgNm));
+			 datasets.push(data[i].cnt);
+		 }
+
+		 //5. obj 셋팅
+		 /*
+		 const obj = {
+					id	: canvasArea,
+					type : "pie",
+					datasets,
+					labels,
+					arrColor,
+					padding :0,
+			}
+		 */
+
+		 const obj = {
+					"id"			: canvasArea
+					, "type" 		: "pie"
+					, "datasets"	: datasets
+					, "labels" 		: labels
+					, "arrColor"	: arrColor
+					, "legend" 		: {
+										position: 'bottom'
+											, align: 'center'
+											, labels: {
+													padding: padding
+											}
+										}
+			}
+
+			//6.차트 그리기
+			fn_makeMainChartJs(obj);
+	 }
+
+	/*
+	 * 함수명	: fn_makeMyDataStatChartJs
+	 * 설 명 : chart.js 그리는 함수
+	 */
+	function fn_makeMyDataStatChartJs(obj) {
+		//0. 차트 데이터 가져오기
+		const id = obj.id;
+		const type = obj.type;
+		const labels = obj.labels;
+		const datasets = obj.datasets;
+		const colors = obj.arrColor;
+		const padding = obj.padding;
+		const position = obj.position;
+
+		//1. 차트 영역
+		const ctx = document.getElementById(id);
+
+		//
+		const myChart = new Chart(ctx, {
+			type: type,
+			data: {
+				labels : labels,
+				datasets : datasets,
+			},
+			options: {
+				plugins: {
+					legend: {
+						  position: position,
+					},//
+				}//end of plugins
+			}
+		});
+
+}
+
+	//차트 그리기 (파이 차트)
+	function fn_makeMainChartJs(obj) {
+			//0. 차트 데이터 가져오기
+			const id = obj.id;
+			const type = obj.type;
+			const labels = obj.labels;
+			const chartDatas = obj.datasets;
+			const colors = obj.arrColor;
+			const padding = obj.padding;
+
+			//1. 차트 영역
+			const ctx = document.getElementById(id);
+
+			//
+			const myChart = new Chart(ctx, {
+				type: type,
+				data: {
+					labels: labels,
+					datasets: [{
+						label: '# of Votes',
+						data: chartDatas,
+						backgroundColor: colors,
+						borderColor: colors,
+						borderWidth: 1
+					}],
+				},
+		    options: {
+		    	responsive: false,
+		    	plugins:{
+		    	legend: { position: 'bottom',
+		    			  align: 'center',
+		    		labels: {
+		    			padding: padding
+		    		}
+		    	}, //
+		        scales: {
+		           ticks: {
+		        	   display: false
+		           }
+		        }//
+		    }//end of plugins
+		}
+	});
+	}
+
+	/**
+	 * 차트 색상 설정
+	 * @param chartData 	해당 차트 데이터
+	 * @param bgColor 		차트 그래프 배경 색
+	 * @param borderColor 	차트 그래프 선 색
+	 */
+	function fn_chartColorSetting(chartData, bgColor, borderColor) {
+		chartData.backgroundColor = bgColor;
+		chartData.borderColor = borderColor;
+	}
+
+</script>
+
+
+    <!-- ===== header ====== -->
+    <header id="header">
+        <div id="sub-mv" class="sub-myservice">
+            <div class="inner">
+                <h2>내손안의 시험인증</h2>
+                <p>시험인증 빅데이터<br class="mo-block"> 내손안의 시험인증을 소개 합니다.</p>
+                <div class="sub-obj">오브젝트</div>
+            </div>
+        </div>
+    </header>
+    <!-- ===== /header ====== -->
+
+	<form id="frm_myDataStatCertForm" name="frm_myDataStatCertForm">
+		<input type="hidden" id="searchType" name="searchType" value="" />
+		<input type="hidden" id="instId" name="instId" value=""/>
+		<input type="hidden" id="certType" name="certType" value=""/>
+		<input type="hidden" id="brno" name="brno" value="${myDataStatSelectRes.brno}"/>
+	</form>
+
+	<!-- ===== container ====== -->
+    <div id="container">
+
+         <!--breadcrumb-wr-->
+		<jsp:include page="/WEB-INF/views/layout/breadcrumbWr.jsp">
+			<jsp:param name="menuTopNo" value="02"/>
+			<jsp:param name="menuSubNo" value="0201"/>
+		</jsp:include>
+		<!-- // breadcrumb-wr-->
+
+        <!--container-->
+        <div id="cont" class="cont-myservice">
+          <!--tit-->
+          <div class="cont-platform-tit">
+            <h2 class="tit">나의 시험인증 현황</h2>
+          </div>
+
+          <!--서브메뉴-->
+          <ul class="sub-tabs grid3 type02">
+            <li class=""><a href="/platformSvc/myData/myDataStat/myDataStatInfo">통계</a></li>
+            <li class="on"><a href="/platformSvc/myData/myDataStat/myDataCertInfo">인증</a></li>
+            <li class=""><a href="/platformSvc/myData/myDataStat/myDataRprtInfo">성적서</a></li>
+            <!--li class=""><a href="UI-FRONT-0304.html">시험항목</a></li-->
+          </ul>
+
+          <div class="slt-list-wr">
+
+            <%-------------------- 기관 목록 ---------------------%>
+            <select class="select select-mysvc" id="inst-select" name="inst-select">
+            	<option value="">전체</option>
+            	<c:forEach var="instList" items="${instList}">
+					 <option value="${instList.instId}">${instList.instEngNm}</option>
+            	</c:forEach>
+            </select>
+            <%-----------------------------------------------%>
+            <!--  <button type="button" class="btn sch">조회</button> -->
+          </div>
+
+          <h4 class="stit">${myDataStatSelectRes.year}년 인증 전체 현황</h4>
+          <ul class="chart-list grid2">
+            <li>
+              <div class="hd"><h5 class="stit">전체 인증 건수</h5></div>
+              <div class="bd chart-circle" style="background:rgb(65, 107, 155);">
+                <!--Chart.js 삽입 영역-->
+                <div class="chart-circle-inner">
+                    <h3 id="myDataStat-total" style="word-break:keep-all;"></h3>
+                </div>
+              </div>
+            </li>
+            <li>
+              <div class="hd"><h5 class="stit">월별 인증 추이(건수)</h5></div>
+              <div class="bd chart-rect" id="cert-byMonth-chartArea2">
+              </div>
+            </li>
+          </ul>
+
+          <h4 class="stit01">
+            ${myDataStatSelectRes.year}년 인증 현황
+            <select class="select select-mysvc" id="cert-select">
+            	<option value="">전체</option>
+            	<option value="2">어린이법</option>
+            	<option value="3">전안법</option>
+            </select>
+          </h4>
+          <ul class="chart-list grid2">
+            <li>
+              <div class="hd"><h5 class="stit">법정기준 인증 비율</h5></div>
+              <div class="bd chart-rect" id="cert-byYear-chartArea"></div>
+              <!--챠트 들어가는 부분-->
+              <!--가로 205px-->
+              <!--
+              <div class="bd chart-circle">
+                -Chart.js 삽입 영역
+                Chart.js 삽입 영역<br>텍스트 지우고 넣어주세요
+              </div>
+              -->
+            </li>
+            <li>
+              <div class="hd"><h5 class="stit">월별 법정기준 인증 추이(건수)</h5></div>
+              <!--챠트 들어가는 부분-->
+              <div class="bd chart-rect" id="cert-countByMonth-chartArea">
+                <!--Chart.js 삽입 영역-->
+                Chart.js 삽입 영역<br>텍스트 지우고 넣어주세요
+              </div>
+            </li>
+          </ul>
+
+          <h4 class="stit">${myDataStatSelectRes.year}년 품목별 인증 현황</h4>
+          <ul class="chart-list grid2">
+            <li>
+              <div class="hd" ><h5 class="stit">품목별 인증 비율</h5></div>
+              <!--챠트 들어가는 부분-->
+              <!--가로 205px-->
+              <div class="bd chart-rect" id="cert-byItem-chartArea2">
+                Chart.js 삽입 영역<br>텍스트 지우고 넣어주세요
+              </div>
+            </li>
+            <li>
+              <div class="hd"><h5 class="stit">월별 TOP3 품목별 인증 추이(건수)</h5></div>
+              <!--챠트 들어가는 부분-->
+              <div class="bd chart-rect" id="cert-byItem-chartArea3">
+                <!--Chart.js 삽입 영역-->
+                Chart.js 삽입 영역<br>텍스트 지우고 넣어주세요
+              </div>
+            </li>
+          </ul>
+
+          <div class="btn-wr">
+            <a href="/platformSvc/myData/myInfoCert/myCertList" class="btn">나의 시험인증 정보조회 바로가기</a>
+          </div>
+
+
+        </div>
+    </div>
+    <!-- ===== /container ====== -->

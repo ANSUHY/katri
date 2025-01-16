@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.system.authrt.mapper.AuthrtMapper">
+
+	<!-- authrtGrpBas 권한 그룹 리스트 조건 sql -->
+	<sql id="sqlWhereAuthrtGrpBas">
+
+		<!-- 사이트 여부 -->
+		WHERE tagb.site_ty_cd = #{searchSiteTyCd}
+
+	</sql>
+
+	<!-- authrtGrpBas 권한 그룹 리스트 개수 조회 -->
+	<select id="selectAuthGrpBasCount" parameterType="com.katri.web.system.authrt.model.AuthrtSelectReq" resultType="int">
+		/* AuthrtMapper.selectAuthGrpBasCount ( authrtGrpBas 권한 그룹 리스트 개수 조회 ) */
+
+		SELECT	COUNT(tagb.authrt_grp_sn) as cnt
+		FROM	tb_authrt_grp_bas tagb
+
+		<include refid="sqlWhereAuthrtGrpBas"/>
+
+	</select>
+
+	<!-- authrtGrpBas 권한 그룹 리스트 조회 -->
+	<select id="selectAuthGrpBasList" parameterType="com.katri.web.system.authrt.model.AuthrtSelectReq" resultType="com.katri.web.system.authrt.model.AuthrtSelectRes">
+		/* AuthrtMapper.selectAuthGrpBasList ( 권한 그룹 리스트 조회 ) */
+
+		SELECT	(row_number() over(order by tagb.authrt_grp_sn asc)) as rnum
+				, tagb.authrt_grp_sn
+				, tagb.authrt_grp_nm
+				, tagb.site_ty_cd
+				, tcc.comn_cd_nm  as site_ty_nm
+				, tcc.comn_cd_val as site_ty_cd_val
+				, tagb.use_yn
+				, tagb.crt_dt
+				, tagb.crtr_id
+				, tagb.mdfcn_dt
+				, tagb.mdfr_id
+
+		FROM	tb_authrt_grp_bas tagb
+
+		/* 사이트 유형 코드 */
+		LEFT OUTER JOIN tb_comn_cd tcc ON ( tcc.comn_grp_cd = 'STC' and tagb.site_ty_cd = tcc.comn_cd and tcc.use_yn = 'Y')
+
+		<include refid="sqlWhereAuthrtGrpBas"/>
+
+		ORDER BY rnum asc
+
+	</select>
+
+	<!-- authrtGrpBas 권한 그룹 상세 조회 -->
+	<select id="selectAuthGrpBasDetail" parameterType="com.katri.web.system.authrt.model.AuthrtSelectReq" resultType="com.katri.web.system.authrt.model.AuthrtSelectRes">
+		/* AuthrtMapper.selectAuthGrpBasDetail ( 권한 그룹 상세 조회 ) */
+
+		SELECT	  tagb.authrt_grp_sn
+				, tagb.authrt_grp_nm
+				, tagb.site_ty_cd
+				, tagb.use_yn
+				, tagb.crt_dt
+				, tagb.crtr_id
+				, tagb.mdfcn_dt
+				, tagb.mdfr_id
+
+		FROM	tb_authrt_grp_bas tagb
+
+		/* 사이트 유형 코드 */
+		LEFT OUTER JOIN tb_comn_cd tcc ON ( tcc.comn_grp_cd = 'STC' and tagb.site_ty_cd = tcc.comn_cd and tcc.use_yn = 'Y')
+
+		WHERE	tagb.authrt_grp_sn = #{targetAuthrtGrpSn}
+
+	</select>
+
+	<!-- authrtGrpBas 권한 그룹 등록 -->
+	<insert id="insertAuthGrpBas" parameterType="com.katri.web.system.authrt.model.AuthrtSaveReq" useGeneratedKeys="true" keyProperty="authrtGrpSn">
+		/* AuthrtMapper.insertAuthGrpBas ( 권한 그룹 등록 ) */
+
+		INSERT INTO tb_authrt_grp_bas
+			(
+				  authrt_grp_nm
+				, site_ty_cd
+				, use_yn
+				, crt_dt
+				, crtr_id
+			)
+		VALUES
+			(
+				  #{authrtGrpNm}
+				, #{siteTyCd}
+				, #{useYn}
+				, now()
+				, #{crtrId}
+			)
+	</insert>
+
+	<!-- authrtGrpBas 권한 그룹 수정 -->
+	<update id="updateAuthGrpBas" parameterType="com.katri.web.system.authrt.model.AuthrtSaveReq">
+		/* AuthrtMapper.updateAuthGrpBas ( 권한 그룹 수정 ) */
+
+		UPDATE
+				tb_authrt_grp_bas
+
+		SET		authrt_grp_nm	= #{authrtGrpNm}
+				, site_ty_cd	= #{siteTyCd}
+				, use_yn		= #{useYn}
+				, mdfcn_dt		= now()
+				, mdfr_id		= #{mdfrId}
+
+		WHERE	authrt_grp_sn 	= #{authrtGrpSn}
+
+	</update>
+
+	<!-- authrtGrpMenu 권한 그룹의 메뉴별 접근 권한 리스트 조회 -->
+	<select id="selectAuthrtGrpMenuList" parameterType="com.katri.web.system.authrt.model.AuthrtSelectReq" resultType="com.katri.web.system.authrt.model.AuthrtSelectRes">
+		/* AuthrtMapper.selectAuthrtGrpMenuList ( 권한 그룹의 메뉴별 접근 권한 리스트 조회 ) */
+
+		WITH RECURSIVE auth_menu_list( site_ty_cd, menu_sn, menu_nm, up_menu_sn, all_menu_sn_val, srt_seq, menu_lvl_val, use_yn , path ) as (
+
+			SELECT 	  tmb.site_ty_cd
+					, tmb.menu_sn
+					, tmb.menu_nm
+					, tmb.up_menu_sn
+					, tmb.all_menu_sn_val
+					, tmb.srt_seq
+					, tmb.menu_lvl_val
+					, tmb.use_yn
+					, array[tmb.srt_seq]
+			FROM 	tb_menu_bas tmb
+			WHERE 	tmb.use_yn = 'Y'
+			  AND	tmb.up_menu_sn is null
+
+			UNION ALL
+
+			SELECT 	  tmb.site_ty_cd
+					, tmb.menu_sn
+					, tmb.menu_nm
+					, tmb.up_menu_sn
+					, tmb.all_menu_sn_val
+					, tmb.srt_seq
+					, tmb.menu_lvl_val
+					, tmb.use_yn
+					, array_append(agm.path, tmb.srt_seq)
+			FROM 	tb_menu_bas tmb
+			INNER JOIN
+				 auth_menu_list agm on ( tmb.up_menu_sn = agm.menu_sn and tmb.use_yn = 'Y')
+		)
+
+		/* 권한 그룹 > 메뉴 권한 조회 */
+		SELECT	  aml.site_ty_cd
+				, aml.menu_sn
+				, aml.menu_nm
+				, aml.up_menu_sn
+				, aml.all_menu_sn_val
+				, aml.srt_seq
+				, aml.menu_lvl_val
+				, aml.use_yn
+				, aml.path as srt_path
+
+				, tagmm.authrt_grp_menu_sn
+				, tagmm.cntn_authrt_yn
+
+				, tagb.authrt_grp_sn
+				, tagb.authrt_grp_nm
+		/* 메뉴 목록 */
+		FROM 	auth_menu_list aml
+
+		/* 권한 그룹 > 메뉴 권한 */
+		LEFT OUTER JOIN tb_authrt_grp_menu_mng tagmm
+			ON ( aml.menu_sn = tagmm.menu_sn and aml.use_yn = 'Y' and tagmm.authrt_grp_sn = #{targetAuthrtGrpSn} )
+
+		/* 권한 그룹 정보  */
+		LEFT OUTER JOIN tb_authrt_grp_bas tagb
+			ON ( tagmm.authrt_grp_sn = tagb.authrt_grp_sn and tagb.use_yn = 'Y' )
+
+		WHERE aml.site_ty_cd = #{searchSiteTyCd}
+
+		ORDER BY srt_path
+
+	</select>
+
+	<!-- authrtGrpBas 권한 그룹 메뉴 있는지 개수 조회 -->
+	<select id="selectAuthGrpMenuCount" parameterType="com.katri.web.system.authrt.model.AuthrtSaveReq" resultType="int">
+		/* AuthrtMapper.selectAuthGrpMenuCount ( authrtGrpBas 권한 그룹 메뉴 있는지 개수 조회 ) */
+
+		SELECT	COUNT(authrt_grp_menu_sn)
+		FROM	tb_authrt_grp_menu_mng
+		WHERE	authrt_grp_sn = #{authrtGrpSn}
+
+	</select>
+
+	<!-- authrtGrpMenu 권한 그룹 > 메뉴 전체 삭제 -->
+	<delete id="deleteAuthrtGrpMenu" parameterType="com.katri.web.system.authrt.model.AuthrtSaveReq">
+		/* AuthrtMapper.deleteAuthrtGrpMenu ( 권한 그룹의 메뉴별 접근 권한 리스트 조회 ) */
+
+		DELETE
+		FROM	tb_authrt_grp_menu_mng
+		WHERE	authrt_grp_sn = #{authrtGrpSn}
+
+	</delete>
+
+	<!-- authrtGrpMenu 권한 그룹 > 메뉴 등록 -->
+	<insert id="insertAuthrtGrpMenu" parameterType="com.katri.web.system.authrt.model.AuthrtSaveReq" useGeneratedKeys="true" keyProperty="authrtGrpMenuSn">
+		/* AuthrtMapper.insertAuthrtGrpMenu ( 권한 그룹 > 메뉴 등록 ) */
+
+		INSERT INTO tb_authrt_grp_menu_mng
+			(
+				  authrt_grp_sn
+				, menu_sn
+				, cntn_authrt_yn
+				, crt_dt
+				, crtr_id
+			)
+		VALUES
+			(
+				  #{authrtGrpSn}
+				, #{menuSn}
+				, #{cntnAuthrtYn}
+				, now()
+				, #{crtrId}
+			)
+
+	</insert>
+
+</mapper>

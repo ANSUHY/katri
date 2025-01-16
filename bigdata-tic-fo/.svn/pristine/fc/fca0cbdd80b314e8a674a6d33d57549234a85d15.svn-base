@@ -1,0 +1,316 @@
+package com.katri.web.auth.controller;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.springframework.context.MessageSource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.katri.common.GlobalExceptionHandler.CustomMessageException;
+import com.katri.common.model.ResponseDto;
+import com.katri.common.util.SessionUtil;
+import com.katri.web.auth.model.DrmncySelectReq;
+import com.katri.web.auth.model.DrmncySelectRes;
+import com.katri.web.auth.model.TryLoginUserSelectRes;
+import com.katri.web.auth.service.DrmncyService;
+import com.katri.web.auth.service.LoginService;
+import com.katri.web.comm.service.CommService;
+import com.katri.web.comm.service.NiceService;
+
+import io.swagger.annotations.Api;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Controller
+@RequiredArgsConstructor
+@Api(tags = {"Drmncy Controller"})
+@RequestMapping("/auth")
+@Slf4j
+public class DrmncyController {
+
+	/** 공통 Service */
+	private final CommService commService;
+
+	/** 메시지 Component */
+	private final MessageSource messageSource;
+
+	/** 휴면 Service */
+	private final DrmncyService drmncyService;
+
+	/** LoginService */
+	private final LoginService loginService;
+
+	/** Nice Service */
+	private final NiceService niceService;
+
+	/*****************************************************
+	 * 휴면 안내 페이지
+	 * @param
+	 * @return String
+	 * @throws Exception
+	*****************************************************/
+	@PostMapping("/drmncyInfo")
+	public String getDrmncyInfo(HttpSession session, @RequestParam String loginId, Model model) throws Exception {
+		//[[0]]. 반환할 정보
+		TryLoginUserSelectRes tryLoginUserDetail = null;
+		String sEncData	= "";
+
+		//[[1]]. 유저 정보 조회
+		try {
+			tryLoginUserDetail 	= loginService.selectTryLoginUserDetail(loginId);
+			sEncData			= niceService.getNiceData(session);
+
+		} catch (CustomMessageException e) {
+
+			String msg	= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			//로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + msg);
+
+		} catch(Exception e) {
+			throw e;
+		}
+
+		//날짜 포맷팅
+		String lastDate	= "";
+		if(tryLoginUserDetail.getLastDrmncyDt() != null && !"".equals(tryLoginUserDetail.getLastDrmncyDt())) {
+			lastDate = tryLoginUserDetail.getLastDrmncyDt().substring(0,10);
+		}
+
+		tryLoginUserDetail.setLastDrmncyDt(lastDate);
+		model.addAttribute("tryLoginUserDetail"	, tryLoginUserDetail);
+		model.addAttribute("sEncData", sEncData);
+
+		return "/auth/drmncyInfo";
+	}
+
+	/*****************************************************
+	 * 휴면 유저 메일 조회
+	 * @param String (유저 아이디)
+	 * @return ResponseEntity
+	*****************************************************/
+	@PostMapping("/drmncy/getUserMail")
+	public ResponseEntity<ResponseDto> getUserMail(@RequestParam String userId) {
+		//[[0]]. 반환할 정보
+		Integer resultCode				= HttpStatus.BAD_REQUEST.value();
+		String resultMsg				= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		DrmncySelectRes drmncySelectRes	= new DrmncySelectRes();
+
+		//[[1]].
+		try {
+			drmncySelectRes	= drmncyService.getUserMail(userId);
+			resultCode		= HttpStatus.OK.value();
+			resultMsg		= messageSource.getMessage("result-message.messages.common.message.search", null, SessionUtil.getLocale()); //정상적으로 조회하였습니다.
+		} catch (CustomMessageException e) {
+			resultCode		= HttpStatus.BAD_REQUEST.value();
+			resultMsg		= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			//로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + resultMsg);
+		} catch (Exception e) {
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+			   .data(drmncySelectRes)
+			   .resultCode(resultCode)
+			   .resultMessage(resultMsg)
+			   .build(),
+			   HttpStatus.OK
+				);
+
+	}
+
+	/*****************************************************
+	 * 휴면 인증 이메일 발송
+	 * @param String (유저 이메일)
+	 * @return ResponseEntity
+	*****************************************************/
+	@PostMapping("/drmncy/sendDrmncyMail")
+	public ResponseEntity<ResponseDto> sendDrmncyMail(HttpServletRequest request,@RequestParam String rcvrEmlAddr) throws Exception{
+		//[[0]]. 반환할 정보
+		Integer resultCode	= HttpStatus.BAD_REQUEST.value();
+		String resultMsg	= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		boolean mailSuccess	= false;
+
+		//[[1]]. 메일 발송
+		try {
+			mailSuccess = drmncyService.sendDrmncyMail(request, rcvrEmlAddr);
+			resultCode	= HttpStatus.OK.value();
+			resultMsg	= messageSource.getMessage("result-message.messages.auth.drmncy.mail.send.success", null, SessionUtil.getLocale()); //메일이 발송되었습니다.
+
+		} catch (Exception e) {
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			resultMsg	= commService.rtnMessageDfError(e.getMessage());
+
+			//로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + resultMsg);
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+			   .data(mailSuccess)
+			   .resultCode(resultCode)
+			   .resultMessage(resultMsg)
+			   .build(),
+			   HttpStatus.OK
+				);
+	}
+
+
+	/*****************************************************
+	 * 휴면 아이디 해제
+	 * @param String (유저 아이디)
+	 * @return ResponseEntity
+	*****************************************************/
+	@PostMapping("/drmncy/updateDrmncy")
+	public ResponseEntity<ResponseDto> updateDrmncy(@RequestParam String userId, @RequestParam String pCi) {
+		//[[0]]. 반환할 정보
+		Integer resultCode	= HttpStatus.BAD_REQUEST.value();
+		String resultMsg	= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		int	result			= 0;
+
+		//[[1]]. 휴면 해지
+		try {
+			result	= drmncyService.updateDrmncy(userId,pCi);
+			resultCode	= HttpStatus.OK.value();
+			resultMsg	= messageSource.getMessage("result-message.messages.common.message.update", null, SessionUtil.getLocale()); //정상적으로 수정하였습니다.
+		} catch (CustomMessageException e) {
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			resultMsg	= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			//로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + resultMsg);
+		} catch (Exception e) {
+			throw e;
+		}
+
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+			   .data(result)
+			   .resultCode(resultCode)
+			   .resultMessage(resultMsg)
+			   .build(),
+			   HttpStatus.OK);
+
+	}
+
+	/*****************************************************
+	 * 휴면 아이디 해제 (메일 인증 회원)
+	 * @param String (유저 아이디)
+	 * @return ResponseEntity
+	*****************************************************/
+	@PostMapping("/drmncy/updateDrmncyWithMail")
+	public ResponseEntity<ResponseDto> updateDrmncyWithMail(@RequestParam String userId) {
+		//[[0]]. 반환할 정보
+		Integer resultCode	= HttpStatus.OK.value();
+		String resultMsg	= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); //에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		int result			= 0;
+
+		//[[1]]. 휴면 해지
+		try {
+			result			= drmncyService.updateDrmncyWithMail(userId);
+
+			resultCode	= HttpStatus.OK.value();
+			resultMsg	= messageSource.getMessage("result-message.messages.common.message.update", null, SessionUtil.getLocale()); //정상적으로 수정하였습니다.
+		} catch (CustomMessageException e) {
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			resultMsg	= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			//로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + resultMsg);
+		} catch (Exception e) {
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+			   .data(result)
+			   .resultCode(resultCode)
+			   .resultMessage(resultMsg)
+			   .build(),
+			   HttpStatus.OK);
+	}
+
+
+	/*****************************************************
+	 * 휴면 아이디 해제 완료
+	 * @return String (휴면 아이디 해제 완료 페이지)
+	*****************************************************/
+	@GetMapping("/drmncy/drmncyAfter")
+	public String drmncyAfter() {
+		return "/auth/drmncyAfter";
+	}
+
+
+	/*****************************************************
+	 * 이메일 인증 번호 비교
+	 * @param drmncySelectReq
+	 * @return int (인증 결과)
+	*****************************************************/
+	@PostMapping("/drmncy/certNoCheck")
+	public ResponseEntity<ResponseDto> certNoCheck(HttpServletRequest request,@ModelAttribute DrmncySelectReq drmncySelectReq){
+
+		// [0]. 반환할 정보들
+		String resultMsg	= messageSource.getMessage("result-message.messages.common.message.error", null, SessionUtil.getLocale()); // 에러가 발생하였습니다. 관리자에게 문의하여 주십시오.
+		Integer resultCode	= HttpStatus.BAD_REQUEST.value();
+		boolean bCertYn		= false;
+
+		try {
+			// 0_0. 해당 이메일의 가장 최신 인증 번호 가져오기
+			bCertYn				= drmncyService.getCertNoOfEmlAddr(drmncySelectReq);
+
+			// 0_1. 가져온 값 비교
+			if( bCertYn ) {
+				resultCode	= HttpStatus.OK.value();
+				resultMsg	= messageSource.getMessage("result-message.messages.common.message.cert.code.checked.success", null, SessionUtil.getLocale()); // 인증코드 완료
+			} else {
+				resultCode	= HttpStatus.OK.value();
+				resultMsg	= messageSource.getMessage("result-message.messages.common.message.cert.code.checked.fail", null, SessionUtil.getLocale()); // 인증코드가 틀립니다. 다시 확인해 주세요.
+			}
+		} catch (CustomMessageException e) {
+			// 값 셋팅
+			resultCode	= HttpStatus.BAD_REQUEST.value();
+			resultMsg 	= commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+			// 로그에 넣기
+			log.error("\n===============ERROR=========================\n" + e.getMessage());
+			log.error("\n===============ERROR_MSG=====================\n" + resultMsg);
+		} catch(Exception e) {
+			throw e;
+		}
+
+		return new ResponseEntity<>(
+				ResponseDto.builder()
+				.data(bCertYn)
+				.resultCode(resultCode)
+				.resultMessage(resultMsg)
+				.build(),
+				HttpStatus.OK
+				);
+
+	}
+
+
+
+
+
+
+
+
+}

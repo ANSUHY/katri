@@ -1,0 +1,464 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="c"		uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="cm" 		uri="/WEB-INF/tlds" %>
+<%@ taglib prefix="spring"	uri="http://www.springframework.org/tags" %>
+
+<%@ page import="com.katri.common.Const" %>
+<c:set var="POST_TYPE_CD_FAQ" value="<%=Const.Code.PostTypeCd.FAQ%>" />
+
+<script>
+	/* 게시글 유형에 따라 호출 URL 설정  */
+	const type = {
+		"NOTICE" : {
+			"list" : "/ctnt/notice/noticeList",
+			"detail" : "/ctnt/notice/noticeDetail"
+		},
+		"FAQ" : {
+			"list" : "/ctnt/faq/faqList",
+			"detail" : "/ctnt/faq/faqList"
+		},
+		"ARCHIVE" : {
+			"list" : "/ctnt/archive/archiveList",
+			"detail" : "/ctnt/archive/archiveDetail"
+		}
+	};
+
+	$(function() {
+		// 검색
+		fn_getSearchList();
+
+		// 추천 검색어 조회
+		fn_getRecKeywordList();
+
+		/* 검색 버튼 클릭 */
+		$("#searchBtn").on("click", function(e){
+			e.preventDefault();
+
+			// 검색
+			fn_getSearchList();
+		});
+
+		/**
+		 * FAQ 답변 보기
+		 */
+		$(document).on("click", "li.li-q", function(key) {
+			const dataType = $(this).attr("data-type"); // 현재 조회 여부 확인
+			const dataKey = $(this).attr("data-key"); // 게시글 번호
+			const listAnswer = $(this).next("li.li-a"); // FAQ 답변 영역
+
+			if (dataType === "false") {
+				$.ajax({
+					  url: "/ctnt/faq/getFaqCn"
+					, type: "GET"
+					, dataType: "json"
+					, data: {
+						  nttSn : dataKey
+						, nttTyCd : "${POST_TYPE_CD_FAQ}"
+					}
+					, success: function(result) {
+						if (result.resultCode === 200) {
+							if (result.data === null) {
+								alert(result.resultMessage);
+							} else {
+								// FAQ 답변 HTML 추가
+								listAnswer.html(fn_convertXss(result.data.nttCn));
+							}
+						}
+					}
+				});
+			}
+
+			// false는 닫 -> 열, true는 열 -> 닫 (조회 구분)
+			let chgDataType = dataType === "false" ? "true" : "false";
+			$(this).attr("data-type", chgDataType);
+
+			// 해당 게시글을 제외한 다른 게시글들은 모두 false
+			$("li.li-q").not($(this)).attr("data-type", "false");
+
+			$(this).next("li.li-a").stop().slideToggle(300);
+			$(this).toggleClass('on').siblings().removeClass('on');
+			$(this).next("li.li-a").siblings("li.li-a").slideUp(300); // 1개씩 펼치기
+		});
+	});
+
+	/**
+	 * 엔터 시 검색
+	 */
+	function fn_unifiedSearchEnter() {
+		if (window.event.keyCode == 13) {
+			fn_getSearchList();
+		};
+	}
+
+	/**
+	 * 검색 조회
+	 */
+	function fn_getSearchList() {
+		if ($.trim($("#unifiedSearchKeyword").val()) === "") { // 검색어 빈 값 체크
+			alert("<spring:message code='result-message.messages.search.message.required.checked'/>"); // 검색어를 입력해주세요.
+		} else {
+			// form 초기화
+			$("#searchListFrm").attr({
+				  onsubmit: "return false"
+				, method: ""
+				, action: ""
+			});
+
+			// 검색 결과 초기화
+			$("#certDataList").html("");
+			$("#noticeList").html("");
+			$("#faqList").html("");
+			$("#archiveList").html("");
+
+			$.blockUI();
+
+			// 검색어
+			$("#searchKeyword").val($("#unifiedSearchKeyword").val());
+
+			$.ajax({
+				  url: "/search/getSearchList"
+				, type: "GET"
+				, dataType: "json"
+				, data: $("#searchListFrm").serialize()
+				, success: function(jsonData) {
+					$.unblockUI();
+
+					if (jsonData.resultCode === 200) {
+						// HTML 변수 선언 및 초기화
+						let noticeHtml = "";
+						let faqHtml = "";
+						let archiveHtml = "";
+						let certDataHtml = "";
+
+						// 인증데이터 HTML 제작
+						if (jsonData.data.certDataList !== null && jsonData.data.certDataList.length > 0) {
+							$.each(jsonData.data.certDataList, function(index, data){
+								certDataHtml += fn_returnCertDataListHtml(data);
+							});
+						} else {
+							certDataHtml += "<td colspan='5' class='no-data'>검색 결과가 없습니다.</td>";
+						}
+
+						// 공지사항 HTML 제작
+						if (jsonData.data.noticeList !== null && jsonData.data.noticeList.length > 0) {
+							$.each(jsonData.data.noticeList, function(index, data){
+								noticeHtml += fn_returnNoticeListHtml(data);
+							});
+						} else {
+							noticeHtml += "<li class='no-data'>검색 결과가 없습니다.</li>";
+						}
+
+						// FAQ HTML 제작
+						if (jsonData.data.faqList !== null && jsonData.data.faqList.length > 0) {
+							$.each(jsonData.data.faqList, function(index, data){
+								faqHtml += fn_returnFaqListHtml(data);
+							});
+						} else {
+							faqHtml += "<li class='no-data'>검색 결과가 없습니다.</li>";
+						}
+
+						// 자료실 HTML 제작
+						if (jsonData.data.archiveList !== null && jsonData.data.archiveList.length > 0) {
+							$.each(jsonData.data.archiveList, function(index, data){
+								archiveHtml += fn_returnArchiveListHtml(data);
+							});
+						} else {
+							archiveHtml += "<li class='no-data'>검색 결과가 없습니다.</li>";
+						}
+
+						// 인증데이터, 공지사항, FAQ, 자료실 HTML 추가
+						$("#certDataList").html(certDataHtml);
+						$("#noticeList").html(noticeHtml);
+						$("#faqList").html(faqHtml);
+						$("#archiveList").html(archiveHtml);
+					} else {
+						alert(jsonData.resultMessage);
+					}
+				}
+			});
+		}
+	}
+
+	/**
+	 * 인증데이터 HTML 제작
+	 */
+	function fn_returnCertDataListHtml(data) {
+		let returnHtml = "";
+
+		returnHtml =
+				"<tr style='cursor:pointer;' onclick='fn_goCertDataDetail(\"" + data.instId + "\", \"" + data.certNo + "\")'>"
+			+	"	<td>" + data.instKoEngNm + "</td>"
+			+	"	<td>" + data.mdlNm + "</td>"
+			+	"	<td>" + data.prdtNm + "</td>"
+			+	"	<td>" + data.certSttNm + "</td>"
+			+	"	<td>" + data.certNo + "</td>"
+			+	"</tr>"
+
+		return returnHtml;
+	}
+
+	/**
+	 * 해당 인증데이터 조회
+	 */
+	function fn_goCertDataDetail(instId, certNo) {
+		// 인증데이터 상세조회에 필요한 파라미터
+		$("#targetInstId").val(instId);
+		$("#targetCertNo").val(certNo);
+
+		$("#searchListFrm").attr({
+			  onsubmit: "return true"
+			, method: "GET"
+			, action: "/dataUsageGuide/certDataDetail"
+		}).submit();
+	}
+
+	/**
+	 * 인증데이터 더보기
+	 */
+	function fn_goCertDataList() {
+		// 인증데이터 검색어
+		$("#schPrdtNm").val($("#searchKeyword").val());
+
+		$("#searchListFrm").attr({
+			  onsubmit: "return true"
+			, method: "GET"
+			, action: "/dataUsageGuide/certDataList"
+		}).submit();
+	}
+
+	/**
+	 * 공지사항 HTML 제작
+	 */
+	function fn_returnNoticeListHtml(data){
+		let returnHtml = "";
+
+		returnHtml =
+				"<li>"
+			+	"	<a href='javascript:void(0)' onclick='fn_goBoardDetail(" + data.nttSn + ", \"NOTICE\")'>"
+			+	"		<div class='lst-cate'>분류 : " + data.comnCdNm + "</div>"
+			+	"		<h3 class='lst-tit'> " + data.nttSjNm + " </h3>"
+			+	"		<div class='lst-cont'>" + fn_convertXss(data.nttCn).replace(/(<([^>]+)>)/ig,"") + "</div>"
+			+	"	</a>"
+			+	"</li>";
+
+		return returnHtml;
+	}
+
+	/**
+	 * FAQ HTML 제작
+	 */
+	function fn_returnFaqListHtml(data){
+		let returnHtml = "";
+
+		returnHtml =
+				"<li class='li-q board-tr' data-type='false' data-key='" + data.nttSn + "'><span>Q</span><em class='type'>"
+			+		data.comnCdNm + "</em><p>" + data.nttSjNm + "</p>"
+			+	"</li>"
+			+	"<li class='li-a'>"
+			+	"</li>"
+
+		return returnHtml;
+	}
+
+	/**
+	 * 자료실 HTML 제작
+	 */
+	function fn_returnArchiveListHtml(data){
+		let returnHtml = "";
+
+		returnHtml =
+				"<li>"
+			+	"	<a href='javascript:void(0)' onclick='fn_goBoardDetail(" + data.nttSn + ", \"ARCHIVE\")'>"
+			+	"		<h3 class='lst-tit'> " + data.nttSjNm + " </h3>"
+			+	"		<div class='lst-cont'>" + fn_convertXss(data.nttCn).replace(/(<([^>]+)>)/ig,"") + "</div>"
+			+	"	</a>"
+			+	"</li>";
+
+		return returnHtml;
+	}
+
+	/**
+	 * 해당 게시글 이동
+	 */
+	function fn_goBoardDetail(nttSn, nttType) {
+		// 게시글 번호, 유형, 검색어 설정
+		$("#nttSn").val(nttSn);
+		$("#nttTyCd").val(nttType);
+		$("#searchKeyword").val("");
+
+		$("#searchListFrm").attr({
+			  onsubmit: "return true"
+			, method: "GET"
+			, action: type[nttType].detail // 게시글 유형에 따라 호출 URL
+		}).submit();
+	}
+
+	/**
+	 * 더보기 클릭 시 해당 게시판 이동
+	 */
+	function fn_goBoardList(nttType) {
+		$("#nttSn").val("");
+		$("#nttTyCd").val(nttType);
+		$("#searchKeyword").val($("#unifiedSearchKeyword").val());
+
+		$("#searchListFrm").attr({
+			  onsubmit: "return true"
+			, method: "GET"
+			, action: type[nttType].list
+		}).submit();
+	}
+
+	/**
+	 * 추천 검색어 조회
+	 */
+	function fn_getRecKeywordList() {
+		$.ajax({
+			  url: "/search/getRecKeywordList"
+			, type: "GET"
+			, dataType: "json"
+			, success: function(jsonData) {
+				let recKeywordHtml = "";
+
+				if (jsonData.resultCode === 200) {
+
+					if (jsonData.data !== null && jsonData.data.length > 0) {
+						// 추천 검색어 HTML 제작
+						$.each(jsonData.data, function(index, data){
+							recKeywordHtml += fn_returnRecKeywordHtml(data);
+						});
+					}
+
+					// 추천 검색어 HTML 추가
+					$("#recKeyword").html(recKeywordHtml);
+				} else {
+					alert(jsonData.resultMessage);
+				}
+			}
+		})
+	}
+
+	/**
+	 * 추천 검색어 HTML 제작
+	 */
+	function fn_returnRecKeywordHtml(data) {
+		let returnRecKeywordHtml = "";
+
+		returnRecKeywordHtml =
+				"<dd>"
+			+	"	<a href='javascript:void(0)' data-key='" + data + "' onclick='fn_recKeywordSearch(this)'>#" + data + "</a>"
+			+	"</dd>";
+
+		return returnRecKeywordHtml;
+	}
+
+	/**
+	 * 추천 검색어 검색
+	 */
+	function fn_recKeywordSearch(e) {
+		// 추천 검색어 가져오기
+		const recKeyword = $(e).attr("data-key");
+
+		// 검색어로 추천 검색어 설정
+		$("#unifiedSearchKeyword").val(recKeyword);
+
+		// 검색
+		fn_getSearchList();
+	}
+</script>
+
+<!-- ===== header ====== -->
+<header id="header">
+	<div id="sub-mv" class="sub-search">
+		<div class="inner">
+			<h2>통합검색</h2>
+			<div class="sub-obj">오브젝트</div>
+		</div>
+	</div>
+</header>
+<!-- ===== /header ====== -->
+
+<!-- ===== container ====== -->
+<div id="container">
+
+	<!--container-->
+	<div id="cont" class="cont-search">
+		<form name="searchListFrm" id="searchListFrm">
+			<!-- 이용안내 조건 -->
+			<input type="hidden" name="targetNttSn" id="targetNttSn">
+			<input type="hidden" name="nttSn" id="nttSn">
+			<input type="hidden" name="nttTyCd" id="nttTyCd">
+			<input type="hidden" name="searchKeyword" id="searchKeyword">
+			<!-- 인증데이터 조건 -->
+			<input type="hidden" name="targetInstId" id="targetInstId">
+			<input type="hidden" name="targetCertNo" id="targetCertNo">
+			<input type="hidden" name="schPrdtNm" id="schPrdtNm">
+
+			<!--tit-->
+			<div class="cont-platform-tit">
+				<h2 class="tit">통합검색</h2>
+			</div>
+
+			<div class="search-wr">
+				<div class="sch-input">
+					<input type="text" name="unifiedSearchKeyword" id="unifiedSearchKeyword" placeholder="검색어를 입력해 주세요." onkeypress="fn_unifiedSearchEnter()" value="${search.unifiedSearchKeyword}">
+					<button type="button" id="searchBtn" class="btn-t-sch">검색</button>
+				</div>
+				<dl id="recKeyword">
+				</dl>
+			</div>
+		</form>
+
+	<!--리스트 // 인증데이터-->
+	<h3 class="tit">
+		인증데이터 조회
+		<a href="javascript:void(0)" onclick="fn_goCertDataList()" class="btn cancel">더보기<i></i></a>
+	</h3>
+	<!--리스트-->
+	<div class="board-cont">
+		<table class="data-lst">
+			<caption>인증데이터 정보 제공 - 인증기관, 모델명, 제품명, 인증상태, 인증번호 내용 제공</caption>
+			<thead>
+				<tr>
+					<th>인증기관</th>
+					<th>모델명</th>
+					<th>제품명</th>
+					<th>인증상태</th>
+					<th>인증번호</th>
+				</tr>
+			</thead>
+			<tbody id="certDataList">
+			</tbody>
+		</table>
+	</div>
+
+	<!--리스트 // 공지사항-->
+	<h3 class="tit">
+		공지사항
+		<a href="javascript:void(0)" onclick="fn_goBoardList('NOTICE')" class="btn cancel">더보기<i></i></a>
+	</h3>
+	<!--리스트-->
+	<ul class="search-lst" id="noticeList">
+	</ul>
+
+	<!--리스트 // FAQ-->
+	<h3 class="tit">
+		FAQ
+		<a href="javascript:void(0)" onclick="fn_goBoardList('FAQ')" class="btn cancel">더보기<i></i></a>
+	</h3>
+	<!--리스트-->
+	<div class="board-cont" id="board-lst">
+		<ul class="board-faq" id="faqList">
+		</ul>
+	</div>
+
+	<!--리스트 // 자료실-->
+	<h3 class="tit">
+		자료실
+		<a href="javascript:void(0)" onclick="fn_goBoardList('ARCHIVE')" class="btn cancel">더보기<i></i></a>
+	</h3>
+	<!--리스트-->
+	<ul class="search-lst pds-lst" id="archiveList">
+	</ul>
+	</div>
+</div>
+<!-- ===== /container ====== -->

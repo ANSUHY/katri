@@ -1,0 +1,26 @@
+package com.katri.web.auth.model;
+
+
+import io.swagger.annotations.ApiModel;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@Data
+@EqualsAndHashCode(callSuper=false)
+@ApiModel(description = "휴면 계정 Response")
+public class DrmncySelectRes {
+
+	/** 사용자 아이디 */
+	private String userId;
+	/** 최종 휴면 일시 */
+	private String lastDrmncyDt;
+	/** 복호화된 이메일 */
+	private String strEncemlAddr;
+	/** 마스킹된 이메일 */
+	private String mailAddress;
+
+	/** 사용자 상태 코드 */
+	private String userSttCd;
+
+
+}

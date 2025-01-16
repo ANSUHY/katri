@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.batch.mapper.BatchMapper">
+
+	<!-- [휴면회원 전환] 처리 필요한 리스트 조회 -->
+	<select id="selectChgDrmncyMemList" parameterType="com.katri.batch.model.BatchChgDrmncyMemDto" resultType="com.katri.batch.model.BatchChgDrmncyMemDto">
+		/* BatchMapper.selectChgDrmncyMemList ([휴면회원 전환] 처리 필요한 리스트 조회) */
+
+		SELECT
+			(row_number() over(order by tub.last_lgn_dt ASC, tub.user_id )) as rownum
+			, tub.user_id
+
+			, TO_CHAR( COALESCE(tub.last_lgn_dt, tub.crt_dt) , 'YYYY-MM-DD' ) -- 마지막 로그인(없으면 생성일)
+		FROM tb_user_bas tub
+		WHERE  tub.user_stt_cd = 'USC020' /* 사용자상태코드가 [정상] 인것만*/
+			AND ( TO_CHAR( COALESCE(tub.last_lgn_dt, tub.crt_dt) , 'YYYY-MM-DD' )
+					<![CDATA[<=]]>
+				TO_CHAR( (now() - '1 year'::interval - '1 day'::interval) , 'YYYY-MM-DD' ) )  /* 마지막 로그인 시간이 (1년)전 보다 적으면 */
+		ORDER BY rownum desc
+	</select>
+
+	<!-- [휴면회원 전환] 처리 -->
+	<update id="updateChgDrmncyMem" parameterType="com.katri.batch.model.BatchChgDrmncyMemDto">
+		/* BatchMapper.updateChgDrmncyMem ([휴면회원 전환] 처리) */
+
+		UPDATE tb_user_bas
+		SET
+			user_stt_cd 		= 'USC030'
+			, drmncy_ymd 		= TO_CHAR( now(), 'YYYYMMDD' ) --휴면일자
+			, last_drmncy_dt 	= now() --최종휴면일시
+			, mdfr_id			= 'BATCH'
+			, mdfcn_dt			= now()
+		WHERE user_id 	= #{userId}
+	</update>
+
+	<!-- [휴면회원 전환 30일전 알림 메일] 처리 필요한 리스트 조회 -->
+	<select id="selectBeforeDrmncyMemList" parameterType="com.katri.batch.model.BatchBeforeDrmncyMemDto" resultType="com.katri.batch.model.BatchBeforeDrmncyMemDto">
+		/* BatchMapper.selectBeforeDrmncyMemList ([휴면회원 전환 30일전 알림 메일] 처리 필요한 리스트 조회) */
+
+		SELECT
+			(row_number() over(order by tub.last_lgn_dt ASC, tub.user_id )) as rownum
+			, tub.user_id
+			, tub.encpt_eml_addr_val
+			, TO_CHAR( now() + '30 day'::interval , 'YYYY-MM-DD' ) as e_drmncy_day --휴면예정일
+
+			, TO_CHAR( COALESCE(tub.last_lgn_dt, tub.crt_dt) , 'YYYY-MM-DD' ) AS rast_lgn_date -- 마지막 로그인(없으면 생성일)
+		FROM tb_user_bas tub
+		WHERE  tub.user_stt_cd = 'USC020' /* 사용자상태코드가 [정상] 인것만*/
+			AND ( TO_CHAR( COALESCE(tub.last_lgn_dt, tub.crt_dt) , 'YYYY-MM-DD' )
+					=
+				TO_CHAR( (now() - '1 year'::interval + '30 day'::interval - '1 day'::interval) , 'YYYY-MM-DD' ) )  /* 마지막 로그인 시간이 (1년 - 30일)전 */
+		ORDER BY rownum desc
+	</select>
+
+	<!-- [기업그룹수집동의여부 기관에게 알림 메일] 기관 MASTER 리스트 조회 -->
+	<select id="selectInstMasterList" resultType="com.katri.batch.model.BatchNotiInstEntGrpClctAgreDto">
+		/* BatchMapper.selectInstMasterList ([기업그룹수집동의여부 기관에게 알림 메일] 기관 MASTER 리스트 조회) */
+
+		SELECT
+			pcib.inst_id 					--기관아이디
+			, pcib.inst_nm 					--기관명
+			, mst.mst_user_nm 				--MASTER 사용자명
+			, mst.mst_encpt_eml_addr_val 	--MASTER 암호화이메일주소값
+		FROM pt_co_inst_bas pcib
+		LEFT OUTER JOIN (
+				SELECT tub.user_nm as mst_user_nm
+					, tub.encpt_eml_addr_val  as mst_encpt_eml_addr_val
+					, tium.inst_id
+				FROM tb_user_bas tub
+				INNER JOIN tb_inst_user_mng tium
+					ON tium.use_yn = 'Y'  AND tub.user_id = tium.user_id
+				WHERE tub.user_ty_cd = 'MTC001'
+					AND tub.user_stt_cd NOT IN ('USC012' , 'USC040') /* 사용자상태코드가 [가입반려], [탈퇴] 인거 제외 */
+			)mst
+			ON mst.inst_id = pcib.inst_id
+		WHERE pcib.use_yn = 'Y'
+			AND pcib.inst_id != 'T000' /* 공통기관 제외 */
+		ORDER BY pcib.inst_id ASC
+	</select>
+
+	<!-- [기업그룹수집동의여부 기관에게 알림 메일] 기관에 보낼 기업그룹수집동의여부리스트 조회 -->
+	<select id="selectInstEntGrpClctAgreList" parameterType="com.katri.batch.model.BatchNotiInstEntGrpClctAgreDto" resultType="com.katri.batch.model.BatchNotiInstEntGrpClctAgreDto">
+		/* BatchMapper.selectInstEntGrpClctAgreList ([기업그룹수집동의여부 기관에게 알림 메일] 기관에 보낼 기업그룹수집동의여부리스트 조회) */
+
+		SELECT
+			tegcam.inst_id
+			, tegcam.ent_grp_sn
+
+			, teb.brno 					--사업자등록번호
+			, teb.ent_nm 				--기업명
+			, tegb.ent_grp_mng_no 		--기업그룹ID
+			, tegb.ent_grp_nm 			--기업그룹명
+			, tegcam.info_pvsn_agre_yn	--수집동의여부
+			, TO_CHAR(tegcam.last_info_pvsn_agre_yn_dt, 'YYYY-MM-DD HH24:MI:SS') as last_info_pvsn_agre_yn_dt_fmt --수집동의여부일시
+		FROM tb_ent_grp_clct_agre_mng tegcam
+		LEFT OUTER JOIN tb_ent_grp_bas tegb
+			ON tegb.use_yn = 'Y'
+			AND tegb.ent_grp_sn = tegcam.ent_grp_sn
+		LEFT OUTER JOIN tb_ent_bas teb
+			ON teb.use_yn = 'Y'
+			AND teb.brno = tegb.brno
+		WHERE tegcam.inst_id =  #{instId}
+			AND TO_CHAR(tegcam.last_info_pvsn_agre_yn_dt , 'YYYY-MM-DD') = TO_CHAR( NOW() - '1 day'::interval , 'YYYY-MM-DD') /* 수집동의여부일시가 (1일)전 */
+		ORDER BY info_pvsn_agre_yn DESC, tegcam.last_info_pvsn_agre_yn_dt ASC
+	</select>
+
+	<!-- 배치실행이력 등록 -->
+	<insert id="insertBtchExcnHist" parameterType="com.katri.batch.model.BtchExcnHistSaveReq">
+		/* BatchMapper.insertBtchExcnHist (배치실행이력 등록) */
+
+		INSERT INTO tb_btch_excn_hist (
+			btch_id
+			, btch_excn_dt
+			, btch_rslt_cd
+			, btch_rslt_cn
+		) VALUES (
+			#{btchId}
+			, now()
+			, #{btchRsltCd}
+			, #{btchRsltCn}
+		)
+	</insert>
+
+</mapper>

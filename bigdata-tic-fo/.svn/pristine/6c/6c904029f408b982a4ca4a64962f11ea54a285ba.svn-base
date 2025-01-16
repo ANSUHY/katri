@@ -1,0 +1,475 @@
+package com.katri.web.platformSvc.myData.model;
+
+import java.util.List;
+
+import com.katri.common.model.Common;
+
+import io.swagger.annotations.ApiModel;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@Data
+@EqualsAndHashCode(callSuper=false)
+@ApiModel(description = "[플랫폼 서비스] > [내 손안의 시험인증] 의 데이터 조회 Response")
+public class MyDataSelectRes extends Common {
+
+	//==================================================== [tb_menu_cptn_mng] 관련 데이터
+	/** 메뉴구성일련번호 */
+	private Integer menuCptnSn;
+
+	/** 메뉴구성코드 */
+	private String menuCptnCd;
+
+	/** 메뉴구성명 */
+	private String menuCptnNm;
+
+	/** 메뉴구성내용 */
+	private String menuCptnCn;
+
+	/** 메뉴구성내용__unescape : JAVA에서 셋팅해줌*/
+	private String menuCptnCnUnescape;
+	//====================================================// [tb_menu_cptn_mng] 관련 데이터 끝
+
+	//==================================================== [##이용약관##] [tb_trms_bas]관련 데이터
+	/** [##이용약관##] _약관일련번호 */
+	private String trmsSn;
+
+	/** [##이용약관##] _약관내용 */
+	private String trmsCn;
+
+	/** [##이용약관##] _약관내용__unescape : JAVA에서 셋팅해줌*/
+	private String trmsCnUnescape;
+	//====================================================// [##이용약관##] [tb_trms_bas]관련 데이터
+
+	//==================================================== [##인증기관+기업그룹수집동의이력##] LIST
+	/** [##인증기관##] 기관아이디 */
+	private String instId;
+
+	/** [##인증기관##] 기관명 */
+	private String instNm;
+
+	/** [##기업그룹수집동의이력##] 정보제공동의여부 */
+	private String infoPvsnAgreYn;
+
+	/** [##기업그룹제출회사공개동의이력##] 제출회사공개동의여부 */
+	private String sbmsnCoRlsAgreYn;
+	//====================================================// [##인증기관+기업그룹수집동의이력##] LIST
+
+	/** 번호 */
+	private Integer rownum;
+
+	//==================================================== [인증서]관련 데이터
+	/** 기관아이디 */
+	//private String instId; --위에 같이씀
+
+	/** 기관명(국문) */
+	//private String instNm; --위에 같이씀
+
+	/** 기관명(영문) */
+	private String instEngNm;
+
+	/** 기관명(영문)_소문자 */
+	private String instEngNmLower;
+
+	/** 기관명(국문, 영문) */
+	private String instKoEngNm;
+
+	/** 인증번호 */
+	private String certNo;
+
+	/** 기관인증식별값 */
+	private String instCertIdntfcVal;
+
+	/** 인증구분코드 */
+	private String certDivCd;
+
+	/** 인증구분명 */
+	private String certDivNm;
+
+	/** 인증상태코드 */
+	private String certSttCd;
+
+	/** 인증상태명 */
+	private String certSttNm;
+
+	/** 인증일자 */
+	private String certYmd;
+
+	/** 인증일자_포맷팅 */
+	private String certYmdFmt;
+
+	/** 인증최종변경일자 */
+	private String certLastChgYmd;
+
+	/** 인증변경사유내용 */
+	private String certChgResnCn;
+
+	/** 최초인증번호 */
+	private String frstCertNo;
+
+	/** 제품명 */
+	private String prdtNm;
+
+	/** 브랜드명 */
+	private String brdNm;
+
+	/** 모델명 */
+	private String mdlNm;
+
+	/** 파생모델명 */
+	private String drvnMdlNm;
+
+	/** 법정제품분류코드 */
+	private String sttyPrdtClfCd;
+
+	/** 법정제품분류명 */
+	private String sttyPrdtClfNm;
+
+	/** 법정제품세분류명 */
+	private String sttyPrdtDtclfNm;
+
+	/** 규격명 */
+	private String stndNm;
+
+	/** 비고내용 */
+	private String rmkCn;
+
+	/** 수입제조구분코드 */
+	private String incmMnftrDivCd;
+
+	/** 제조고객회사명 */
+	private String mnftrCustcoNm;
+
+	/** 제조고객회사사업자등록번호 */
+	private String mnftrCustcoBrno;
+
+	/** 제조고객회사국가명 */
+	private String mnftrCustcoNtnNm;
+
+	/** 제조고객회사대표자명 */
+	private String mnftrCustcoRprsvNm;
+
+	/** 제조고객회사우편번호 */
+	private String mnftrCustcoZip;
+
+	/** 제조고객회사주소 */
+	private String mnftrCustcoAddr;
+
+	/** 제조고객회사전화번호 */
+	private String mnftrCustcoTelno;
+
+	/** 수입고객회사명 */
+	private String incmCustcoNm;
+
+	/** 수입고객회사사업자등록번호 */
+	private String incmCustcoBrno;
+
+	/** 수입고객회사대표자명 */
+	private String incmCustcoRprsvNm;
+
+	/** 수입고객회사우편번호 */
+	private String incmCustcoZip;
+
+	/** 수입고객회사주소 */
+	private String incmCustcoAddr;
+
+	/** 수입고객회사전화번호 */
+	private String incmCustcoTelno;
+	//====================================================// [인증서]관련 데이터 끝
+
+	//==================================================== [성적서] 관련 데이터
+	/** 기관아이디 */
+	//private String instId; --위에 같이씀
+
+	/** 기관접수번호 */
+	private String instRcptNo;
+
+	/** 성적서번호 */
+	private String rprtNo;
+
+	/** 성적서발급회차번호 */
+	private String rprtIssuTmsNo;
+
+	/** 시험시작일자 */
+	private String testBgngYmd;
+
+	/** 시험종료일자 */
+	private String testEndYmd;
+
+	/** 통합성적서용도구분코드 */
+	private String intgrRprtPrposDivCd;
+
+	/** 기관성적서용도구분코드 */
+	private String instRprtPrposDivCd;
+
+	/** 기관성적서용도구분명 */
+	private String instRprtPrposDivNm;
+
+	/** 통합성적서구분코드 */
+	private String intgrRprtDivCd;
+
+	/** 기관성적서구분코드 */
+	private String instRprtDivCd;
+
+	/** 기관성적서구분명 */
+	private String instRprtDivNm;
+
+	/** 통합종합판정결과코드 */
+	private String intgrGnrlzJgmtRsltCd;
+
+	/** 통합종합판정결과명 */
+	private String intgrGnrlzJgmtRsltNm;
+
+	/** 기관종합판정결과코드 */
+	private String instGnrlzJgmtRsltCd;
+
+	/** 기관종합판정결과명 */
+	private String instGnrlzJgmtRsltNm;
+
+	/** 시험접수일자 */
+	private String testRcptYmd;
+
+	/** 성적서발급일자 */
+	private String rprtIssuYmd;
+
+	/** 성적서발급일자_포맷팅 */
+	private String rprtIssuYmdFmt;
+
+	/** 성적서수정발급일자 */
+	private String rprtMdfcnIssuYmd;
+
+	/** 안전인증번호 */
+	private String safeCertNo;
+
+	/** 검사방법내용 */
+	private String inspMtdCn;
+
+	/** 검사절차내용 */
+	private String inspPrcdCn;
+
+	/** 안전기준외적용내용 */
+	private String safeCrtraFrgnAplcnCn;
+
+	/** 비고내용 */
+	//private String rmkCn; --위에 같이씀
+
+	/** 기타내용 */
+	private String etcCn;
+
+	/** 수집파일일자 */
+	private String clctFileYmd;
+
+	/** 최초적재일자 */
+	private String frstLdngYmd;
+
+	/** 변경적재일자 */
+	private String chgLdngYmd;
+
+	/** ETL작업일시 */
+	private String etlJobDt;
+
+	/** ETL작업아이디 */
+	private String etlJobId;
+
+	/** 참조관계점검오류여부 */
+	private String refRltChckErrYn;
+
+	/** 접수회사명 */
+	private String rcptCoNm;
+
+	/** 제출회사명 */
+	private String sbmsnCoNm;
+
+	//====================================================// [성적서] 관련 데이터 끝
+
+	//==================================================== [성적서_품목] 관련 데이터 시작
+	/** 기관아이디 */
+	//private String instId; --위에 같이씀
+
+	/** 기관접수번호 */
+	//private String instRcptNo; --위에 같이씀
+
+	/** 성적서번호 */
+	//private String rprtNo; --위에 같이씀
+
+	/** 기관품목코드 */
+	private String instPdctgCd;
+
+	/** 표준대분류코드 */
+	private String stdLgclfCd;
+
+	/** 표준대분류명 */
+	private String stdLgclfNm;
+
+	/** 표준중분류코드 */
+	private String stdMlclfCd;
+
+	/** 표준중분류명 */
+	private String stdMlclfNm;
+
+	/** 기관품목명 */
+	private String instPdctgNm;
+
+	/** 수집파일일자 */
+	//private String clctFileYmd; --위에 같이씀
+
+	/** 최초적재일자 */
+	//private String frstLdngYmd; --위에 같이씀
+
+	/** 변경적재일자 */
+	//private String chgLdngYmd; --위에 같이씀
+
+	/** ETL작업일시 */
+	//private String etlJobDt; --위에 같이씀
+
+	/** ETL작업아이디 */
+	//private String etlJobId; --위에 같이씀
+
+	/** 참조관계점검오류여부 */
+	//private String refRltChckErrYn; --위에 같이씀
+
+	/** 제조국가명 */
+	private String mnftrNtnNm;
+
+	/** 모델명 */
+	//private String mdlNm; --위에 같이씀
+
+	/** 제조업체명 */
+	private String mnftrEntrpsNm;
+
+	/** 시료건수 */
+	private String sampleTotalCnt;
+
+	/** 성적서_품목 목록 */
+	private List<MyDataSelectRes> rprtPdctgList;
+	//====================================================// [성적서_품목] 관련 데이터 끝
+
+	//==================================================== [성적서_시료] 관련 데이터 시작
+
+	/** 기관시료번호 */
+	private String instSampleNo;
+
+	/** 기관시료번호 */
+	private String instSampleNm;
+
+	/** 기관시험항목코드 */
+	private String instTestItemCd;
+
+	/** 기관시험항목명 */
+	private String instTestItemNm;
+
+	/** 기관규격명 */
+	private String instStndNm;
+
+	/** 기관조건명 */
+	private String instCondNm;
+
+	/** 기관단위명 */
+	private String instUnitNm;
+
+	/** 사용기기명 */
+	private String useIstmtNm;
+
+	/** 검출한계내용 */
+	private String dtctLimitCn;
+
+	/** 시험결과관리번호 */
+	private String testRsltMngNo;
+
+	/** 시험결과명 */
+	private String testRsltNm;
+
+	/** 시험기준값 */
+	private String testCrtraVal;
+
+	/** 시험측정값 */
+	private String testMsrmtVal;
+
+	/** 기관판정결과명 */
+	private String instJgmtRsltNm;
+
+	/** CAS번호 */
+	private String casNo;
+
+	/** 성적서_시료 정보 목록 */
+	private List<MyDataSelectRes> instSampleList;
+
+	/** 성적서_시료별 시험항목 정보 목록 */
+	private List<MyDataSelectRes> instTestItemList;
+
+	/** 성적서_시험항목별 시험결과 목록 */
+	private List<MyDataSelectRes> instTestItemRsltList;
+
+	/** 하나의 [##시료 정보##] 에 [##시험항목별 시험결과##] 몇개인지 count */
+	private Integer oneSapmleCountRsltCnt;
+
+	/** 하나의 [##시료별 시험항목 정보##] 에 [##시험항목별 시험결과##] 몇개인지 */
+	private Integer oneTestItemCountRsltCnt;
+	//====================================================// [성적서_시료] 관련 데이터 끝
+
+	//==================================================== [tb_cert_adit_info_mng]관련 데이터
+	/** 추가정보명 */
+	private String certAditInfoNm;
+
+	/** 추가정보내용 */
+	private String certAditInfoCn;
+
+	/** 추가정보 등록여부 */
+	private String haveCertAditInfo;
+	//====================================================// [tb_cert_adit_info_mng]관련 데이터 끝
+
+	//====================================================  QR이미지파일 관련 데이터
+	/** QR이미지파일주소 */
+	private String qrImgFileFullAddr;
+
+	/** QR코드 생성여부 */
+	private String haveQrImgFile;
+	//====================================================//  QR이미지파일 관련 데이터
+
+	//==================================================== 제품사진 관련 데이터
+	/** imgName(파일명) 리스트 */
+	private List<String> imgNameList;
+	//====================================================// 제품사진 관련 데이터 데이터 끝
+
+	//==================================================== [##인증기관##], [##시험기관##] select박스를 만들기위한 [pt_co_inst_bas]관련 데이터
+	/** [##인증기관##], [##시험기관##] SELECT박스 LIST_기관아이디 */
+	private String lsInstId;
+
+	/** [##인증기관##], [##시험기관##] SELECT박스 LIST_기관명 */
+	private String lsInstNm;
+	//====================================================// [##인증기관##], [##시험기관##] select박스를 만들기위한 [pt_co_inst_bas]관련 데이터
+
+	//==================================================== [##통합공통상세코드##] select박스를 만들기위한 [pt_co_intgr_comn_dtl_cd]관련 데이터
+	/** [##통합공통상세코드##] SELECT박스 LIST_디테일코드 */
+	private String lsDtlCd;
+
+	/** [##통합공통상세코드##] SELECT박스 LIST_디테일코드명 */
+	private String lsDtlCdNm;
+	//====================================================// [##통합공통상세코드##] select박스를 만들기위한 [pt_co_intgr_comn_dtl_cd]관련 데이터
+
+	//==================================================== [##CO_법정제품분류##] select박스를 만들기위한 [pt_co_stty_prdt_clf_cd]관련 데이터
+	/** [##CO_법정제품분류##] SELECT박스 LIST_법정제품분류코드 */
+	private String lsSttyPrdtClfCd;
+
+	/** [##CO_법정제품분류##] SELECT박스 LIST_법정제품세분류명 */
+	private String lsSttyPrdtDtclfNm;
+	//====================================================// [##CO_법정제품분류##] select박스를 만들기위한 [pt_co_stty_prdt_clf_cd]관련 데이터
+
+	//==================================================== [##제품분류_대##] select박스를 만들기위한 [pt_co_indst_std_lgclf_cd]관련 데이터
+	/** [##제품분류_대##] SELECT박스 LIST_표준대분류코드 */
+	private String lsStdLgclfCd;
+
+	/** [##제품분류_대##] SELECT박스 LIST_표준대분류명 */
+	private String lsStdLgclfNm;
+	//====================================================// [##제품분류_대##] select박스를 만들기위한 [pt_co_indst_std_lgclf_cd]관련 데이터
+
+	//==================================================== [##제품분류_중##] select박스를 만들기위한 [pt_co_indst_std_mlclf_cd]관련 데이터
+	/** [##제품분류_중##] SELECT박스 LIST_표준중분류코드 */
+	private String lsStdMlclfCd;
+
+	/** [##제품분류_중##] SELECT박스 LIST_표준중분류명 */
+	private String lsStdMlclfNm;
+	//====================================================// [##제품분류_중##] select박스를 만들기위한 [pt_co_indst_std_mlclf_cd]관련 데이터
+
+
+}

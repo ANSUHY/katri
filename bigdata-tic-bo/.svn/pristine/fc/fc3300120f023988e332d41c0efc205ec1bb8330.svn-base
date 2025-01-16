@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.comm.mapper.FileMapper">
+
+	<!-- 파일 목록 조회 -->
+	<select id="selectFileList" parameterType="com.katri.web.comm.model.FileDto" resultType="com.katri.web.comm.model.FileDto">
+		/* FileMapper.selectFileList (파일 목록 조회) */
+		SELECT
+			tfm.file_sn
+			, tfm.orgnl_file_nm
+			, tfm.strg_file_nm
+			, tfm.strg_file_path_addr
+			, tfm.file_extn_nm
+			, tfm.file_sz_val
+			, tfm.srt_seq
+			, tfm.del_yn
+			, tfm.file_div_nm
+			, tfm.ref_div_val
+			, tfm.link_url_addr
+			, tfm.crt_dt
+			, tfm.crtr_id
+			, tfm.mdfcn_dt
+			, tfm.mdfr_id
+		FROM tb_file_mng tfm
+		WHERE tfm.del_yn = 'N'
+			<if test="fileDivNm != null and fileDivNm != ''">
+				AND tfm.file_div_nm = #{fileDivNm}
+			</if>
+			<if test="refDivVal != null and refDivVal != ''">
+				AND tfm.ref_div_val = #{refDivVal}
+			</if>
+			<if test="linkUrlAddr != null and linkUrlAddr != ''">
+				AND tfm.link_url_addr  = #{linkUrlAddr}
+			</if>
+		ORDER BY tfm.file_sn ASC
+	</select>
+
+	<!-- 파일 상세 조회 -->
+	<select id="selectFile" parameterType="com.katri.web.comm.model.FileDto" resultType="com.katri.web.comm.model.FileDto">
+		/* FileMapper.selectFile (파일 상세 조회) */
+		SELECT
+			tfm.file_sn
+			, tfm.orgnl_file_nm
+			, tfm.strg_file_nm
+			, tfm.strg_file_path_addr
+			, tfm.file_extn_nm
+			, tfm.file_sz_val
+			, tfm.srt_seq
+			, tfm.del_yn
+			, tfm.file_div_nm
+			, tfm.ref_div_val
+			, tfm.link_url_addr
+			, tfm.crt_dt
+			, tfm.crtr_id
+			, tfm.mdfcn_dt
+			, tfm.mdfr_id
+		FROM tb_file_mng tfm
+		WHERE tfm.del_yn = 'N'
+			<if test="fileSn != null and fileSn != ''">
+				AND tfm.file_sn = #{fileSn}
+			</if>
+			<if test="fileDivNm != null and fileDivNm != ''">
+				AND tfm.file_div_nm = #{fileDivNm}
+			</if>
+			<if test="refDivVal != null and refDivVal != ''">
+				AND tfm.ref_div_val = #{refDivVal}
+			</if>
+			<if test="linkUrlAddr != null and linkUrlAddr != ''">
+				AND tfm.link_url_addr  = #{linkUrlAddr}
+			</if>
+		LIMIT 1
+	</select>
+
+	<!-- 파일 정보 등록 -->
+	<insert id="insertFile" parameterType="com.katri.web.comm.model.FileDto" useGeneratedKeys="true" keyProperty="fileSn">
+		/* FileMapper.insertFile (파일 정보 등록) */
+		INSERT INTO tb_file_mng (
+			file_div_nm
+			, ref_div_val
+			, orgnl_file_nm
+			, strg_file_nm
+			, strg_file_path_addr
+			, file_extn_nm
+			, srt_seq
+			, file_sz_val
+			, del_yn
+			, crt_dt
+			, crtr_id
+			, link_url_addr
+		) VALUES (
+			#{fileDivNm}
+			, #{refDivVal}
+			, #{orgnlFileNm}
+			, #{strgFileNm}
+			, #{strgFilePathAddr}
+			, #{fileExtnNm}
+			, ( SELECT COALESCE( MAX(srt_seq), 0) + 1 FROM tb_file_mng tfm WHERE del_yn='N' AND file_div_nm= #{fileDivNm} AND ref_div_val= #{refDivVal} )
+			, #{fileSzVal}
+			, 'N'
+			, now()
+			, #{crtrId}
+			, #{linkUrlAddr}
+		)
+	</insert>
+
+	<!-- 파일 정보 del_yn = 'Y' 로 수정 -->
+	<update id="updateDeleteFile" parameterType="com.katri.web.comm.model.FileDto">
+		/* FileMapper.updateDeleteFile (파일 정보 del_yn = 'Y' 로 수정) */
+		UPDATE tb_file_mng
+		SET del_yn = 'Y'
+			, mdfcn_dt = now()
+			, mdfr_id = #{mdfrId}
+		WHERE file_sn = #{fileSn}
+	</update>
+
+	<!-- 관련 업로드 파일 개수 -->
+	<select id="selectFileCnt" parameterType="com.katri.web.comm.model.FileDto" resultType="Integer">
+		/* FileMapper.selectFileCnt (관련 업로드 파일 개수) */
+
+		SELECT
+			COUNT(*)
+		FROM
+			tb_file_mng tfm
+		WHERE
+			del_yn = 'N' AND ref_div_val = #{refDivVal}
+	</select>
+
+	<!-- 순번 변경: 파일 수정/삭제 시 -->
+	<update id="chgFileSrtSeq" parameterType="com.katri.web.comm.model.FileDto">
+		/* FileMapper.chgFileSrtSeq (순번 변경: 파일 등록/삭제 시) */
+
+		UPDATE
+			tb_file_mng
+		SET
+			srt_seq = #{srtSeq}
+		WHERE
+			file_sn = #{fileSn}
+	</update>
+
+	<!-- 파일다운로드이력 등록 -->
+	<insert id="insertFileDwnldHist" parameterType="com.katri.web.comm.model.FileDwnldHistSaveReq">
+		/* FileMapper.insertFileDwnldHist (파일다운로드이력 등록) */
+
+		INSERT INTO tb_file_dwnld_hist (
+			file_sn
+			, file_nm
+			, eqmt_cntn_id
+			, sesion_cntn_id
+			, user_ip_addr
+			, crt_dt
+			, crtr_id
+		) VALUES (
+			#{fileSn}
+			, #{fileNm}
+			, #{eqmtCntnId}
+			, #{sesionCntnId}
+			, #{userIpAddr}
+			, now()
+			, #{crtrId}
+		)
+	</insert>
+
+</mapper>

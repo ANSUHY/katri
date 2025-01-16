@@ -1,0 +1,94 @@
+server:
+  servlet:
+    session:
+      timeout: 60m
+    jsp:
+      init-parameters:
+        development: true
+  error:
+    include-binding-errors: NEVER
+    include-exception: false
+    include-message: NEVER
+    include-stacktrace: NEVER
+    path: /error
+    whitelabel.enabled: true
+
+spring:
+  servlet:
+    multipart:
+      location: D:\\
+      maxFileSize: 100MB
+      maxRequestSize: 100MB
+  data-source:
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: jdbc:log4jdbc:postgresql://192.168.190.101:5432/bigdata
+    jdbc-url: jdbc:log4jdbc:postgresql://192.168.190.101:5432/bigdata
+    username: bigdatatic
+    password: tic!2022@
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      maximum-pool-size: 10
+      connection-test-query: SELECT 1
+      minimum-idle: 1
+      connection-timeout: 100000
+  messages:
+    basename: config/common/message
+    encoding: UTF-8
+  mvc:
+    #static-path-pattern: /static/**
+    view.prefix: /WEB-INF/views/
+    view.suffix: .jsp
+  #thymeleaf:
+    #cache: false
+  cache:
+    jcache:
+      config: classpath:ehcache.xml
+
+mybatis:
+  mapper-locations: classpath:mappers/**/*.xml
+  configuration:
+    cache-enabled: true
+    lazy-loading-enabled: true
+    multiple-result-sets-enabled: true
+    use-column-label: true
+    default-statement-timeout: 65000
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    root: error
+    com.katri.web: error
+    sql: error
+    org.hibernate.SQL: off
+    jdbc: off
+    jdbc.sqlonly: off
+    jdbc.sqltiming: error
+    jdbc.audit: off
+    jdbc.resultset: off
+    jdbc.resultsettable: error
+    jdbc.connection: off
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %magenta([%thread]) %-30.-30F : %msg%n'
+  response:
+    length: 50
+
+login:
+  password:
+    master.key: KATRI@2022!
+    aes256.key: 2022!KATRI@2022@
+
+domain:
+  web:
+    bo.url: localhost:8100
+    fo.url: localhost:8082
+    mo.url: localhost:8081
+  pc: http://127.0.0.1
+
+const:
+  customer:
+    not.call.acc.gr: Z005
+
+config:
+  messages:
+    scheduler:
+      exec: N

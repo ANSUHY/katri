@@ -1,0 +1,476 @@
+package com.katri.common;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Enumeration;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.MessageSource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.BadSqlGrammarException;
+import org.springframework.stereotype.Component;
+import org.springframework.validation.BindException;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.ResourceAccessException;
+
+import com.katri.common.model.ResponseDto;
+import com.katri.common.util.CommonUtil;
+import com.katri.common.util.SessionUtil;
+import com.katri.common.util.StringUtil;
+import com.katri.web.comm.service.CommService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+/***************************************************
+ * <ul>
+ * <li>업무 그룹명 : 공통 업무</li>
+ * <li>서브 업무명 : 공통 관리</li>
+ * <li>설	 명 : Global exception 처리</li>
+ * <li>작	성	자 : ASH</li>
+ * <li>작	성	일 : 2022. 09. 14.</li>
+ * </ul>
+ * <pre>
+ * ======================================
+ * 변경자/변경일 :
+ * 변경사유/내역 :
+ * ======================================
+ * </pre>
+ ***************************************************/
+
+@Component
+@RequiredArgsConstructor
+@Slf4j
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+	/** 메시지 Component */
+	@SuppressWarnings("unused")
+	private final MessageSource messageSource;
+
+	/** 공통 Service */
+	private final CommService commService;
+
+	/**************************************************************
+	 * Exception 처리
+	 *
+	 * @param e Exception 정보
+	 **************************************************************/
+	@ExceptionHandler(value = Exception.class)
+	public Object exception(HttpServletRequest request, HttpServletResponse response, Exception e){
+		log.error("Response Status [ Exception _ 400 ]");
+
+		return this.errorProcess(request, response, e, HttpStatus.BAD_REQUEST);
+
+	}
+
+	/**************************************************************
+	 * 사용자 RuntimeException 처리
+	 *
+	 * @param e Exception 정보
+	 **************************************************************/
+	@ExceptionHandler(value = CustomBadSqlGrammarException.class)
+	public Object CustomBadSqlGrammarException(HttpServletRequest request, HttpServletResponse response, Exception e){
+		log.error("Response Status [ CustomBadSqlGrammarException _ 404 ]");
+
+		return this.errorProcess(request, response, e, HttpStatus.BAD_REQUEST);
+	}
+
+	/**************************************************************
+	 * 사용자 RuntimeException 처리
+	 *
+	 * @param e Exception 정보
+	 **************************************************************/
+	@ExceptionHandler(value = CustomIOException.class)
+	public Object CustomIOException(HttpServletRequest request, HttpServletResponse response, Exception e){
+		log.error("Response Status [ CustomIOException _ 404 ]");
+
+		return this.errorProcess(request, response, e, HttpStatus.BAD_REQUEST);
+	}
+
+	/**************************************************************
+	 * 사용자 RuntimeException 처리
+	 *
+	 * @param e Exception 정보
+	 **************************************************************/
+	@ExceptionHandler(value = CustomRuntimeException.class)
+	public Object CustomRuntimeException(HttpServletRequest request, HttpServletResponse response, Exception e){
+		log.error("Response Status [ customRuntimeException _ 404 ]");
+
+		return this.errorProcess(request, response, e, HttpStatus.BAD_REQUEST);
+	}
+
+	/**************************************************************
+	 * 사용자 CustomResourceAccessException 처리
+	 *
+	 * @param e Exception 정보
+	 **************************************************************/
+	@ExceptionHandler(value = CustomResourceAccessException.class)
+	public Object CustomResourceAccessException(HttpServletRequest request, HttpServletResponse response, Exception e){
+		log.error("Response Status [ CustomResourceAccessException _ 404 ]");
+
+		return this.errorProcess(request, response, e, HttpStatus.BAD_REQUEST);
+	}
+
+	/**************************************************************
+	 * 사용자 BadRequestException 처리
+	 *
+	 * @param e Exception 정보
+	 **************************************************************/
+	@ExceptionHandler(value = CustomBadRequestException.class)
+	public Object CustomBadRequestException(HttpServletRequest request, HttpServletResponse response, Exception e){
+		log.error("Response Status [ CustomBadRequestException _ 404 ]");
+
+		return this.errorProcess(request, response, e, HttpStatus.BAD_REQUEST);
+	}
+
+	/**************************************************************
+	 * 사용자 NotFoundException 처리
+	 *
+	 * @param e Exception 정보
+	 **************************************************************/
+	@ExceptionHandler(value = CustomNotFoundException.class)
+	public Object CustomNotFoundException(HttpServletRequest request, HttpServletResponse response, Exception e){
+		log.error("Response Status [ CustomNotFoundException _ 404 ]");
+
+		return this.errorProcess(request, response, e, HttpStatus.BAD_REQUEST);
+	}
+
+	/**************************************************************
+	 * 로그인 TimeoutException 처리
+	 *
+	 * @param e Exception 정보
+	 **************************************************************/
+	@ExceptionHandler(value = CustomLoginTimeout.class)
+	public Object CustomLoginTimeout(HttpServletRequest request, HttpServletResponse response, Exception e){
+		log.error("Response Status [ CustomLoginTimeout _ 404 ]");
+
+		return this.errorProcess(request, response, e, HttpStatus.BAD_REQUEST);
+	}
+
+	/**************************************************************
+	 * 사용자 CustomMessageException 처리 (프로세스상 MESSAGE EXCEPTION이 필요한경우)
+	 *
+	 * @param e Exception 정보
+	 **************************************************************/
+	@ExceptionHandler(value = CustomMessageException.class)
+	public Object CustomMessageException(HttpServletRequest request, HttpServletResponse response, Exception e){
+		log.error("Response Status [ 사용자 정의 CustomMessageException _ 200 ]");
+
+		return this.errorProcess(request, response, e, HttpStatus.OK);
+	}
+
+	/**************************************************************
+	 * validation 에러 (@ModelAttribute) 처리
+	 *
+	 * @param e Exception 정보
+	 **************************************************************/
+	@ExceptionHandler({BindException.class})
+	public ResponseEntity<?> errorValid(HttpServletRequest request, HttpServletResponse response, BindException exception) {
+		log.error("validation 에러 (@ModelAttribute)");
+
+		//[[1]] 메시지뽑기
+		BindingResult bindingResult = exception.getBindingResult();
+
+		StringBuilder stringBuilder = new StringBuilder();
+
+		for (FieldError fieldError : bindingResult.getFieldErrors()) {
+			if( ! stringBuilder.toString().isEmpty()) {
+				stringBuilder.append("\n");
+			}
+			//메시지 셋팅
+			stringBuilder.append(this.returnValidationMsg(fieldError.getField(), fieldError.getDefaultMessage()));
+		}
+
+		//[[2]] ajax 여부
+		String ajaxForward = "";	// Ajax 통신 유무
+		Enumeration<String> em = request.getHeaderNames();
+		while(em.hasMoreElements()){
+			String name = StringUtil.nvl(em.nextElement()) ;
+			String val = StringUtil.nvl(request.getHeader(name)) ;
+			if(name.toLowerCase().contentEquals("ajax-forward")) {
+				// ajax통신 체크
+				ajaxForward = val;
+			}
+		}
+
+		//[[3]] 통신의 종류에 따라 처리
+		if(StringUtils.isBlank(ajaxForward)) { //5-1. Ajax 통신이 아닐경우
+
+			CommonUtil.alertMsgBack(response, stringBuilder.toString());
+
+			return null;
+
+		} else { //5-2. Ajax 통신일 경우 - response에 셋팅
+
+			return new ResponseEntity<>(
+					ResponseDto.builder()
+							.resultMessage(stringBuilder.toString())
+							.build()
+					, HttpStatus.BAD_REQUEST);
+
+		}
+
+	}
+
+	/**************************************************************
+	 * validation 에러 (@RequestBody) 처리
+	 *
+	 * @param e Exception 정보
+	 **************************************************************/
+	@ExceptionHandler({MethodArgumentNotValidException.class})
+	public ResponseEntity<ResponseDto> errorArgumentValid(HttpServletRequest request, HttpServletResponse response, MethodArgumentNotValidException exception) {
+		log.error("validation 에러 (@RequestBody)");
+
+		//[[1]] 메시지뽑기
+		BindingResult bindingResult = exception.getBindingResult();
+
+		StringBuilder stringBuilder = new StringBuilder();
+
+		for (FieldError fieldError : bindingResult.getFieldErrors()) {
+			if( ! stringBuilder.toString().isEmpty()) {
+				stringBuilder.append("\n");
+			}
+			//메시지 셋팅
+			stringBuilder.append(this.returnValidationMsg(fieldError.getField(), fieldError.getDefaultMessage()));
+		}
+
+		//[[2]] ajax 여부
+		String ajaxForward = "";	// Ajax 통신 유무
+		Enumeration<String> em = request.getHeaderNames();
+		while(em.hasMoreElements()){
+			String name = StringUtil.nvl(em.nextElement()) ;
+			String val = StringUtil.nvl(request.getHeader(name)) ;
+			if(name.toLowerCase().contentEquals("ajax-forward")) {
+				// ajax통신 체크
+				ajaxForward = val;
+			}
+		}
+
+		//[[3]] 통신의 종류에 따라 처리
+		if(StringUtils.isBlank(ajaxForward)) { //5-1. Ajax 통신이 아닐경우
+
+			CommonUtil.alertMsgBack(response, stringBuilder.toString());
+
+			return null;
+
+		} else { //5-2. Ajax 통신일 경우 - response에 셋팅
+
+			return new ResponseEntity<>(
+					ResponseDto.builder()
+							.resultMessage(stringBuilder.toString())
+							.build()
+					, HttpStatus.BAD_REQUEST);
+
+		}
+
+	}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	/*****************************************************
+	 * error Process (ajax여부에 따라 )
+	 * @param request
+	 * @param response
+	 * @param e Exception 정보
+	 * @return
+	*****************************************************/
+	public Object errorProcess(HttpServletRequest request, HttpServletResponse response, Exception e, HttpStatus status) {
+
+		//[[1]] ajax 여부
+		String ajaxForward = "";	// Ajax 통신 유무
+		Enumeration<String> em = request.getHeaderNames();
+		while(em.hasMoreElements()){
+			String name = StringUtil.nvl(em.nextElement()) ;
+			String val = StringUtil.nvl(request.getHeader(name)) ;
+			if(name.toLowerCase().contentEquals("ajax-forward")) {
+				// ajax통신 체크
+				ajaxForward = val;
+			}
+		}
+
+		//[[2]] 들어온 주소값
+		String uri = "";
+		uri =  request.getRequestURI();
+
+		//[[3]] 값 셋팅
+		String msg = commService.rtnMessageDfError(e.getMessage()); //service에서 exception하면서 보낸 메시지
+
+		//[[4]] 로그에 넣기
+		log.error("\n===============ERROR_PAGE====================\n" + uri);
+		log.error("\n===============ERROR=========================\n" + e.getMessage());
+		log.error("\n===============ERROR_MSG=====================\n" + msg);
+
+		//[[5]] 통신의 종류에 따라 처리
+		if(StringUtils.isBlank(ajaxForward)) { //5-1. Ajax 통신이 아닐경우
+
+			//5-1-1. 가야할 url
+			String goUrl = this.returnMoveUrl(uri);
+
+			//5-1-2. 때에 따라 처리
+			if( ! "".equals(goUrl)) { //가야할 url이 있으면
+				//ALERT창띄우면서 url로 보내기
+				CommonUtil.moveUrlAlertMsg(response, msg ,goUrl);
+			}else {
+				/*
+					//ALERT창띄우면서 Back시키기
+					CommonUtil.alertMsgBack(response, msg);
+				*/
+
+				//에러페이지로 보내기
+				try {
+					response.sendError(0);
+				} catch (IOException e1) {}
+			}
+
+			return null;
+
+		} else { //5-2. Ajax 통신일 경우 - response에 셋팅
+
+			return new ResponseEntity<>(
+					ResponseDto.builder()
+							.resultMessage(msg)
+							.resultCode(HttpStatus.BAD_REQUEST.value())
+							.build()
+					, status);
+
+		}
+
+	}
+
+	/*****************************************************
+	 * uri에 따른 가야할 url리턴
+	 * @param uri
+	 * @return 가야할 url 리턴
+	*****************************************************/
+	public String returnMoveUrl(String uri) {
+		String goUrl = "";
+
+		if("/board/boardDetail".equals(uri) || "/board/boardReg".equals(uri)) {
+			goUrl = "/board/boardList";
+		}
+
+		return goUrl;
+	}
+
+	/*****************************************************
+	 * validation 메세지 반환 ( 맞는 값이 없으면 : field + 값을 한번 확인해주세요)<br>
+	 * @param strFild 필드명
+	 * @param strMsgCd 메시지코드
+	 * @return String 메시지
+	*****************************************************/
+	public String returnValidationMsg(String strFild, String strMsgCd) {
+		String rtnMsg = messageSource.getMessage(strMsgCd, null, strFild + " : "+ messageSource.getMessage("result-message.messages.common.message.confirm.data", null, SessionUtil.getLocale()), SessionUtil.getLocale());
+		return rtnMsg;
+	}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/**************************************************************
+	 * 사용자 SQLDataException 정의 class
+	 **************************************************************/
+	@SuppressWarnings("serial")
+	public static class CustomBadSqlGrammarException extends BadSqlGrammarException{
+		static SQLException ex = null;
+		public CustomBadSqlGrammarException(String message) {
+			super(message, message, ex);
+		}
+
+	}
+
+	/**************************************************************
+	 * 사용자 RuntimeException 정의 class
+	 **************************************************************/
+	@SuppressWarnings("serial")
+	public static class CustomRuntimeException extends RuntimeException{
+
+		public CustomRuntimeException(String message) {
+			super(message);
+		}
+
+	}
+
+	/**************************************************************
+	 * 사용자 BadRequestException 정의 class
+	 **************************************************************/
+	@SuppressWarnings("serial")
+	public static class CustomBadRequestException extends RuntimeException {
+
+		public CustomBadRequestException(String message) {
+			super(message);
+		}
+
+	}
+
+	/**************************************************************
+	 * 사용자 NotFoundException 정의 class
+	 **************************************************************/
+	@SuppressWarnings("serial")
+	public static class CustomNotFoundException extends RuntimeException {
+
+		public CustomNotFoundException(String message) {
+			super(message);
+		}
+
+	}
+
+	/**************************************************************
+	 * 로그인 TimeoutException 정의 class
+	 **************************************************************/
+	@SuppressWarnings("serial")
+	public static class CustomLoginTimeout extends RuntimeException {
+
+		public CustomLoginTimeout(String message) {
+			super(message);
+		}
+
+	}
+
+	/**************************************************************
+	 * 사용자 ResourceAccessException 정의 class
+	 **************************************************************/
+	@SuppressWarnings("serial")
+	public static class CustomResourceAccessException extends ResourceAccessException {
+
+		public CustomResourceAccessException(String message) {
+			super(message);
+		}
+
+	}
+
+	/**************************************************************
+	 * 사용자 IOException 정의 class
+	 **************************************************************/
+	@SuppressWarnings("serial")
+	public static class CustomIOException extends IOException {
+
+		public CustomIOException(String message) {
+			super(message);
+		}
+
+	}
+
+	/**************************************************************
+	 * 사용자 CustomMessageException 정의 class
+	 **************************************************************/
+	@SuppressWarnings("serial")
+	public static class CustomMessageException extends Exception {
+
+		public CustomMessageException(String message) {
+			super(message);
+		}
+
+	}
+
+}

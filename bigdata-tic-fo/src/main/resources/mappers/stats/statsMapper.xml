@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.stats.mapper.StatsMapper">
+
+	<select id="selectStatsCount" parameterType="com.katri.web.stats.model.StatsReq" resultType="com.katri.web.stats.model.StatsRes">
+		/* StatsMapper.selectStatsCount (인증상태 통계 카운트) */
+		select comn_cd_nm as cert_inst_nm
+		     , comn_cd as inst_id
+		     , coalesce(c.all_count,0 ) as all_count
+		     , coalesce(c.confirm_count,0 ) as confirm_count
+		     , coalesce(c.cancel_count,0 ) as cancel_count
+		     , coalesce(c.etc_count,0 ) as etc_count
+		  from tb_comn_cd_bak m
+		  left join (
+						select upper(a.inst_id) as inst_id
+						     , count(a.intgr_rcpt_no) as all_count
+						     , sum( case when a.cert_stt_cd = '17' then 1 else 0 end ) as confirm_count
+						     , sum( case when a.cert_stt_cd = '10' then 1 else 0 end ) as cancel_count
+						     , sum( case when a.cert_stt_cd != '10' and a.cert_stt_cd != '17' then 1 else 0 end ) as etc_count
+						  from stty_cert_issu_txn a
+						 where 1 = 1
+						  <if test="instId != null and instId != ''">
+				           and upper(a.inst_id) = #{instId}
+				          </if>
+				          <if test="startDate != null and startDate != ''">
+				           and to_char( to_date(a.cert_ymd,'YYYYMMDD') ,'YYYY.MM.DD' ) BETWEEN #{startDate} AND #{endDate}
+				          </if>
+						 group by upper(a.inst_id)
+		  ) c on m.comn_cd = c.inst_id
+		 where UP_CD = 'INST03'
+		 <if test="instId != null and instId != ''">
+		   and comn_cd = #{instId}
+		</if>
+		 order by cd_seq asc
+	</select>
+
+	<sql id="TypeWhereSql" >
+		<if test="instId != null and instId != ''">
+		   and upper(a.inst_id) = #{instId}
+		</if>
+		<if test="startDate != null and startDate != ''">
+		   and to_char( to_date(a.cert_ymd,'YYYYMMDD') ,'YYYY.MM.DD' ) BETWEEN #{startDate} AND #{endDate}
+		</if>
+	</sql>
+
+	<select id="selectTypeTotalCount" parameterType="com.katri.web.stats.model.StatsReq" resultType="int">
+		/* StatsMapper.selectTypeTotalCount (인증구분 통계 카운트) */
+		select count(b.cert_div_cd) as all_count
+		  from (
+			select a.cert_div_cd
+			  from stty_cert_issu_txn a
+			 where 1 = 1
+			<include refid="TypeWhereSql" />
+			 group by cert_div_cd
+		) b
+	</select>
+	<select id="selectTypeCount" parameterType="com.katri.web.stats.model.StatsReq" resultType="com.katri.web.stats.model.StatsRes">
+		/* StatsMapper.selectTypeCount (인증구분 통계 카운트) */
+		select a.cert_div_cd
+		     , fn_cd_nm('CERT01',upper(a.cert_div_cd), '1') cert_div_nm
+		     , count(a.intgr_rcpt_no) as all_count
+		     , sum( case when a.cert_stt_cd = '17' then 1 else 0 end ) as confirm_count
+		     , sum( case when a.cert_stt_cd = '10' then 1 else 0 end ) as cancel_count
+		     , sum( case when a.cert_stt_cd != '10' and a.cert_stt_cd != '17' then 1 else 0 end ) as etc_count
+			 , (row_number() over(order by cert_div_cd asc)) as rownum
+		  from stty_cert_issu_txn a
+		 where 1 = 1
+		<include refid="TypeWhereSql" />
+		 group by cert_div_cd
+		 order by rownum desc
+		offset #{startCount} limit #{limitCount};
+	</select>
+
+</mapper>

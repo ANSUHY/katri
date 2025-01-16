@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.ctnt.inquiry.mapper.InquiryMapper">
+
+
+<!-- 검색 -->
+<sql id="inqWhere">
+	WHERE
+		del_yn = 'N'
+	<if test="searchBoardType != null">
+		<choose>
+			<when test="searchBoardType == 'DONE'">
+			AND ntt_ans_yn = 'Y'
+			</when>
+			<when test="searchBoardType == 'WAIT'">
+			AND ntt_ans_yn = 'N'
+			</when>
+		</choose>
+	</if>
+	<if test="searchKeyword != null">
+		AND (ntt_sj_nm LIKE CONCAT('%', #{ searchKeyword }, '%')
+		OR  ntt_cn LIKE CONCAT('%', #{ searchKeyword }, '%'))
+	</if>
+</sql>
+
+
+<select id="getInqCnt" parameterType="com.katri.web.ctnt.inquiry.model.InquirySelectReq" resultType="int">
+ /* InquiryMapper.getInqCnt ( 1:1 문의 개수 조회 )*/
+
+ 	SELECT
+ 			COUNT(ntt_sn)
+ 	FROM tb_ntt_mng
+   <include refid="inqWhere"></include>
+   AND ntt_ty_cd LIKE #{ nttCyCd }
+
+</select>
+
+<select id="getInqList" resultType="com.katri.web.ctnt.inquiry.model.InquirySelectRes">
+/* InquiryMapper.getInqList ( 1:1 문의 목록 조회 ) */
+
+	SELECT
+		(ROW_NUMBER() OVER(order by n.ntt_ans_yn DESC , n.crt_dt ASC)) as rownum
+		  , n.ntt_sn
+		  , n.ntt_ans_yn
+		  , n.ntt_ty_cd
+		  , n.ntt_clf_cd
+		  , n.ntt_cn
+		  , n.crt_dt
+		  , n.crtr_id
+		  , n.ntt_ans_crt_dt
+		  , n.ntt_ans_yn
+		  , c.comn_cd_nm
+		  , c.comn_cd_desc_cn
+  FROM tb_ntt_mng n
+  LEFT OUTER JOIN tb_comn_cd c ON (c.comn_grp_cd = 'PD_INQUIRY' and c.use_yn = 'Y' and n.ntt_clf_cd = c.comn_cd)
+  <include refid="inqWhere"></include>
+  AND ntt_ty_cd LIKE #{ nttCyCd }
+  ORDER BY rownum DESC
+  OFFSET #{startRow} LIMIT #{endRow}
+
+</select>
+
+<select id="getDetailData" resultType="com.katri.web.ctnt.inquiry.model.InquirySelectRes">
+	/* InquiryMapper.getDetailData ( 1:1 문의 상세 조회 )*/
+
+	SELECT
+	    n.ntt_cn
+	  , n.ntt_ans_cn
+	  , n.ntt_ans_crt_dt
+	  , n.ntt_ans_crtr_id
+	  , n.crtr_id
+	  , n.ntt_ans_yn
+	  , n.crt_dt
+	  , c.comn_cd_nm
+	FROM tb_ntt_mng n
+ 	LEFT OUTER JOIN tb_comn_cd c ON(c.comn_grp_cd = 'PD_INQUIRY' AND c.use_yn = 'Y' AND n.ntt_clf_cd = c.comn_cd)
+  	WHERE ntt_sn = #{ nttSn }
+
+</select>
+
+<update id="updateInquiryAns">
+	/* InquiryMapper.updateInquiryAns ( 1:1 문의 답변 수정 )*/
+
+	UPDATE
+ 		tb_ntt_mng
+ 	SET ntt_ans_mdfcn_dt = now()
+ 	  , ntt_ans_mdfr_id = #{ nttAnsMdfrId }
+ 	  , ntt_ans_cn  = #{ nttAnsCn }
+ 	WHERE ntt_sn = #{ nttSn }
+
+</update>
+
+<update id="regInqAns" parameterType="com.katri.web.ctnt.inquiry.model.InquirySaveReq">
+		/* InquiryMapper.regInqAns ( 1:1문의 답변 등록 )*/
+
+		UPDATE
+			tb_ntt_mng
+		 SET ntt_ans_yn = 'Y'
+		   , ntt_ans_cn = #{ nttAnsCn }
+		   , ntt_ans_crt_dt = NOW()
+		   , ntt_ans_crtr_id = #{ nttAnsCrtrId }
+		WHERE ntt_sn = #{ nttSn }
+</update>
+
+<select id="selectEmail" parameterType="string" resultType="string">
+SELECT encpt_eml_addr_val FROM tb_user_bas WHERE user_id = #{crtrId}
+</select>
+
+<update id="updateNttInqCnt" parameterType="int">
+	UPDATE
+		tb_ntt_mng
+	SET
+		ntt_inq_cnt = COALESCE(ntt_inq_cnt, 0) + 1
+	WHERE ntt_sn = #{nttSn}
+</update>
+
+
+</mapper>

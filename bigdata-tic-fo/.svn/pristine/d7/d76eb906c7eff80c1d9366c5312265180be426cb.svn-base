@@ -1,0 +1,297 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="c"		uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="spring" 	uri="http://www.springframework.org/tags" %>
+
+<%@ page import="com.katri.common.Const" %>
+<c:set var="POST_TYPE_CD_ARCHIVE" value="<%=Const.Code.PostTypeCd.ARCHIVE%>" />
+<c:set var="ROW_COUNT" value="<%=Const.Paging.ROW_COUNT%>" />
+
+<script type="text/javascript">
+	let isSearch = false;
+
+	$(function() {
+		// 목록, 페이지 초기화
+		$("#areaData").html("");
+
+		// 자료실 목록 조회
+		fn_getArchiveList(1);
+
+		// 게시글 더보기
+		fn_moreView();
+
+		// 검색 결과 구분
+		fn_searchResultDiv();
+	});
+
+	/* 뒤로가기 시 스크롤 이동을 위한 게시글 일련번호 초기화 */
+	window.onpageshow = function(event){
+		if(event.persisted || (window.performance && window.performance.navigation.type == 2)){
+			$("#nttSn").val("");
+		}
+	}
+
+	/**
+	 * 게시글 더보기
+	 */
+	function fn_moreView() {
+		/* 더보기 */
+		$(".cont-board .btn-more").on("click", function () {
+			// 페이지 증가
+			const chgPage = parseInt($("#chgPage").val()) + 1;
+			$("#chgPage").val(chgPage);
+
+			const currPage = parseInt($("#currPage").val()) + 1;
+			$("#currPage").val(currPage);
+
+			// 더보기는 10개씩 조회
+			$("#rowCount").val(${ROW_COUNT});
+
+			// 자료실 목록 조회
+			fn_getArchiveList(chgPage);
+		});
+	}
+
+	/**
+	 * 검색 결과 구분
+	 */
+	function fn_searchResultDiv() {
+		/* 등록글이 없을 때 검색 결과가 없을 때 구분 */
+		$("#searchBtn").on("click", function(e){
+			e.preventDefault();
+
+			// 검색
+			fn_archiveSearch();
+		});
+	}
+
+	/**
+	 * 엔터 검색 자료실
+	 */
+	function fn_searchEnterArchive() {
+		if (window.event.keyCode == 13) {
+			fn_archiveSearch(); // 검색
+		};
+	}
+
+	/**
+	 * 검색
+	 */
+	function fn_archiveSearch() {
+		isSearch = true;
+
+		// 데이터 초기화 (기본값)
+		$("#areaData").html("");
+		$("#rowCount").val(${ROW_COUNT});
+		$("#currPage").val(1);
+		$("#chgPage").val(1);
+
+		// 검색
+		fn_getArchiveList(1);
+	}
+
+	/**
+	 * 자료실 목록 조회
+	 */
+	function fn_getArchiveList(page) {
+		if(page == ''){
+			page = 1;
+		}
+
+		// 현재 페이지
+		$("#currPage").val(page);
+
+		// 변경 페이지
+		$("#chgPage").val() < 1 ? $("#chgPage").val(1) : "";
+
+		// 검색어가 존재하는 경우 '검색 결과가 없습니다'
+		if ($.trim($("#searchKeyword").val()) !== "") {
+			isSearch = true;
+		}
+
+		$.blockUI();
+
+		// 데이터 가져오기
+		$.ajax({
+			  url: "/ctnt/archive/getArchiveList"
+			, type: "GET"
+			, dataType: "json"
+			, async: "true"
+			, data: $("#archiveFrm").serialize()
+			, success : function(jsonData, textStatus, jqXHR) {
+				$.unblockUI();
+
+				let html = "";
+
+				const noData = "<spring:message code='result-message.messages.ctnt.message.archive.no.search'/>"; // 등록된 자료가 없습니다.
+				const noResult = "<spring:message code='result-message.messages.ctnt.message.common.no.search'/>"; // 검색 결과가 없습니다.
+
+				if (jsonData.resultCode === 200) {
+						// 더보기 버튼 초기화
+						$('.cont-board .btn-more').show();
+
+						const bigdataList = "#board-list .board-tr:not(.active)"; // 위치
+						const bigdataTotalCnt = jsonData.data.totCnt; // 총 길이
+						const bigdataLength = jsonData.data.list.length; // 조회된 길이
+						const rowCount = $("#rowCount").val(); // 행
+
+					if (jsonData.data.list !== null && jsonData.data.list.length > 0) { // 데이터 O
+						// 조회된 개수에 따라 더보기 버튼 숨기기
+						if (Math.ceil(bigdataTotalCnt/${ROW_COUNT}) === parseInt($("#chgPage").val())) {
+							$('.cont-board .btn-more').hide();
+						}
+
+						// 1. 자료실 게시글 html 제작
+						$.each(jsonData.data.list, function(index, data){
+							html += fn_returnArchiveListHtml(data);
+						});
+
+					} else { // 데이터 X
+						$('.cont-board .btn-more').hide();
+
+						html	=	"<tr>"
+								+ 	"	<td colspan='4' class='no-data pc-block'>"
+								+ 			(isSearch ? noResult : noData)
+								+ 	"	</td>"
+								+ 	"	<td colspan='2' class='no-data mo-block'>"
+								+			(isSearch ? noResult : noData)
+								+ 	"	</td>"
+								+	"</tr>";
+
+						isSearch = false;
+					}
+
+					// 2. 자료실 게시글 출력
+					$("#areaData").append(html);
+
+					// 스크롤 이동
+					fn_moveScroll($("#nttSn").val());
+				} else {
+					alert(result.resultMessage);
+				}
+			}
+		});
+	}
+
+	/**
+	 * 자료실 게시글 html 제작
+	 */
+	function fn_returnArchiveListHtml(data){
+		let returnHtml = "";
+
+		returnHtml += "<tr class='board-tr' id='board-tr-" + data.nttSn + "' onclick='fn_goBoardDetail(" + data.nttSn + ")' style='cursor:pointer;'>";
+		returnHtml += "	<td>" + data.rownum + "</td>";
+		returnHtml += "	<td><span>" + data.nttSjNm + "</span><span>" + data.crtDt + " </span></td>";
+		returnHtml += "	<td>" + (data.fileDtoCnt > 0 ? "<a class='file'>첨부파일</a>" : "") + "</td>";
+		returnHtml += "	<td>" + data.crtDt + "</td>";
+		returnHtml += "</tr>";
+
+		return returnHtml;
+	}
+
+	/**
+	 * 자료실 상세 조회
+	 */
+	function fn_goBoardDetail(nttSn) {
+		$("#nttSn").val(nttSn);
+
+		$("#archiveFrm").attr({
+			  method: "GET"
+			, action: "/ctnt/archive/archiveDetail"
+		}).submit();
+	}
+
+	/**
+	 * 스크롤 이동
+	 */
+	function fn_moveScroll(nttSn) {
+		if (!fn_emptyCheck(nttSn)) {
+			// 해당 게시글의 rownum
+			let nRowNum = $("#board-tr-" + nttSn).find("td:eq(0)").text();
+
+			// 해당 게시글의 rownum이 현재 페이지에 존재하는지
+			if ( nRowNum !== '' ) {
+				document.getElementById("board-tr-" + nttSn).scrollIntoView({behavior: "smooth", block: "center"});
+				$("#nttSn").val("");
+			} else {
+				// 해당 게시글의 rownum이 없다면 '더보기'
+				$(".btn-more").click();
+			}
+		}
+	}
+
+	/**
+	 * FAQ 목록 이동
+	 */
+	function fn_goFaqList() {
+		location.href = "/ctnt/faq/faqList";
+	}
+
+	/**
+	 * 공지사항 목록 이동
+	 */
+	function fn_goNoticeList() {
+		location.href = "/ctnt/notice/noticeList";
+	}
+</script>
+
+<!-- ===== header ====== -->
+<header id="header">
+	<div id="sub-mv" class="sub-board">
+		<div class="inner">
+			<h2>이용안내</h2>
+			<div class="sub-obj">오브젝트</div>
+		</div>
+	</div>
+</header>
+<!-- ===== /header ====== -->
+
+<!-- ===== container ====== -->
+<div id="container">
+
+	<!--breadcrumb-wr-->
+	<jsp:include page="/WEB-INF/views/layout/breadcrumbWr.jsp">
+		<jsp:param name="menuTopNo" value="05"/>
+		<jsp:param name="menuSubNo" value="0503"/>
+	</jsp:include>
+	<!-- // breadcrumb-wr-->
+
+	<!--container-->
+	<div id="cont" class="cont-board">
+		<!--  조건 -->
+		<form name="archiveFrm" id="archiveFrm">
+			<input type="hidden" name="nttSn" id="nttSn" value="${archiveSearchData.nttSn}">
+			<input type="hidden" name="nttTyCd" id="nttTyCd" value="${POST_TYPE_CD_ARCHIVE}" />
+			<input type="hidden" name="currPage" id="currPage" value="${archiveSearchData.currPage}">
+			<input type="hidden" name="chgPage" id="chgPage" value="${archiveSearchData.chgPage}">
+			<input type="hidden" name="rowCount" id="rowCount" value="${archiveSearchData.rowCount}">
+
+			<h2 class="tit">자료실</h2>
+			<!--board-->
+			<div class="board-sch-wr">
+				<input type="text" name="searchKeyword" id="searchKeyword" placeholder="검색어를 입력하세요." class="inp-sch" value="${archiveSearchData.searchKeyword}" onkeypress="fn_searchEnterArchive()" title="검색">
+				<button type="submit" id="searchBtn" class="btn">검색</button>
+			</div>
+		</form>
+		<div class="board-cont" id="board-lst">
+			<table class="pds-lst">
+				<caption>시험인증 빅데이터 플랫폼 자료실 - 번호, 제목, 첨부파일, 등록일</caption>
+				<thead>
+					<tr>
+						<th>번호</th>
+						<th>제목</th>
+						<th>첨부파일</th>
+						<th>등록일</th>
+					</tr>
+				</thead>
+				<tbody id="areaData">
+
+				</tbody>
+			</table>
+		</div>
+		<div class="btn-wr">
+			<a href="javascript:void(0)" class="btn cancel btn-more">더보기<i></i></a>
+		</div>
+		<!--//board-->
+	</div>
+</div>
+<!-- ===== /container ====== -->

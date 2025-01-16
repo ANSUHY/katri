@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.dbr.mapper.DbrMapper">
+
+	<select id="selectReferenceDate" resultType="com.katri.web.dbr.model.DbrRes">
+		/* DbrMapper.selectReferenceDate (대시보드 조회 기준일) */
+		 select to_char( to_date( max(base_date), 'YYYYMMDD') ,'YYYY.MM.DD' ) as reference_dt
+		   from stty_cert_status
+		  order by reference_dt
+		  limit 1
+	</select>
+
+	<select id="selectReferenceCount" parameterType="com.katri.web.dbr.model.DbrReq" resultType="com.katri.web.dbr.model.DbrRes">
+		/* DbrMapper.selectReferenceCount (대시보드 기준일 카운트) */
+		select rel_cd_1 as instId
+		     , comn_cd
+		     , comn_cd_nm as certInstNm
+		     , c.base_date
+		     , COALESCE( c.status_cd,'SUCCESS') as status_cd
+		     , COALESCE( c.gather_record_cnt , 0) as gather_record_cnt
+		     , COALESCE( c.gather_image_cnt , 0) as gather_image_cnt
+		     , COALESCE( c.err_log , '') as err_log
+		  from tb_comn_cd_bak
+		  left join (
+					 select base_date
+					      , status_cd
+					      , inst_id
+					      , gather_record_cnt
+					      , gather_image_cnt
+					      , err_log
+					   from stty_cert_status
+					  where to_char( to_date( base_date, 'YYYYMMDD') ,'YYYY.MM.DD' ) = #{selectDate}
+		     ) c on inst_id = comn_cd
+		 where up_cd = #{upCd}
+		 order by comn_cd
+	</select>
+
+	<select id="selectResultCount" parameterType="com.katri.web.dbr.model.DbrReq" resultType="com.katri.web.dbr.model.DbrRes">
+		/* DbrMapper.selectResultCount (대시보드 결과 카운트) */
+		select to_char( a.time ,'MM.DD' ) as reference_dt
+		     , sum( case when status_cd = 'SUCCESS' then gather_record_cnt + gather_image_cnt else 0 end ) as suss_cnt
+		     , sum( case when status_cd = 'FAILURE' then gather_record_cnt + gather_image_cnt else 0 end ) as fail_cnt
+		  from (SELECT * FROM generate_series(#{selectDate}::date - interval '6 day', #{selectDate}::date, '1 days') as time) as a
+		  left join stty_cert_status on to_char( a.time ,'YYYYMMDD' ) = base_date
+		 group by a.time
+		 order by a.time
+	</select>
+	<select id="selectCaseCount" parameterType="com.katri.web.dbr.model.DbrReq" resultType="com.katri.web.dbr.model.DbrRes">
+		/* DbrMapper.selectResultCount (대시보드 건수 카운트) */
+		 select to_char( a.time ,'MM.DD' ) as reference_dt
+		     , COALESCE( sum(gather_record_cnt) , 0) as gather_record_cnt
+		     , COALESCE( sum(gather_image_cnt) , 0) as gather_image_cnt
+		  from (SELECT * FROM generate_series(#{selectDate}::date - interval '6 day', #{selectDate}::date, '1 days') as time) as a
+		  left join stty_cert_status
+		         on to_char( a.time ,'YYYYMMDD' ) = base_date
+		<if test="instId != ''">
+		   		and inst_id = #{instId}
+		</if>
+		 group by a.time
+		 order by a.time
+	</select>
+
+
+</mapper>

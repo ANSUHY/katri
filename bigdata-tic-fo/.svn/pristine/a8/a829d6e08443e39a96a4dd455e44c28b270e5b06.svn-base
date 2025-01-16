@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.mypage.inquiry.mapper.InquiryMapper">
+
+<sql id="inquiryWhere">
+	WHERE ${alias}del_yn = 'N'
+	AND ${alias}ntt_ty_cd = #{nttTyCd}
+	AND ${alias}crtr_id	  = #{crtrId}
+	<if test="nttClfCd != null and nttClfCd != ''">
+		AND ${alias}ntt_clf_cd = #{nttClfCd}
+	</if>
+</sql>
+
+
+<select id="selectInquiryListCount" resultType="int" parameterType="com.katri.web.mypage.inquiry.model.InquirySelectReq">
+	/* InquiryMapper.selectInquiryListCount( 1:1 문의 리스트 카운트 ) */
+	SELECT
+		COUNT(ntt_sn)
+	FROM tb_ntt_mng tnm
+	LEFT JOIN tb_comn_cd c on (c.comn_grp_cd = 'PD_INQUIRY' AND c.use_yn = 'Y' and tnm.ntt_clf_cd = c.comn_cd
+	  <choose>
+		<when test="userTyCd == 'MTC003' or userTyCd == 'MTC004' or userTyCd == 'MTC005' ">
+			AND c.comn_cd_val = 'NC'
+		</when>
+		<otherwise>
+			AND c.comn_cd_val = 'I'
+		</otherwise>
+	</choose>)
+   <include refid="inquiryWhere">
+		<property name="alias" value="tnm."></property>
+	</include>
+</select>
+
+<select id="selectInquiryList" resultType="com.katri.web.mypage.inquiry.model.InquirySelectRes" parameterType="com.katri.web.mypage.inquiry.model.InquirySelectReq">
+	/* InquiryMapper.selectInquiryList( 1:1 문의 리스트 조회 ) */
+	SELECT
+	   	tnm.ntt_sn
+	  , tnm.ntt_clf_cd
+	  , tnm.ntt_sj_nm
+	  , tnm.ntt_cn
+	  , tnm.crt_dt
+	  , tnm.ntt_ans_yn
+	  , tnm.ntt_ans_cn
+	  , tnm.ntt_ans_crt_dt
+	  , tnm.ntt_ans_crtr_id
+	  , tnm.ntt_sn
+	  , c.comn_cd_nm
+	  , c.comn_cd_desc_cn
+	 FROM tb_ntt_mng tnm
+	 LEFT JOIN tb_comn_cd c on (c.comn_grp_cd = 'PD_INQUIRY' AND c.use_yn = 'Y' and tnm.ntt_clf_cd = c.comn_cd
+	  <choose>
+		<when test="userTyCd == 'MTC003' or userTyCd == 'MTC004' or userTyCd == 'MTC005' ">
+			AND c.comn_cd_val = 'NC'
+		</when>
+		<otherwise>
+			AND c.comn_cd_val = 'I'
+		</otherwise>
+	</choose>)
+	<include refid="inquiryWhere">
+		<property name="alias" value="tnm."></property>
+	</include>
+	ORDER BY crt_dt DESC
+	OFFSET #{startRow} LIMIT #{endRow}
+</select>
+
+<select id="selectInquiryCategoryList" resultType="com.katri.web.mypage.inquiry.model.InquirySelectRes">
+	/* InquiryMapper.selectInquiryCategoryList( 1:1 문의 유형 조회 ) */
+	SELECT
+			comn_grp_cd
+		  , comn_cd
+		  , comn_cd_nm
+		  , comn_cd_desc_cn
+		FROM tb_comn_cd
+	   WHERE comn_grp_cd = 'PD_INQUIRY'
+	   <choose>
+		<when test="userTyCd == 'MTC003' or userTyCd == 'MTC004' or userTyCd == 'MTC005' ">
+			AND comn_cd_val = 'NC'
+		</when>
+		<otherwise>
+			AND comn_cd_val = 'I'
+		</otherwise>
+	</choose>
+</select>
+
+<insert id="insertInquiry">
+	/* InquiryMapper.insertInquiry( 1:1 문의 등록 )*/
+	INSERT INTO tb_ntt_mng
+	(
+		ntt_ty_cd
+	  , ntt_clf_cd
+	  , ntt_cn
+	  , crt_dt
+	  , crtr_id
+	  , ntt_inq_cnt
+	)
+	VALUES
+	(
+		#{nttTyCd}
+	  , #{nttClfCd}
+	  , #{nttCn}
+	  , now()
+	  , #{crtrId}
+	  , 0
+	)
+</insert>
+
+<update id="updateInqcnt" parameterType="int">
+	/* InquiryMapper.updateInqCnt ( 1:1 문의 조회수 증가 )*/
+	UPDATE
+		tb_ntt_mng
+	SET
+		ntt_inq_cnt = COALESCE(ntt_inq_cnt, 0) + 1
+	WHERE ntt_sn = #{nttSn}
+</update>
+
+<select id="selectMailAddress" resultType="string">
+	/* InquiryMapper.selectMailAddress(1:1 문의 등록 -> 메일 전송 ) */
+	SELECT
+			comn_cd_2_val
+	FROM tb_comn_cd
+	WHERE comn_cd = 'EMT09'
+</select>
+
+</mapper>

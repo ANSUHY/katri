@@ -1,0 +1,389 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="c"		uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="cm" 		uri="/WEB-INF/tlds" %>
+<%@ taglib prefix="spring"	uri="http://www.springframework.org/tags" %>
+
+<%@ page import="com.katri.common.Const" %>
+<c:set var="ROW_COUNT" value="<%=Const.Paging.ROW_COUNT%>" />
+<c:set var="USER_TYPE_CD_ENT_MASTER" value="<%=Const.Code.UserTyCd.ENT_MASTER%>" />
+
+<script type="text/javascript">
+
+	$(document).ready(function() {
+
+	});
+
+	/*
+	 * 함수명 : fn_myCertDetailInit()
+	 * 설   명 : 초기 작업
+	 */
+	function fn_myCertDetailInit() {
+
+	}
+
+	/*
+	 * 함수명 : fn_goMyCertList
+	 * 설   명 : 리스트 페이지로 이동
+	*/
+	function fn_goMyCertList() {
+
+		$("#frm_myCertList").attr("method", "GET");
+		$("#frm_myCertList").attr("action", "/platformSvc/myData/myInfoCert/myCertList");
+		$("#frm_myCertList").submit();
+	}
+
+	/*
+	 * 함수명 : fn_callCertAditInfoInput
+	 * 설   명 : [추가정보] {등록/수정}버튼 눌리면(input박스 보여주고 등 처리)
+	*/
+	function fn_callCertAditInfoInput() {
+
+		/* 버튼 제어 */
+		$("#btnCallCertAditInfoInput").hide();// {등록/수정}버튼 숨기기
+		$("#btnSaveCertAditInfo").show(); 	// {저장}버튼 보이기
+
+		/* input 등 제어 */
+		$("#areaCertAditInput").show(); //추가정보 등록 보이기
+		$("#areaCertAditInfo").hide();  //보여주는곳 숨기기
+
+	}
+
+	/*
+	 * 함수명 : fn_saveCertAditInfo()
+	 * 설   명 : [추가정보] 저장하기
+	 */
+	function fn_saveCertAditInfo(){
+
+		$.blockUI();
+		// ==========데이터 전송====================
+		$.ajax({
+
+			url 		: "/platformSvc/myData/myInfoCert/saveCertAditInfo"
+			, method 	: "POST"
+			, dataType 	: "json"
+			, async 	: true
+			, data 		: {"instId" : $("#frm_myCertList #targetInstId").val()
+						 , "certNo" : $("#frm_myCertList #targetCertNo").val()
+						 , "aditInfoNm" : $("#certAditInfoNmInput").val()
+						 , "aditInfoCn" : $("#certAditInfoCnInput").val()
+						}
+			, success 	: function(result) {
+				$.unblockUI();
+				if (result.resultCode === 200) {
+
+					/* 새로고침 */
+					location.reload();
+
+				} else {
+					alert(result.resultMessage);
+				}
+			}
+		});
+
+	}
+
+	/*
+	 * 함수명 : fn_getMyCertQrImgFile()
+	 * 설   명 : QR이미지파일 데이터 가져오기+다운받기
+	*/
+	function fn_getMyCertQrImgFile() {
+
+		 $.ajax({
+			url	 		: "/platformSvc/myData/myInfoCert/getMyCertQrImgFileData"
+			, type 		: "GET"
+			, dataType 	: "json"
+			, data 		: {"targetInstId" : $("#frm_myCertList #targetInstId").val()
+							, "targetCertNo" : $("#frm_myCertList #targetCertNo").val()
+						}
+			, success 	: function(jsonData, textStatus, jqXHR) {
+				$.unblockUI();
+
+				if(jsonData.resultCode === 200){
+
+					//QR 파일 다운받기
+					let href = "/file/downloadFile?encodeFileSn=" + jsonData.data.encodeFileSn;
+					location.href= href;
+
+					//QR 이미지파일 화면에 셋팅
+					let qrImgFileFullAddr = (jsonData.data.strgFilePathAddr + jsonData.data.strgFileNm);
+					$("#areaQrImg").show();
+					$("#tagQrImg").attr("src", qrImgFileFullAddr);
+
+				} else {
+					alert(jsonData.resultMessage);
+				}
+			}
+		});
+
+	 }
+
+</script>
+
+<!-- ===== header ====== -->
+<header id="header">
+	<div id="sub-mv" class="sub-myservice">
+		<div class="inner">
+			<h2>플랫폼 서비스</h2>
+			<div class="sub-obj">오브젝트</div>
+		</div>
+	</div>
+</header>
+<!-- ===== /header ====== -->
+
+<!-- ===== container ====== -->
+<div id="container">
+
+	<!--breadcrumb-wr-->
+	<jsp:include page="/WEB-INF/views/layout/breadcrumbWr.jsp">
+		<jsp:param name="menuTopNo" value="02"/>
+		<jsp:param name="menuSubNo" value="0201"/>
+	</jsp:include>
+	<!-- // breadcrumb-wr-->
+
+	<!--container-->
+	<div id="cont" class="cont-myservice dtl-myservice">
+
+		<!-- 검색 조건 -->
+		<form action="" method="get" name="frm_myCertList" 	id="frm_myCertList">
+
+			<input type="hidden" name="rowCount" 		id="rowCount" 			value="${ROW_COUNT * schDatamyCert.currPage}">
+			<input type="hidden" name="currPage" 		id="currPage"			value="${schDatamyCert.currPage}">
+
+			<input type="hidden" name="targetInstId" 	id="targetInstId" 		value="${schDatamyCert.targetInstId}"/> <!-- Detail 갈때 기관아이디 -->
+			<input type="hidden" name="targetCertNo" 	id="targetCertNo" 		value="${schDatamyCert.targetCertNo}"/> <!-- Detail 갈때 인증번호 -->
+
+			<input type="hidden" name="schInstId" 		id="schInstId" 			value="${schDatamyCert.schInstId}">		<!-- [검색:인증기관]  -->
+			<input type="hidden" name="schCertNo" 		id="schCertNo" 			value="${schDatamyCert.schCertNo}">		<!-- [검색:인증번호]  -->
+			<input type="hidden" name="schMkrNm" 		id="schMkrNm" 			value="${schDatamyCert.schMkrNm}">		<!-- [검색:제조업체명]  -->
+			<input type="hidden" name="schMdlNm" 		id="schMdlNm" 			value="${schDatamyCert.schMdlNm}">		<!-- [검색:모델명]  -->
+			<input type="hidden" name="schIptrNm" 		id="schIptrNm" 			value="${schDatamyCert.schIptrNm}">		<!-- [검색:수입업체명]  -->
+			<input type="hidden" name="schPhotoYN" 		id="schPhotoYN" 		value="${schDatamyCert.schPhotoYN}">	<!-- [검색:사진유무]  -->
+			<input type="hidden" name="schCertYmdF" 	id="schCertYmdF" 		value="${schDatamyCert.schCertYmdF}">	<!-- [검색:인증일자_시작일]  -->
+			<input type="hidden" name="schCertYmdT" 	id="schCertYmdT" 		value="${schDatamyCert.schCertYmdT}">	<!-- [검색:인증일자_끝일]  -->
+			<input type="hidden" name="schSttCd" 		id="schSttCd" 			value="${schDatamyCert.schSttCd}">		<!-- [검색:인증상태]  -->
+			<input type="hidden" name="schPrdtClfCd" 	id="schPrdtClfCd" 		value="${schDatamyCert.schPrdtClfCd}">	<!-- [검색:제품분류]  -->
+			<input type="hidden" name="schPrdtNm" 		id="schPrdtNm" 			value="${schDatamyCert.schPrdtNm}">		<!-- [검색:제품명]  -->
+
+		</form>
+		<!--// 검색 조건  -->
+
+		<!--tit-->
+		<div class="cont-platform-tit bMg80">
+			<h2 class="tit">인증 정보 상세</h2>
+		</div>
+		<!--// tit-->
+
+		<h3 class="tit">인증정보</h3>
+
+		<!--리스트-->
+		<div class="svc-info-dtl">
+			<table summary="인증정보 상세 - 인증기관, 통합접수번호, 인증번호, 인증구분, 인증일자, 인증상태, 최초인증번호, 인증변경일자, 인증변경사유 내용 포함">
+				<tr>
+					<th>인증기관</th>
+					<td colspan="3">${myCertDetail.instNm}(${myCertDetail.instEngNm})</td>
+					<%--
+					<th>통합접수번호</th>
+					<td>${myCertDetail.instCertIdntfcVal}</td>
+					--%>
+				</tr>
+
+				<tr>
+					<th>인증번호</th>
+					<td>${myCertDetail.certNo}</td>
+					<th>인증구분</th>
+					<td>${myCertDetail.certDivNm}</td>
+				</tr>
+
+				<tr>
+					<th>인증일자</th>
+					<td><cm:stringFormat type="date" format="YYYY-MM-DD" value="${myCertDetail.certYmd}" /></td>
+					<th>인증상태</th>
+					<td>${myCertDetail.certSttNm}</td>
+				</tr>
+
+				<tr>
+					<th>최초인증번호</th>
+					<td>${myCertDetail.frstCertNo}</td>
+					<th>인증변경일자</th>
+					<td><cm:stringFormat type="date" format="YYYY-MM-DD" value="${myCertDetail.certLastChgYmd}" /></td>
+				</tr>
+
+				<tr>
+					<th>인증변경사유</th>
+					<td colspan="3">${myCertDetail.certChgResnCn}</td>
+				</tr>
+
+			</table>
+		</div>
+
+		<h3 class="tit">제품정보</h3>
+
+		<!--리스트-->
+		<div class="svc-info-dtl">
+			<table summary="제품정보 상세 - 제품명, 브랜드명, 모델명, 규격, 제품분류코드, 제품세분류명, 파생모델명, 비고 내용 포함">
+				<tr>
+					<th>제품명</th>
+					<td>${myCertDetail.prdtNm}</td>
+					<th>브랜드명</th>
+					<td>${myCertDetail.brdNm}</td>
+				</tr>
+
+				<tr>
+					<th>모델명</th>
+					<td>${myCertDetail.mdlNm}</td>
+					<th>규격</th>
+					<td>${myCertDetail.stndNm}</td>
+				</tr>
+
+				<tr>
+					<th>제품분류코드</th>
+					<td>${myCertDetail.sttyPrdtClfCd}</td>
+					<th>제품세분류명</th>
+					<td>${myCertDetail.sttyPrdtClfNm}</td>
+				</tr>
+
+				<tr>
+					<th>파생모델명</th>
+					<td colspan="3">${myCertDetail.drvnMdlNm}</td>
+				</tr>
+
+				<tr>
+					<th>비고</th>
+					<td colspan="3">${myCertDetail.rmkCn}</td>
+				</tr>
+			</table>
+		</div>
+
+		<h3 class="tit">제조사 정보</h3>
+
+		<!--리스트-->
+		<div class="svc-info-dtl">
+			<table summary="제조사 상세 - 제조사, 사업자 등록번호, 제조국, 대표자, 주소, 전화번호 내용 포함">
+				<tr>
+					<th>제조사</th>
+					<td>${myCertDetail.mnftrCustcoNm}</td>
+					<th>사업자 등록번호</th>
+					<td>${myCertDetail.mnftrCustcoBrno}</td>
+				</tr>
+
+				<tr>
+					<th>제조국</th>
+					<td>${myCertDetail.mnftrCustcoNtnNm}</td>
+					<th>대표자</th>
+					<td>${myCertDetail.mnftrCustcoRprsvNm}</td>
+				</tr>
+
+				<tr>
+					<th>주소</th>
+					<td colspan="3">${myCertDetail.mnftrCustcoAddr}</td>
+				</tr>
+
+				<tr>
+					<th>전화번호</th>
+					<td colspan="3">${myCertDetail.mnftrCustcoTelno}</td>
+				</tr>
+
+			</table>
+		</div>
+
+		<h3 class="tit">수입업체 정보</h3>
+
+		<!--리스트-->
+		<div class="svc-info-dtl">
+			<table summary="수입업체 상세 - 수입업체, 사업자 등록번호, 전화번호, 대표자, 주소 내용 포함">
+				<tr>
+					<th>수입업체</th>
+					<td>${myCertDetail.incmCustcoNm}</td>
+					<th>사업자 등록번호</th>
+					<td>${myCertDetail.incmCustcoBrno}</td>
+				</tr>
+
+				<tr>
+					<th>전화번호</th>
+					<td>${myCertDetail.incmCustcoTelno}</td>
+					<th>대표자</th>
+					<td>${myCertDetail.incmCustcoRprsvNm}</td>
+				</tr>
+
+				<tr>
+					<th>주소</th>
+					<td colspan="3">${myCertDetail.incmCustcoAddr}</td>
+				</tr>
+
+			</table>
+
+		</div>
+
+		<h3 class="tit bBr">제품사진</h3>
+		<div class="dtl-photo" style="display:block; text-align:center;">
+			<c:if test="${! empty myCertDetail.imgNameList}">
+				<c:forEach items="${myCertDetail.imgNameList}" var="item">
+<%-- 					<img src="/platformSvc/myData/myInfoCert/displayImage?instEngNmLower=${myCertDetail.instEngNmLower}&certNo=${myCertDetail.certNo}&imgName=${item}" alt="${item}" onerror="this.src='/asset/images/cert_no_image.png'" style="margin-bottom:10px;"> --%>
+					<img src="/images/${myCertDetail.instEngNmLower}/cert/${myCertDetail.certNo}/${item}" alt="${item}" onerror="this.src='/asset/images/cert_no_image.png'" style="margin-bottom:10px;">
+				</c:forEach>
+			</c:if>
+			<c:if test="${empty myCertDetail.imgNameList}">
+				해당 정보가 없습니다.
+			</c:if>
+		</div>
+
+		<h3 class="tit bBr">
+			추가 정보
+			<!-- 로그인한 사용자가 [기업마스터] 일때만 버튼 보이기 -->
+			<c:if test="${sessionScope.SS_KATRI_FO.login_user_ty_cd != null && sessionScope.SS_KATRI_FO.login_user_ty_cd eq  USER_TYPE_CD_ENT_MASTER}">
+				<div class="btn-wr">
+					<a href="javascript:void(0)" onclick="fn_callCertAditInfoInput()" class="btn btn-down wd100 btn-file-input" id="btnCallCertAditInfoInput">등록/수정</a>
+					<a href="javascript:void(0)" onclick="fn_saveCertAditInfo()"  	class="btn btn-down wd80 btn-file-save" id="btnSaveCertAditInfo" style="display: none;" >저장</a>
+				</div>
+			</c:if>
+			<!--// 로그인한 사용자가 [기업마스터] 일때만 버튼 보이기 -->
+		</h3>
+		<div class="dtl-inr" style="flex-flow:column;">
+
+			<!-- 로그인한 사용자가 [기업마스터] 일때만 보이기 : 저장하는 input박스-->
+			<c:if test="${sessionScope.SS_KATRI_FO.login_user_ty_cd != null && sessionScope.SS_KATRI_FO.login_user_ty_cd eq  USER_TYPE_CD_ENT_MASTER}">
+				<div id="areaCertAditInput" style="width:100%; display:none;">
+					<h4><span>버튼명</span></h4>
+					<input type="text" name="certAditInfoNmInput" id="certAditInfoNmInput" value="${ myCertDetail.certAditInfoNm }" placeholder="버튼명 미입력 시 '추가정보'로 제공됩니다." style="width:100%; margin-top:10px; padding-left:10px;" >
+					<h4 style="margin-top:20px;""><span>링크 주소</span></h4>
+					<input type="text" name="certAditInfoCnInput" id="certAditInfoCnInput" value="${ (myCertDetail.certAditInfoCn eq '' || empty myCertDetail.certAditInfoCn) ? 'https://' : myCertDetail.certAditInfoCn }" placeholder="https://"  style="width:100%; margin-top:10px; padding-left:10px;" >
+					<div style="width:100%; margin-top:10px;">※ 추가 정보는 인증정보의 제품정보 관련 웹사이트 URL 링크를 통한 더 많은 제품정보를 제공할 수 있습니다.</div>
+					<div style="width:100%; margin-top:10px;">※ 스마트폰에서 QR코드 인식하면 등록한 버튼으로 제공합니다.</div>
+				</div>
+			</c:if>
+			<!--// 로그인한 사용자가 [기업마스터] 일때만 보이기 -->
+
+			<div id="areaCertAditInfo" style="width:100%;">
+				<c:choose>
+					<c:when test="${myCertDetail.certAditInfoNm != null && myCertDetail.certAditInfoCn !=  null}">
+						<h4><span>버튼명</span></h4>
+						<div style="width:100%; margin-top:10px; padding-left:10px;">${myCertDetail.certAditInfoNm}</div>
+						<h4 style="margin-top:20px;""><span>링크 주소</span></h4>
+						<div style="width:100%; margin-top:10px; padding-left:10px;"><a href="${myCertDetail.certAditInfoCn}" target="_blank" >${myCertDetail.certAditInfoCn}</a></div>
+					</c:when>
+					<c:otherwise>
+						<div style="width:100%; text-align:center;">등록된 추가 정보가 없습니다.</div>
+					</c:otherwise>
+				</c:choose>
+			</div>
+		</div>
+
+		<h3 class="tit bBr">
+			QR코드 정보
+			<div class="btn-wr">
+				<a href="javascript:void(0)" onclick="fn_getMyCertQrImgFile()" class="btn btn-down btn-img-down">QR코드 다운로드<i></i></a>
+			</div>
+		</h3>
+		<div id="areaQrImg" class="dtl-photo noMg" style="${ myCertDetail.qrImgFileFullAddr ne '' && ! empty myCertDetail.qrImgFileFullAddr ? '' : 'display:none;'}">
+			<img id="tagQrImg" src="${myCertDetail.qrImgFileFullAddr}" alt="QR코드 이미지">
+		</div>
+
+		<div class="btn-wr">
+			<a href="javascript:void(0)" onclick="fn_goMyCertList()" class="btn">목록</a>
+		</div>
+
+	</div>
+	<!--// container-->
+
+</div>
+<!-- ===== /container ====== -->

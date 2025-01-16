@@ -1,0 +1,83 @@
+package com.katri.web.platformSvc.myData.model;
+
+import com.katri.common.model.Common;
+
+import io.swagger.annotations.ApiModel;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@Data
+@EqualsAndHashCode(callSuper=false)
+@ApiModel(description = "[플랫폼 서비스] > [내 손안의 시험인증]의 Request")
+public class MyDataSaveReq extends Common {
+
+	/** 기업그룹일련번호 */
+	private Integer entGrpSn;
+
+	/** 생성자아이디 */
+	private String crtrId;
+
+	/** 이력일련번호 */
+	private Integer histSn;
+
+	/** 약관일련번호 */
+	private Integer trmsSn;
+
+	/** 기관아이디 */
+	private String instId;
+
+	/** 사업자등록번호 */
+	private String brno;
+
+	/** 기업그룹관리번호 */
+	private String entGrpMngNo;
+
+	//======  [기업그룹수집동의이력] 저장 정보===================
+	/** 약관 번호 : [내 손안의 시험인증 서비스 이용약관] : check안하면 안넘어옴 */
+	private Integer chkMydataTemrsSn;
+
+	/** 약관 번호 : [시험인증 데이터 수집·이용 약관] : check안하면 안넘어옴 */
+	private Integer chkCertTemrsSn;
+
+	/** 체크한 [수집대상 기관] ID */
+	private String[] arrChkClctAgreInstId;
+
+	/** [수집대상 기관] ID _JAVA에서 하나씩 쓰기 위한 OR 하나씩 저장할때*/
+	private String clctAgreInstId;
+
+	/** 정보제공동의여부 */
+	private String infoPvsnAgreYn;
+	//======// [기업그룹수집동의이력] 저장 정보 끝 ============
+
+	//======  [기업그룹제출회사공개동의이력] 저장 정보===================
+	/** 약관 번호 : [시험인증 데이터 제3자(제출처) 제공 약관] : check안하면 안넘어옴 */
+	private Integer chkOfferTemrsSn;
+
+	/** 체크한 [제공 대상 제출처] ID */
+	private String[] arrChkSbmsnCoRlsInstId;
+
+	/** [제공 대상 제출처] ID _JAVA에서 하나씩 쓰기 위한 OR 하나씩 저장할때 */
+	private String sbmsnCoRlsInstId;
+
+	/** 제출회사공개동의여부 */
+	private String sbmsnCoRlsAgreYn;
+	//======// [기업그룹제출회사공개동의이력] 저장 정보 끝 ============
+
+	/** [수집대상 기관] ID && [제공 대상 제출처] ID */
+	private String clctAgreSbmsnCoRlsInstId;
+
+	//======  [인증서추가정보관리] 저장 정보===================
+	/** 기관아이디 */
+	//private String instId; 위에 있음
+
+	/** 인증번호 */
+	private String certNo;
+
+	/** 추가정보명 */
+	private String aditInfoNm;
+
+	/** 추가정보내용 */
+	private String aditInfoCn;
+	//======// [인증서추가정보관리] 저장 정보 끝 ============
+
+}

@@ -1,0 +1,145 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>시험인증 빅데이터 포탈 관리자</title>
+
+<link href="../css/style.css" rel="stylesheet">
+<script src="../js/jquery.min.js"></script>
+<script src="../js/jquery-ui.js"></script>
+<script src="../js/custom.js"></script>
+
+</head>
+
+<body class="popup">
+
+	<div id="pop-wrap">
+
+		<h1 class="pop-tit">회원 상세</h1>
+
+		<div class="pop-contnet">
+			<!-- 계정 정보 -->
+			<h2 class="pop-tit2 left" style="margin-top: 0px;">계정 정보</h2>
+			<div class="hd-search">
+				<table>
+					<colgroup>
+						<col style="width:200px;">
+						<col>
+						<col style="width:200px">
+						<col>
+					</colgroup>
+					<tbody>
+						<tr>
+							<th>
+								회원유형
+							</th>
+							<td>
+								기관 마스터 / 기관 일반
+							</td>
+							<th>
+								회원 상태
+							</th>
+							<td>
+								정상
+							</td>
+						</tr>
+						<tr>
+							<th>
+								아이디
+							</th>
+							<td>
+								jijijijijijijji
+							</td>
+							<th>
+								가입일
+							</th>
+							<td>
+								2022-09-30
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<!-- // 계정 정보 -->
+
+			<!-- 회원 정보 -->
+			<h2 class="pop-tit2 left" style="margin-top: 0px;">회원 정보</h2>
+			<div class="hd-search">
+				<table>
+					<colgroup>
+						<col style="width:200px;">
+						<col>
+						<col style="width:200px;">
+						<col>
+					</colgroup>
+					<tbody>
+						<tr>
+							<th>
+								이름
+							</th>
+							<td>
+
+							</td>
+							<th>
+								휴대폰 번호
+							</th>
+							<td>
+
+							</td>
+						</tr>
+						<tr>
+							<th>
+								이메일
+							</th>
+							<td colspan="3">
+
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<!-- // 담당자 정보 --> <!-- // 회원 정보 -->
+
+			<!-- 관심 키워드 -->
+			<h2 class="pop-tit2 left" style="margin-top: 0px;">관심 키워드</h2>
+			<div class="hd-search">
+				<table>
+					<colgroup>
+						<col style="width:200px;">
+						<col>
+					</colgroup>
+					<tbody>
+						<tr>
+							<th>
+								선택1
+							</th>
+							<td>
+
+							</td>
+						</tr>
+						<tr>
+							<th>
+								선택2
+							</th>
+							<td>
+
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<!-- // 관심 키워드 -->
+
+			<div class="btn-box r">
+				<a href="javascript:void(0);" class="btn btn-blue">접속 로그</a>
+				<a href="javascript:void(0);" class="btn btn-blue">약관동의 이력</a>
+			</div>
+
+		</div><!-- /pop-contnet -->
+		<a href="javascript:self.close();" class="pop-close"><i class="fa fa-times"></i></a>
+	</div><!-- /pop-wrao -->
+
+	</body>
+</html>

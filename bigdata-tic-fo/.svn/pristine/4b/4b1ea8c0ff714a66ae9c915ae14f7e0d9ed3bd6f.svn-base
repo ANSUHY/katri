@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="86" height="79" viewBox="0 0 86 79">
+    <g data-name="그룹 975" transform="translate(22 1)">
+        <circle data-name="타원 44" cx="1.5" cy="1.5" r="1.5" transform="translate(46 5)"/>
+        <circle data-name="타원 45" cx="1.5" cy="1.5" r="1.5" transform="translate(54 5)"/>
+    </g>
+    <g data-name="그룹 668" transform="translate(16.967 22.072)">
+        <rect data-name="사각형 26" width="12.064" height="12.064" rx="1" style="stroke-miterlimit:10;stroke:#0021ff;stroke-width:1.7px;fill:none"/>
+        <path data-name="패스 923" d="m1019.916 564.029 2.172 3.23 3.642-5.461" transform="translate(-1016.745 -558.212)" style="stroke-linecap:round;stroke-linejoin:round;stroke:#0021ff;stroke-width:1.7px;fill:none"/>
+    </g>
+    <g data-name="그룹 669" transform="translate(16.967 39.053)">
+        <rect data-name="사각형 27" width="12.064" height="12.064" rx="1" style="stroke-miterlimit:10;stroke:#0021ff;stroke-width:1.7px;fill:none"/>
+        <path data-name="패스 924" d="m1019.916 595.885 2.172 3.23 3.642-5.461" transform="translate(-1016.745 -590.068)" style="stroke-linecap:round;stroke-linejoin:round;stroke:#0021ff;stroke-width:1.7px;fill:none"/>
+    </g>
+    <g data-name="그룹 670" transform="translate(16.967 56.033)">
+        <rect data-name="사각형 28" width="12.064" height="12.064" rx="1" style="stroke-miterlimit:10;stroke:#0021ff;stroke-width:1.7px;fill:none"/>
+        <path data-name="패스 925" d="m1019.916 627.74 2.172 3.23 3.642-5.461" transform="translate(-1016.745 -621.924)" style="stroke-linecap:round;stroke-linejoin:round;stroke:#0021ff;stroke-width:1.7px;fill:none"/>
+    </g>
+    <path data-name="사각형 1734" d="M43 27h33v2H43z"/>
+    <path data-name="사각형 1735" d="M43 37h23v2H43z"/>
+    <path data-name="사각형 1736" d="M43 47h16v2H43z"/>
+    <g data-name="그룹 976">
+        <g data-name="사각형 1744" style="stroke:#000;stroke-width:2.5px;fill:none">
+            <rect width="86" height="79" rx="5" style="stroke:none"/>
+            <rect x="1.25" y="1.25" width="83.5" height="76.5" rx="3.75" style="fill:none"/>
+        </g>
+        <path data-name="사각형 1745" d="M2 13h82v2H2z"/>
+    </g>
+</svg>

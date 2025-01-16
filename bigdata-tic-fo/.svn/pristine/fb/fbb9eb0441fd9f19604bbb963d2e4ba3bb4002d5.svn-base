@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.katri.web.svc.mapper.SvcMapper">
+
+	<!-- [QR랜딩페이지][인증데이터 조회] 상세 조회 -->
+	<select id="selectCertDataDetail" parameterType="com.katri.web.svc.model.SvcSelectReq" resultType="com.katri.web.svc.model.SvcSelectRes">
+		/* SvcMapper.selectCertDataDetail ([QR랜딩페이지][인증데이터 조회] 상세 조회) */
+
+		SELECT
+			UPPER(prcb.inst_id) AS inst_id 	--기관아이디
+			, (SELECT pcib.inst_nm FROM pt_co_inst_bas pcib WHERE pcib.use_yn ='Y' AND pcib.inst_id = prcb.inst_id LIMIT 1) AS inst_nm --기관명(국문)
+			, (SELECT pcib.inst_eng_nm FROM pt_co_inst_bas pcib WHERE pcib.use_yn ='Y' AND pcib.inst_id = prcb.inst_id LIMIT 1) AS inst_eng_nm --기관명(영문)
+			, prcb.cert_no					--인증번호
+			, prcb.inst_cert_idntfc_val		--기관인증식별값
+			, prcb.cert_div_cd				--인증구분코드
+			, (SELECT pcicdc.dtl_cd_nm FROM pt_co_intgr_comn_dtl_cd pcicdc WHERE pcicdc.use_yn ='Y' AND pcicdc.grp_cd='ATC006' AND pcicdc.dtl_cd = prcb.cert_div_cd LIMIT 1) AS cert_div_nm --인증구분명
+			, prcb.cert_stt_cd				--인증상태코드
+			, (SELECT pcicdc.dtl_cd_nm FROM pt_co_intgr_comn_dtl_cd pcicdc WHERE pcicdc.use_yn ='Y' AND pcicdc.grp_cd='ATC007' AND pcicdc.dtl_cd = prcb.cert_stt_cd LIMIT 1) AS cert_stt_nm --인증상태명
+			, prcb.cert_ymd					--인증일자
+			, prcb.cert_last_chg_ymd		--인증최종변경일자
+			, prcb.cert_chg_resn_cn			--인증변경사유내용
+			, prcb.frst_cert_no				--최초인증번호
+			, prcb.prdt_nm					--제품명
+			, prcb.brd_nm					--브랜드명
+			, prcb.mdl_nm					--모델명
+			, prcb.drvn_mdl_nm				--파생모델명
+			, prcb.stty_prdt_clf_cd			--법정제품분류코드
+			, (SELECT pcspcc.stty_prdt_dtclf_nm FROM pt_co_stty_prdt_clf_cd pcspcc WHERE pcspcc.use_yn ='Y' AND pcspcc.stty_prdt_clf_cd = prcb.stty_prdt_clf_cd LIMIT 1) AS stty_prdt_clf_nm --법정제품분류명
+			, prcb.stty_prdt_dtclf_nm		--법정제품세분류명
+			, prcb.stty_prdt_dtclf_nm		--법정제품세분류명
+			, prcb.stnd_nm					--규격명
+			, prcb.rmk_cn					--비고내용
+			, prcb.incm_mnftr_div_cd		--수입제조구분코드
+
+			, prcb.mnftr_custco_nm			--제조고객회사명
+			, prcb.mnftr_custco_brno		--제조고객회사사업자등록번호
+			, prcb.mnftr_custco_ntn_nm		--제조고객회사국가명
+			, prcb.mnftr_custco_rprsv_nm	--제조고객회사대표자명
+			, prcb.mnftr_custco_zip			--제조고객회사우편번호
+			, prcb.mnftr_custco_addr		--제조고객회사주소
+			, prcb.mnftr_custco_telno		--제조고객회사전화번호
+
+			, prcb.incm_custco_nm			--수입고객회사명
+			, prcb.incm_custco_brno			--수입고객회사사업자등록번호
+			, prcb.incm_custco_rprsv_nm		--수입고객회사대표자명
+			, prcb.incm_custco_zip			--수입고객회사우편번호
+			, prcb.incm_custco_addr			--수입고객회사주소
+			, prcb.incm_custco_telno		--수입고객회사전화번호
+
+			, (SELECT tcaim.adit_info_nm FROM tb_cert_adit_info_mng tcaim WHERE tcaim.inst_id = prcb.inst_id AND tcaim.cert_no = prcb.cert_no LIMIT 1) AS cert_adit_info_nm --추가정보명
+			, (SELECT tcaim.adit_info_cn FROM tb_cert_adit_info_mng tcaim WHERE tcaim.inst_id = prcb.inst_id AND tcaim.cert_no = prcb.cert_no LIMIT 1) AS cert_adit_info_cn --추가정보내용
+
+		FROM pt_rf_cert_bas prcb
+		INNER JOIN pt_rf_cert_rcpt_rlt prcrr	/* PT_RF_인증서접수관계 */
+			ON prcrr.inst_id = prcb.inst_id AND prcrr.cert_no = prcb.cert_no
+		INNER JOIN pt_rf_rcpt_bas prrb 			/*접수기본*/
+			ON prrb.inst_id = prcrr.inst_id
+				AND prrb.inst_rcpt_no = prcrr.inst_rcpt_no
+
+		/* 기관아이디(prcb.inst_id), 접수기본.접수회사사업자등록번호(prrb.rcpt_co_brno), 접수기본.그룹아이디(prrb.grp_id) 로  정보제공동의여부(tegcam.info_pvsn_agre_yn)이 값이 Y인것만 */
+		INNER JOIN tb_ent_grp_clct_agre_mng tegcam	/*기업그룹수집동의관리*/
+			ON tegcam.inst_id = prcb.inst_id
+				AND tegcam.brno = prrb.rcpt_co_brno
+				AND (CASE WHEN tegcam.ent_grp_mng_no = '9999999999' then '_' ELSE tegcam.ent_grp_mng_no END) = prrb.grp_id
+				AND tegcam.info_pvsn_agre_yn = 'Y'
+
+		WHERE UPPER(prcb.inst_id) = #{targetInstId} AND prcb.cert_no = #{targetCertNo}
+
+		LIMIT 1
+	</select>
+
+	<!-- [QR랜딩페이지][인증데이터 조회] 이미지 리스트 조회 -->
+	<select id="selectCertDataImgList" parameterType="com.katri.web.svc.model.SvcSelectReq" resultType="String">
+		/* SvcMapper.selectCertDataImgList ([인증데이터 조회] 이미지 리스트 조회) */
+
+		SELECT
+			prcit.cert_img_file_nm --인증이미지파일명
+		FROM pt_rf_cert_img_txn prcit
+		WHERE UPPER(prcit.inst_id) = #{targetInstId} AND prcit.cert_no = #{targetCertNo}
+		ORDER BY prcit.file_nm
+	</select>
+
+</mapper>

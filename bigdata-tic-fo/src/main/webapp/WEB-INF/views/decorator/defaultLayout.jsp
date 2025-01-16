@@ -1,0 +1,49 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+
+<!DOCTYPE html>
+<html lang="ko">
+
+	<head>
+		<jsp:include page="../layout/headLayout.jsp" />
+	</head>
+
+	<body>
+		<!-- ===== wrap ====== -->
+		<div id="wrap">
+
+			<!-- ===== search : 모바일 ====== -->
+			<div id="sch-m" class="">
+				<jsp:include page="../layout/schmLayout.jsp" />
+			</div>
+			<!-- // ===== search : 모바일 ====== -->
+
+			<!-- ===== rnb ====== -->
+			<nav id="rnb" class="">
+				<jsp:include page="../layout/rnbLayout.jsp" />
+			</nav>
+			<!-- // ===== rnb ====== -->
+
+			<div class="rnb-dimd">딤드</div>
+
+			<!-- ===== nav ====== -->
+			<nav id="nav" class="">
+				<jsp:include page="../layout/navLayout.jsp" />
+			</nav>
+			<!-- // ===== nav ====== -->
+
+			<!-- ===== header && container ====== -->
+			<sitemesh:write property='body'/>
+			<!-- ===== // header && container ====== -->
+
+			<!-- ===== footer ====== -->
+			<footer id="footer">
+				<jsp:include page="../layout/bottomLayout.jsp" />
+			</footer>
+			<!-- // ===== footer ====== -->
+
+		</div>
+		<!-- ===== //wrap ====== -->
+	</body>
+
+</html>

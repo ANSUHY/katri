@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="25.375" viewBox="0 0 20 25.375">
+    <path data-name="패스 2" d="m1406.267 287.39 3.672 5.989" transform="translate(-1391.437 -269.379)" style="stroke-linecap:round;stroke:#000;stroke-width:2px;fill:none"/>
+    <g data-name="타원 2" style="stroke:#000;stroke-width:2px;fill:none">
+        <circle cx="10" cy="10" r="10" style="stroke:none"/>
+        <circle cx="10" cy="10" r="9" style="fill:none"/>
+    </g>
+</svg>
