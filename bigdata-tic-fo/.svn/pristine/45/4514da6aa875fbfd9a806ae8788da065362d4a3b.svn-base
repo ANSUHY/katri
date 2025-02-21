@@ -7,7 +7,7 @@ plugins {
 
 group = 'com'
 version = '1.0'
-sourceCompatibility = '1.8'
+sourceCompatibility = '17'
 
 configurations {
 	compileOnly {
@@ -23,7 +23,7 @@ repositories {
 		url='http://ptlnexus:8085/repository/maven-public/'
 		allowInsecureProtocol = true
 	}
-	
+
 //	mavenCentral()
 }
 
