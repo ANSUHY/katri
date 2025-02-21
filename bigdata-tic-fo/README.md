@@ -2,7 +2,8 @@
 
 
 #####
-Preferences > Java > Compiler > JDK확인해보기
+이클립스내 Preferences > Java > Compiler > JDK확인해보기
+프로젝트내 Properties > Gradle > {{Override workspace settings}} 체크하고 javahome잡아주기
 ######
 
 ---

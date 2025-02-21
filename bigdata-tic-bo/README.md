@@ -1,10 +1,15 @@
 ## Setting 가이드
 
+#####
+이클립스내 Preferences > Java > Compiler > JDK확인해보기
+프로젝트내 Properties > Gradle > {{Override workspace settings}} 체크하고 javahome잡아주기
+######
+
 ---
 
 **소프트웨어 구성**
 0. Spring Tool Suite4 설치(필수)
-1. jdk1.8.0_241
+1. jdk17
 2. Spring Boot 2.3.5 RELEASE
 3. apache-tomcat-8.0.33 (Spring Boot Embed)
 4. Spring JDBC 5.1.8 (Spring Boot Embed)

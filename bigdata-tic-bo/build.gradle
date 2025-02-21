@@ -7,10 +7,11 @@ plugins {
 
 group = 'com'
 version = '1.0'
-sourceCompatibility = '1.8'
+sourceCompatibility = '17'
+targetCompatibility = '17'
 
 configurations {
-	compileOnly {
+	implementationOnly {
 		extendsFrom annotationProcessor
 	}
 }
@@ -19,12 +20,12 @@ repositories {
 	// stkim updated.
 	// windows host file에 210.90.145.250 ptlnexus 설정하고 사용해야 함
 	// 설정 이후 maven 주석 해제 및 mavenCentral() 주석처리해야 함
-	maven {
+	/*maven {
 		url='http://ptlnexus:8085/repository/maven-public/'
 		allowInsecureProtocol = true
-	}
+	}*/
 
-//	mavenCentral()
+	mavenCentral()
 }
 
 // stkim add.
@@ -62,10 +63,10 @@ dependencies {
 	implementation group: 'org.postgresql', name: 'postgresql', version: '42.5.1'
 
 	// https://mvnrepository.com/artifact/javax.servlet/jstl
-	compile group: 'javax.servlet', name: 'jstl', version: '1.2'
+	implementation group: 'javax.servlet', name: 'jstl', version: '1.2'
 	implementation 'javax.validation:validation-api:2.0.1.Final'
 
-	compile group: 'commons-io', name: 'commons-io', version: '2.11.0'
+	implementation group: 'commons-io', name: 'commons-io', version: '2.11.0'
 
 	runtimeOnly group: 'org.apache.taglibs', name: 'taglibs-standard-impl', version: '1.2.5'
 	implementation 'org.sitemesh:sitemesh:3.0.1'
